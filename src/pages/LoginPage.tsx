@@ -1,6 +1,8 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+
+const REMEMBER_KEY = 'murmur_remembered';
 
 function generateMathCaptcha(): { text: string; answer: number } {
   const a = Math.floor(Math.random() * 9) + 1;
@@ -23,35 +25,63 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [remember, setRemember] = useState(true);
   const [captcha, setCaptcha] = useState(generateMathCaptcha);
   const [captchaInput, setCaptchaInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // 载入时读取记住的邮箱和密码
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(REMEMBER_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.email) setEmail(parsed.email);
+        if (parsed.password) setPassword(parsed.password);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const saveRemembered = () => {
+    try {
+      if (remember) {
+        localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email: email.trim(), password }));
+      } else {
+        localStorage.removeItem(REMEMBER_KEY);
+      }
+    } catch { /* ignore */ }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setInfo(null);
     if (loading) return;
+
+    if (mode === 'signup') {
+      if (password !== confirm) {
+        setError('两次输入的密码不一致');
+        setCaptcha(generateMathCaptcha());
+        return;
+      }
+      if (String(captcha.answer) !== captchaInput.trim()) {
+        setError('验证码不正确，请重新输入');
+        setCaptcha(generateMathCaptcha());
+        setCaptchaInput('');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       if (mode === 'signin') {
-        const { error } = await signIn(email, password);
+        saveRemembered();
+        const { error } = await signIn(email, password, remember);
         if (error) setError(error);
         else navigate('/');
       } else {
-        if (password !== confirm) {
-          setError('两次输入的密码不一致');
-          setCaptcha(generateMathCaptcha());
-          return;
-        }
-        if (String(captcha.answer) !== captchaInput.trim()) {
-          setError('验证码不正确，请重新输入');
-          setCaptcha(generateMathCaptcha());
-          setCaptchaInput('');
-          return;
-        }
         const { error } = await signUp(email, password);
         if (error) setError(error);
         else {
@@ -76,42 +106,73 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
+      <div className="login-deco login-deco-1" />
+      <div className="login-deco login-deco-2" />
       <div className="login-card">
         <button className="login-card-close" onClick={() => navigate('/')} aria-label="返回">×</button>
-        <h1 className="login-card-title">{mode === 'signin' ? '登录呓语集' : '注册账号'}</h1>
+
+        <div className="login-logo">
+          <span className="login-logo-dot">呓</span>
+        </div>
+        <h1 className="login-card-title">{mode === 'signin' ? '欢迎回来' : '加入呓语集'}</h1>
+        <p className="login-card-sub">{mode === 'signin' ? '登录你的账号，继续书写呓语' : '创建一个新账号'}</p>
 
         {info && <p className="captcha-info">{info}</p>}
         {error && <p className="auth-error">{error}</p>}
 
         <form onSubmit={handleSubmit} className="login-card-form">
-          <input
-            type="email"
-            className="login-input"
-            placeholder="邮箱"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            className="login-input"
-            placeholder="密码（至少6位）"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-          />
-          {mode === 'signup' && (
+          <div className="login-field">
+            <span className="login-field-icon">✉️</span>
+            <input
+              type="email"
+              className="login-input"
+              placeholder="邮箱"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+          </div>
+          <div className="login-field">
+            <span className="login-field-icon">🔒</span>
             <input
               type="password"
               className="login-input"
-              placeholder="确认密码"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="密码（至少6位）"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             />
+          </div>
+          {mode === 'signup' && (
+            <div className="login-field">
+              <span className="login-field-icon">🔒</span>
+              <input
+                type="password"
+                className="login-input"
+                placeholder="确认密码"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+                minLength={6}
+                autoComplete="new-password"
+              />
+            </div>
           )}
+
+          {mode === 'signin' && (
+            <label className="login-remember">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+              />
+              <span>记住登录（保持登录，下次免输入）</span>
+            </label>
+          )}
+
           {mode === 'signup' && (
             <div className="captcha-row">
               <span className="captcha-question">{captcha.text}</span>
@@ -125,8 +186,9 @@ export default function LoginPage() {
               />
             </div>
           )}
-          <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
-            {loading ? '提交中…' : (mode === 'signin' ? '登录' : '注册')}
+
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? '提交中…' : (mode === 'signin' ? '登 录' : '注 册')}
           </button>
         </form>
 

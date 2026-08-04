@@ -10,7 +10,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string, remember?: boolean) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -43,8 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error ? error.message : null };
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, remember = true) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error && !remember) {
+      // 未勾选"记住我"：登录后清除本地持久 token，本次会话仍有效，刷新后需重新登录
+      try {
+        const storageKey = (supabase.auth as any).storageKey || 'supabase.auth.token';
+        localStorage.removeItem(storageKey);
+      } catch { /* ignore */ }
+    }
     return { error: error ? error.message : null };
   };
 
