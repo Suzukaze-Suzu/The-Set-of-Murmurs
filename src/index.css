@@ -386,9 +386,9 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 }
 .login-card-close{position:absolute;top:14px;right:16px;border:none;background:color-mix(in srgb,var(--bg-soft) 70%,transparent);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--text-secondary);font-size:1.3rem;line-height:1;transition:all .2s;z-index:2}
 .login-card-close:hover{background:var(--coral-pink);color:#fff;transform:rotate(90deg)}
-.login-logo{width:64px;height:64px;border-radius:22px;margin:0 auto 16px;background:var(--grad-warm);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px color-mix(in srgb,var(--coral-pink) 35%,transparent)}
-.login-logo-dot{font-size:1.8rem;font-weight:800;color:#fff}
-.login-card-title{font-size:1.55rem;font-weight:800;margin-bottom:6px;color:var(--text-main)}
+
+
+.login-card-title{font-size:1.7rem;font-weight:800;margin:26px 0 8px;color:var(--text-main)}
 .login-card-sub{color:var(--text-secondary);font-size:.92rem;margin-bottom:22px}
 .login-card-form{display:flex;flex-direction:column;gap:14px}
 .login-field{position:relative;display:flex;align-items:center}

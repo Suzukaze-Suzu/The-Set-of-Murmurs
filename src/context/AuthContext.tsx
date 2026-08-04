@@ -46,6 +46,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string, remember = true) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    // 若登录失败（如邮箱未确认）：清除可能残留的旧会话，避免界面继续显示博主身份
+    if (error) {
+      try { await supabase.auth.signOut(); } catch { /* ignore */ }
+    }
     if (!error && !remember) {
       // 未勾选"记住我"：登录后清除本地持久 token，本次会话仍有效，刷新后需重新登录
       try {

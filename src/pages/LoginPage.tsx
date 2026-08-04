@@ -117,10 +117,7 @@ export default function LoginPage() {
       <div className="login-card">
         <button className="login-card-close" onClick={() => navigate('/')} aria-label="返回">×</button>
 
-        <div className="login-logo">
-          <span className="login-logo-dot">呓</span>
-        </div>
-        <h1 className="login-card-title">{mode === 'signin' ? '欢迎回来' : '加入呓语集'}</h1>
+        <h1 className="login-card-title">{mode === 'signin' ? '呓语集' : '加入呓语集'}</h1>
         <p className="login-card-sub">{mode === 'signin' ? '登录你的账号，继续书写呓语' : '创建一个新账号'}</p>
 
         {info && <p className="captcha-info">{info}</p>}
