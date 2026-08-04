@@ -1,25 +1,128 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Article, Category } from '../types';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import { ArticleContext, initialArticles, uid, storageKey } from './ArticleContext';
+import { supabase } from '../lib/supabase';
+import { useAuth } from './AuthContext';
+import { ArticleContext, uid } from './ArticleContext';
+
+function rowToArticle(row: any): Article {
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.content || '',
+    category: row.category || 'essay',
+    tags: row.tags || [],
+    date: row.date,
+    favorite: !!row.favorite,
+    pinned: !!row.pinned,
+    summary: row.summary || '',
+  };
+}
 
 export function ArticleProvider({ children }: { children: ReactNode }) {
-  const [articles, setArticles] = useLocalStorage<Article[]>(storageKey, initialArticles);
+  const { isAdmin } = useAuth();
+  const [articles, setArticlesState] = useState<Article[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [version, setVersion] = useState(0); // 用于刷新
 
-  const addArticle = (a: Article) => setArticles((prev) => [{ ...a, id: a.id || uid() }, ...prev]);
+  const refresh = () => setVersion((v) => v + 1);
 
-  const updateArticle = (a: Article) =>
-    setArticles((prev) => prev.map((x) => (x.id === a.id ? a : x)));
+  // 从 Supabase 加载文章
+  useEffect(() => {
+    let mounted = true;
+    supabase
+      .from('articles')
+      .select('*')
+      .then(({ data, error }) => {
+        if (!mounted) return;
+        if (!error && data) {
+          setArticlesState(data.map(rowToArticle));
+        }
+        setLoaded(true);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [version]);
 
-  const deleteArticle = (id: string) => setArticles((prev) => prev.filter((x) => x.id !== id));
+  const setArticles = (updater: (prev: Article[]) => Article[]) => {
+    setArticlesState(updater);
+  };
 
-  const toggleFavorite = (id: string) =>
-    setArticles((prev) =>
-      prev.map((x) => (x.id === id ? { ...x, favorite: !x.favorite } : x))
-    );
+  const addArticle = (a: Article) => {
+    if (!isAdmin) return;
+    const article: Article = { ...a, id: a.id || uid() };
+    supabase
+      .from('articles')
+      .insert({
+        id: article.id,
+        title: article.title,
+        content: article.content,
+        category: article.category,
+        tags: article.tags,
+        date: article.date,
+        favorite: article.favorite,
+        pinned: article.pinned,
+        summary: article.summary || '',
+      })
+      .then(({ error }) => {
+        if (!error) refresh();
+      });
+  };
 
-  const togglePinned = (id: string) =>
-    setArticles((prev) => prev.map((x) => (x.id === id ? { ...x, pinned: !x.pinned } : x)));
+  const updateArticle = (a: Article) => {
+    if (!isAdmin) return;
+    supabase
+      .from('articles')
+      .update({
+        title: a.title,
+        content: a.content,
+        category: a.category,
+        tags: a.tags,
+        date: a.date,
+        favorite: a.favorite,
+        pinned: a.pinned,
+        summary: a.summary || '',
+      })
+      .eq('id', a.id)
+      .then(({ error }) => {
+        if (!error) refresh();
+      });
+  };
+
+  const deleteArticle = (id: string) => {
+    if (!isAdmin) return;
+    supabase
+      .from('articles')
+      .delete()
+      .eq('id', id)
+      .then(({ error }) => {
+        if (!error) refresh();
+      });
+  };
+
+  const toggleFavorite = (id: string) => {
+    if (!isAdmin) return;
+    const target = articles.find((a) => a.id === id);
+    if (target) {
+      supabase
+        .from('articles')
+        .update({ favorite: !target.favorite })
+        .eq('id', id)
+        .then(() => refresh());
+    }
+  };
+
+  const togglePinned = (id: string) => {
+    if (!isAdmin) return;
+    const target = articles.find((a) => a.id === id);
+    if (target) {
+      supabase
+        .from('articles')
+        .update({ pinned: !target.pinned })
+        .eq('id', id)
+        .then(() => refresh());
+    }
+  };
 
   const getByCategory = (c: Category) =>
     articles.filter((a) => a.category === c).sort((a, b) => b.date.localeCompare(a.date));

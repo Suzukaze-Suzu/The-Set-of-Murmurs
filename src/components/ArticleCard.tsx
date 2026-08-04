@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Article, CATEGORY_META } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface Props {
   article: Article;
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function ArticleCard({ article, onToggleFavorite }: Props) {
+  const { isAdmin } = useAuth();
   const meta = CATEGORY_META[article.category];
   return (
     <div
@@ -19,7 +21,8 @@ export default function ArticleCard({ article, onToggleFavorite }: Props) {
         </span>
         <div className="card-actions">
           {article.pinned && <span className="card-pin" title="置顶">置顶</span>}
-          <button
+          {isAdmin ? (
+            <button
             className={`fav-btn ${article.favorite ? 'fav-on' : ''}`}
             onClick={(e) => {
               e.preventDefault();
@@ -29,6 +32,9 @@ export default function ArticleCard({ article, onToggleFavorite }: Props) {
           >
             {article.favorite ? '★' : '☆'}
           </button>
+          ) : article.favorite ? (
+            <span className="fav-btn fav-on" title="收藏">★</span>
+          ) : null}
         </div>
       </div>
 
@@ -51,3 +57,4 @@ export default function ArticleCard({ article, onToggleFavorite }: Props) {
     </div>
   );
 }
+

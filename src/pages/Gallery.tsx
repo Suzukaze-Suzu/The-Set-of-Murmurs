@@ -1,8 +1,10 @@
 import { useState, FormEvent } from 'react';
 import { useGallery } from '../context/GalleryContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Gallery() {
   const { images, addImage, removeImage } = useGallery();
+  const { isAdmin } = useAuth();
   const [url, setUrl] = useState('');
   const [caption, setCaption] = useState('');
   const [error, setError] = useState('');
@@ -28,6 +30,7 @@ export default function Gallery() {
         收藏你喜欢的图片吧，可以粘贴任意网络图片链接。
       </p>
 
+      {isAdmin && (
       <form className="gallery-form card" onSubmit={handleAdd}>
         <input
           type="text"
@@ -49,6 +52,7 @@ export default function Gallery() {
         {error && <p className="gallery-error">{error}</p>}
         <button type="submit" className="btn btn-primary">添加图片</button>
       </form>
+      )}
 
       {images.length === 0 ? (
         <div className="empty-state">
@@ -67,13 +71,15 @@ export default function Gallery() {
               </div>
               <figcaption className="gallery-caption">
                 <span>{img.caption || '未命名图片'}</span>
-                <button
-                  className="gallery-remove"
-                  onClick={() => removeImage(img.id)}
-                  title="移除这张图片"
-                >
-                  移除
-                </button>
+                {isAdmin && (
+                  <button
+                    className="gallery-remove"
+                    onClick={() => removeImage(img.id)}
+                    title="移除这张图片"
+                  >
+                    移除
+                  </button>
+                )}
               </figcaption>
             </figure>
           ))}
@@ -92,3 +98,4 @@ export default function Gallery() {
     </div>
   );
 }
+

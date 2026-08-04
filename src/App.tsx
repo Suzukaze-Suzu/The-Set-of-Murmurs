@@ -1,4 +1,5 @@
 import { HashRouter, Routes, Route, Outlet, useOutletContext } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import { ArticleProvider } from './context/ArticleProvider';
 import { CommentProvider } from './context/CommentContext';
 import { ProfileProvider } from './context/ProfileContext';
@@ -35,10 +36,11 @@ function ArticlesRoute() {
 export default function App() {
   return (
     <ThemeProvider>
-      <ProfileProvider>
-            <GalleryProvider>
-          <ArticleProvider>
-            <CommentProvider>
+              <AuthProvider>
+        <ProfileProvider>
+          <GalleryProvider>
+            <ArticleProvider>
+              <CommentProvider>
               <HashRouter>
                 <Routes>
                 <Route element={<LayoutRoute />}>
@@ -55,10 +57,11 @@ export default function App() {
                 </Route>
               </Routes>
             </HashRouter>
-            </CommentProvider>
-          </ArticleProvider>
-        </GalleryProvider>
-      </ProfileProvider>
+              </CommentProvider>
+            </ArticleProvider>
+          </GalleryProvider>
+        </ProfileProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

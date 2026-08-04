@@ -337,3 +337,14 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .nav-links a{padding:7px 12px;font-size:.9rem}
 }
 /* (导航栏单行方案完成) */
+/* ===== 登录/认证 UI ===== */
+.nav-auth{flex-shrink:0;margin-left:2px}
+.auth-modal{max-width:380px}
+.auth-form{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+.auth-form .gallery-input{width:100%}
+.auth-form .btn-primary{width:100%}
+.auth-switch{border:none;background:none;color:var(--sky-blue);cursor:pointer;margin-top:14px;font-size:.88rem;text-decoration:underline}
+.btn-sm{padding:6px 14px;font-size:.85rem}
+@media (max-width:640px){
+  .nav-auth .btn-sm{padding:6px 10px;font-size:.8rem}
+}

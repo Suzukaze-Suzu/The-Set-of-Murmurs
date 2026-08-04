@@ -1,9 +1,11 @@
 import { useState, ChangeEvent, useRef, FormEvent } from 'react';
 import { useProfile } from '../context/ProfileContext';
+import { useAuth } from '../context/AuthContext';
 import ProfileCard from '../components/ProfileCard';
 
 export default function About() {
   const { profile, setProfile } = useProfile();
+  const { isAdmin } = useAuth();
   const avatarInput = useRef<HTMLInputElement>(null);
   const [editMode, setEditMode] = useState(false);
   const [nickname, setNickname] = useState(profile.nickname);
@@ -65,9 +67,10 @@ export default function About() {
         </div>
       </div>
 
-      {/* 编辑个人资料 */}
+      {/* 编辑个人资料（仅博主可见） */}
+      {isAdmin && (
       <div className="edit-profile card">
-        {editMode ? (
+          {editMode ? (
           <form onSubmit={saveProfile}>
             <h3>编辑个人资料</h3>
             <button type="button" className="avatar-upload-btn" onClick={() => avatarInput.current?.click()}>
@@ -93,6 +96,8 @@ export default function About() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
+

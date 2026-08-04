@@ -3,6 +3,8 @@ import { CATEGORIES, CATEGORY_META } from '../types';
 import { useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useProfile } from '../context/ProfileContext';
+import { useAuth } from '../context/AuthContext';
+import AuthButton from './AuthButton';
 
 const CATEGORY_ROUTES: Record<string, string> = {
   anime: '/category/anime',
@@ -15,6 +17,7 @@ const CATEGORY_ROUTES: Record<string, string> = {
 export default function Navbar() {
   const location = useLocation();
   const { profile } = useProfile();
+  const { isAdmin } = useAuth();
   const [showIntro, setShowIntro] = useState(false);
 
   return (
@@ -31,7 +34,9 @@ export default function Navbar() {
             <Link to="/gallery" className={location.pathname === '/gallery' ? 'active' : ''}>图集</Link>
             <Link to="/guestbook" className={location.pathname === '/guestbook' ? 'active' : ''}>留言板</Link>
             <Link to="/about" className={location.pathname === '/about' ? 'active' : ''}>关于</Link>
-            <Link to="/write" className={location.pathname === '/write' ? 'active' : ''}>写作</Link>
+            {isAdmin && (
+              <Link to="/write" className={location.pathname.startsWith('/write') ? 'active' : ''}>写作</Link>
+            )}
           </div>
           <div className="nav-cats">
             {CATEGORIES.map((c) => (
@@ -40,6 +45,9 @@ export default function Navbar() {
                 <span className="cat-text">{CATEGORY_META[c].label}</span>
               </Link>
             ))}
+          </div>
+          <div className="nav-auth">
+            <AuthButton />
           </div>
           <button className="nav-avatar" onClick={() => setShowIntro(true)} title="点击查看我的介绍">
             {profile.avatar ? (

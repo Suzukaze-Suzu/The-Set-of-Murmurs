@@ -1,5 +1,6 @@
-import { createContext, useContext, ReactNode } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from './AuthContext';
 
 export interface GalleryImage {
   id: string;
@@ -7,56 +8,69 @@ export interface GalleryImage {
   caption: string;
 }
 
-export const galleryStorageKey = 'yiyuji_gallery';
-
 export function galleryUid() {
   return 'img_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
-
-const sampleImages: GalleryImage[] = [
-  {
-    id: 'g0',
-    url: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=80',
-    caption: '山间晨雾',
-  },
-  {
-    id: 'g1',
-    url: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=800&q=80',
-    caption: '湖边倒影',
-  },
-  {
-    id: 'g2',
-    url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
-    caption: '天空的色彩',
-  },
-];
 
 interface GalleryContextType {
   images: GalleryImage[];
   addImage: (url: string, caption?: string) => void;
   removeImage: (id: string) => void;
+  loading: boolean;
 }
 
 const GalleryContext = createContext<GalleryContextType | null>(null);
 
 export function GalleryProvider({ children }: { children: ReactNode }) {
-  const [images, setImages] = useLocalStorage<GalleryImage[]>(galleryStorageKey, sampleImages);
+  const { isAdmin } = useAuth();
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    supabase
+      .from('gallery')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!mounted) return;
+        if (!error && data) {
+          setImages(data.map((row) => ({ id: row.id, url: row.url, caption: row.caption || '' })));
+        }
+        setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const addImage = (url: string, caption = '') => {
     const trimmed = url.trim();
     if (!trimmed) return;
-    setImages((prev) => [
-      { id: galleryUid(), url: trimmed, caption: caption.trim() },
-      ...prev,
-    ]);
+    // 只有 admin 能添加图集；普通读者前端隐藏按钮，这里再兜底
+    if (!isAdmin) return;
+    const newImg: GalleryImage = { id: galleryUid(), url: trimmed, caption: caption.trim() };
+    supabase
+      .from('gallery')
+      .insert({ id: newImg.id, url: newImg.url, caption: newImg.caption })
+      .then(({ error }) => {
+        if (!error) setImages((prev) => [newImg, ...prev]);
+      });
   };
 
   const removeImage = (id: string) => {
-    setImages((prev) => prev.filter((img) => img.id !== id));
+    if (!isAdmin) return;
+    supabase
+      .from('gallery')
+      .delete()
+      .eq('id', id)
+      .then(({ error }) => {
+        if (!error) setImages((prev) => prev.filter((img) => img.id !== id));
+      });
   };
 
   return (
-    <GalleryContext.Provider value={{ images, addImage, removeImage }}>
+    <GalleryContext.Provider value={{ images, addImage, removeImage, loading }}>
       {children}
     </GalleryContext.Provider>
   );

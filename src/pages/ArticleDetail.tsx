@@ -2,6 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { useComments } from '../context/CommentContext';
+import { useAuth } from '../context/AuthContext';
 import { CATEGORY_META } from '../types';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import CommentSection from '../components/CommentSection';
@@ -9,6 +10,7 @@ import CommentSection from '../components/CommentSection';
 export default function ArticleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const { getById, toggleFavorite, deleteArticle } = useArticles();
   const { articleComments, addArticleComment } = useComments();
 
@@ -64,24 +66,31 @@ export default function ArticleDetail() {
         <div className="detail-meta">
           <span className="detail-meta-icon">▪</span>
           <span>{article.date}</span>
+          {isAdmin && (
           <button className={`meta-btn ${article.favorite ? 'meta-fav-on' : ''}`} onClick={() => toggleFavorite(article.id)}>
             {article.favorite ? '★ 已收藏' : '☆ 收藏'}
           </button>
+          )}
+          {isAdmin && (
           <button className="meta-btn" onClick={exportMarkdown}>
             导出 .md
           </button>
-        </div>
+          )}
+      </div>
       </div>
 
       <article className="detail-body card">
         <MarkdownRenderer content={article.content} />
       </article>
 
-      <div className="detail-actions">
-        <button className="btn btn-danger" onClick={afterDelete}>删除文章</button>
-      </div>
+      {isAdmin && (
+        <div className="detail-actions">
+          <button className="btn btn-danger" onClick={afterDelete}>删除文章</button>
+    </div>
+      )}
 
       <CommentSection comments={comments} onAdd={(name, content) => addArticleComment(article.id, name, content)} />
     </div>
   );
 }
+
