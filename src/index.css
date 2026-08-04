@@ -77,14 +77,14 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .hero-sub{font-size:1.3rem;margin:14px 0 8px;opacity:.96;font-weight:600}
 .hero-desc{max-width:620px;margin:0 auto 28px;opacity:.92;line-height:1.9}
 .hero-cta{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
-/* ===== 分区标题 ===== */
+/* ===== 鍒嗗尯鏍囬 ===== */
 .section-title{font-size:1.45rem;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:10px}
 .cat-section{margin-bottom:40px}
 .cat-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .more-link{font-size:.9rem;font-weight:600;color:var(--sky-blue-dark);display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--radius-pill);transition:all .2s;background:color-mix(in srgb,var(--sky-blue) 8%,transparent)}
 .more-link:hover{background:color-mix(in srgb,var(--sky-blue) 18%,transparent);transform:translateX(3px)}
 .search-banner{background:var(--grad-warm);color:#fff;padding:16px 22px;border-radius:var(--radius-sm);margin-bottom:26px;box-shadow:var(--shadow-sm)}
-/* ===== 文章卡片 ===== */
+/* ===== 鏂囩珷鍗＄墖 ===== */
 .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px}
 .card-grid.wide{gap:20px}
 .article-card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:12px;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent);transition:all .25s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden}
@@ -105,23 +105,23 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .card-date{font-size:.8rem;color:var(--text-secondary);display:flex;align-items:center;gap:5px}
 .read-more{font-size:.85rem;font-weight:700;color:var(--sky-blue-dark);display:inline-flex;align-items:center;gap:3px;transition:all .2s;padding:6px 12px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sky-blue) 8%,transparent)}
 .read-more:hover{background:color-mix(in srgb,var(--sky-blue) 18%,transparent);transform:translateX(3px)}
-/* ===== 筛选 ===== */
+/* ===== 绛涢€?===== */
 .filter-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}
 .filter-chip{border:none;cursor:pointer;padding:8px 18px;border-radius:var(--radius-pill);background:var(--bg-card);color:var(--text-main);box-shadow:var(--shadow-sm);font-size:.88rem;font-weight:500;border:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent);transition:all .2s}
 .filter-chip:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
 .filter-chip.active{color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(91,168,216,.35)}
 .result-count{color:var(--text-secondary);margin-bottom:16px;font-size:.95rem}
-/* ===== 空状态 ===== */
+/* ===== 绌虹姸鎬?===== */
 .empty-state{text-align:center;padding:70px 20px;color:var(--text-secondary)}
 .empty-icon{font-size:3rem;display:flex;width:84px;height:84px;margin:0 auto 20px;align-items:center;justify-content:center;background:var(--bg-soft);border-radius:50%;box-shadow:var(--shadow-sm)}
 .empty-state .btn{margin-top:18px}
-/* ===== 分类页头部 ===== */
+/* ===== 鍒嗙被椤靛ご閮?===== */
 .cat-header{border-radius:var(--radius);padding:36px;margin-bottom:28px;color:#fff;position:relative;overflow:hidden;box-shadow:var(--shadow)}
 .cat-header::after{content:'';position:absolute;width:200px;height:200px;right:-40px;bottom:-60px;border-radius:50%;background:rgba(255,255,255,.18);filter:blur(20px)}
 .back-link{color:#fff;opacity:.9;font-size:.88rem;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.18);padding:6px 14px;border-radius:var(--radius-pill);margin-bottom:14px;transition:all .2s}
 .back-link:hover{opacity:1;background:rgba(255,255,255,.28);transform:translateX(-3px)}
 .cat-count{opacity:.92;position:relative;z-index:2}
-/* ===== 个人资料卡片 & 关于 ===== */
+/* ===== 涓汉璧勬枡鍗＄墖 & 鍏充簬 ===== */
 .profile-card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:28px 22px;text-align:center;align-self:start;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent);position:relative;overflow:hidden}
 .profile-card::before{content:'';position:absolute;top:0;left:0;right:0;height:80px;background:var(--grad-main);opacity:.12}
 .profile-avatar{width:92px;height:92px;border-radius:50%;overflow:hidden;margin:12px auto 14px;background:var(--grad-main);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(91,168,216,.3);border:4px solid #fff;position:relative}
@@ -147,7 +147,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .avatar-upload-btn img{width:100%;height:100%;object-fit:cover}
 .form-actions{display:flex;gap:12px;margin-top:18px}
 .profile-controls p{color:var(--text-secondary);margin-bottom:14px}
-/* ===== 写作页 ===== */
+/* ===== 鍐欎綔椤?===== */
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
 .toolbar .btn{background:var(--bg-card);box-shadow:var(--shadow-sm);border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent);color:var(--text-main)}
 .toolbar .btn:hover{box-shadow:var(--shadow)}
@@ -169,7 +169,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .editor-preview{border:1px solid color-mix(in srgb,var(--slate-blue) 25%,transparent);border-radius:var(--radius-sm);padding:18px;min-height:340px;background:var(--bg-page)}
 .write-actions{margin-top:24px;display:flex;justify-content:center}
 .write-actions .btn{padding:12px 40px;font-size:1rem}
-/* ===== 文章详情 ===== */
+/* ===== 鏂囩珷璇︽儏 ===== */
 .article-detail{max-width:800px}
 .detail-head{margin-bottom:26px}
 .detail-cats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
@@ -182,7 +182,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .meta-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow);color:var(--sky-blue-dark)}
 .detail-body{padding:32px;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent)}
 .detail-actions{margin:22px 0;text-align:right}
-/* ===== Markdown 正文 ===== */
+/* ===== Markdown 姝ｆ枃 ===== */
 .markdown-body{font-size:1rem;line-height:1.9;color:var(--text-main)}
 .markdown-body h1,.markdown-body h2,.markdown-body h3,.markdown-body h4{margin:1.4em 0 .5em;font-weight:800;color:var(--sky-blue-dark);line-height:1.4}
 .markdown-body h1{font-size:1.8rem}.markdown-body h2{font-size:1.5rem}.markdown-body h3{font-size:1.25rem}
@@ -198,7 +198,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .markdown-body img{max-width:100%;border-radius:10px;box-shadow:var(--shadow-sm)}
 .markdown-body hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--slate-blue),transparent);margin:1.6em 0}
 .math-block-wrap{text-align:center;margin:1.3em 0;overflow-x:auto;padding:10px 0}
-/* ===== 评论区 & 留言板 ===== */
+/* ===== 璇勮鍖?& 鐣欒█鏉?===== */
 .comment-section{margin-top:36px}
 .comment-title{font-size:1.25rem;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px}
 .comment-form{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:14px;margin-bottom:22px;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent)}
@@ -217,7 +217,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .comment-body{color:var(--text-secondary);line-height:1.7}
 .empty-tip{color:var(--text-secondary);font-style:italic;text-align:center;padding:20px}
 .guestbook-hero{padding:24px;margin-bottom:24px}
-/* ===== 响应式 ===== */
+/* ===== 鍝嶅簲寮?===== */
 @media (max-width:768px){
   .about-grid{grid-template-columns:1fr}
   .nav-cats{display:none}
@@ -227,15 +227,15 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .write-meta{flex-direction:column;align-items:stretch}
   .comment-name{width:100%}
 }
-/* ===== 导航：分类彩色圆点 ===== */
+/* ===== 瀵艰埅锛氬垎绫诲僵鑹插渾鐐?===== */
 .cat-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;flex-shrink:0}
 .nav-cats a{display:inline-flex;align-items:center;white-space:nowrap}
-/* ===== 导航：头像按钮 ===== */
+/* ===== 瀵艰埅锛氬ご鍍忔寜閽?===== */
 .nav-avatar{width:38px;height:38px;border-radius:50%;border:2px solid #fff;box-shadow:var(--shadow-sm);cursor:pointer;overflow:hidden;padding:0;flex-shrink:0;background:var(--grad-main);display:flex;align-items:center;justify-content:center;transition:all .25s}
 .nav-avatar:hover{transform:scale(1.08);box-shadow:0 6px 18px rgba(91,168,216,.4)}
 .nav-avatar img{width:100%;height:100%;object-fit:cover}
 .nav-avatar-placeholder{width:100%;height:100%;background:var(--grad-main);position:relative}
-/* ===== 弹窗（介绍 & 缩放）===== */
+/* ===== 寮圭獥锛堜粙缁?& 缂╂斁锛?==== */
 .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);z-index:1000;overflow:auto;padding:20px}
 .intro-modal,.zoom-modal{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-lg);position:relative;max-width:420px;width:100%;padding:36px 30px 30px;text-align:center;border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
 .modal-close{position:absolute;top:12px;right:14px;border:none;background:color-mix(in srgb,var(--bg-soft) 70%,transparent);width:30px;height:30px;border-radius:50%;cursor:pointer;color:var(--text-secondary);font-size:1.2rem;line-height:1;transition:all .2s}
@@ -249,7 +249,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .zoom-modal{max-width:820px;max-height:90vh;padding:14px;display:flex;flex-direction:column;align-items:center;overflow:auto}
 .zoom-modal img{max-width:100%;max-height:calc(90vh - 60px);border-radius:var(--radius-sm);object-fit:contain}
 .zoom-caption{margin-top:10px;color:var(--text-secondary);font-size:.9rem}
-/* ===== 卡片收藏 / 置顶 ===== */
+/* ===== 鍗＄墖鏀惰棌 / 缃《 ===== */
 .card-pin{font-size:.7rem;background:color-mix(in srgb,var(--honey-gold) 25%,transparent);color:#9a7b2e;padding:2px 8px;border-radius:var(--radius-pill);font-weight:600}
 [data-theme='dark'] .card-pin{color:var(--honey-gold)}
 .fav-btn.fav-on{background:var(--coral-pink);color:#fff;box-shadow:0 4px 12px rgba(232,155,138,.4)}
@@ -257,7 +257,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .meta-btn.meta-fav-on{color:#fff;background:var(--coral-pink);box-shadow:0 4px 12px rgba(232,155,138,.4)}
 .detail-meta-icon{color:var(--sky-blue)}
 .more-arrow{font-size:1.1rem;line-height:1;transform:translateY(-1px)}
-/* ===== 空状态 CSS 图标 ===== */
+/* ===== 绌虹姸鎬?CSS 鍥炬爣 ===== */
 .empty-icon-magnifier{position:relative}
 .empty-icon-magnifier::before{content:'';width:30px;height:30px;border-radius:50%;border:3px solid var(--sky-blue)}
 .empty-icon-magnifier::after{content:'';position:absolute;width:14px;height:4px;background:var(--sky-blue);transform:rotate(45deg);border-radius:2px;top:30px;left:calc(50% + 8px)}
@@ -266,12 +266,12 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .empty-icon-ghost::after{content:'';position:absolute;width:26px;height:10px;background:var(--bg-card);border-radius:50%;top:30px}
 .empty-icon-gallery::before{content:'';width:34px;height:26px;border:3px solid var(--coral-pink);border-radius:6px;position:relative}
 .empty-icon-gallery::after{content:'';position:absolute;width:18px;height:12px;background:var(--coral-pink);border-radius:3px;top:8px;left:calc(50% - 1px);transform:rotate(-12deg)}
-/* ===== 评论头像（首字母圆）===== */
+/* ===== 璇勮澶村儚锛堥瀛楁瘝鍦嗭級===== */
 .comment-avatar{width:34px;height:34px;border-radius:50%;background:var(--grad-main);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:600;flex-shrink:0}
-/* ===== 头像上传按钮 ===== */
+/* ===== 澶村儚涓婁紶鎸夐挳 ===== */
 .avatar-upload-hint{display:flex;flex-direction:column;align-items:center;line-height:1.2;color:var(--sky-blue);font-size:1.4rem}
 .avatar-upload-hint small{font-size:.7rem;color:var(--text-secondary)}
-/* ===== 图集页 ===== */
+/* ===== 鍥鹃泦椤?===== */
 .gallery-page{max-width:960px}
 .gallery-desc{color:var(--text-secondary);font-size:.95rem;margin-bottom:20px}
 .gallery-form{display:flex;flex-direction:column;gap:12px;padding:22px;margin-bottom:28px}
@@ -290,7 +290,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .gallery-caption span{font-size:.86rem;color:var(--text-main);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gallery-remove{border:none;background:color-mix(in srgb,var(--coral-pink) 15%,transparent);color:var(--coral-pink);padding:4px 10px;border-radius:var(--radius-pill);cursor:pointer;font-size:.78rem;font-weight:600;transition:all .2s;flex-shrink:0}
 .gallery-remove:hover{background:var(--coral-pink);color:#fff}
-/* ===== 排版优化：避免标题换行 ===== */
+/* ===== 鎺掔増浼樺寲锛氶伩鍏嶆爣棰樻崲琛?===== */
 .section-title{white-space:nowrap}
 .cat-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:nowrap}
 .more-link{white-space:nowrap;flex-shrink:0}
@@ -299,11 +299,11 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nav-links a,.nav-cats a{white-space:nowrap}
 .page-title{white-space:normal}
 @media (max-width:600px){.cat-section-head{flex-wrap:wrap}}
-/* ===== 分区标题强调条 ===== */
+/* ===== 鍒嗗尯鏍囬寮鸿皟鏉?===== */
 .section-title{position:relative;padding-left:14px}
 .section-title::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:5px;height:22px;border-radius:3px;background:var(--grad-main)}
 .cat-section .section-title::before{background:currentColor;opacity:.6}
-/* ===== 修复一行变两行：按钮不换行 ===== */
+/* ===== 淇涓€琛屽彉涓よ锛氭寜閽笉鎹㈣ ===== */
 .btn{white-space:nowrap}
 .toolbar .btn{white-space:nowrap}
 .meta-btn{white-space:nowrap}
@@ -311,7 +311,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .search-box input{min-width:60px}
 .hero-cta a{white-space:nowrap}
 .gallery-form .btn-primary{white-space:nowrap}
-/* 顶部条与导航在窄屏时保持可读 */
+/* 椤堕儴鏉′笌瀵艰埅鍦ㄧ獎灞忔椂淇濇寔鍙 */
 @media (max-width:860px){
   .nav-links a,.nav-cats a{padding:6px 10px;font-size:.85rem}
   .nav-inner{gap:10px;padding:10px 16px}
@@ -321,7 +321,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .topbar-inner{flex-wrap:nowrap}
   .theme-toggle{padding:8px 12px;font-size:.82rem;white-space:nowrap}
 }
-/* ===== 导航栏：全屏保持单行 ===== */
+/* ===== 瀵艰埅鏍忥細鍏ㄥ睆淇濇寔鍗曡 ===== */
 @media (min-width:1180px){
   .nav-inner{flex-wrap:nowrap;gap:14px}
   .nav-links{gap:4px;flex:1}
@@ -330,16 +330,16 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .nav-cats a{padding:7px 10px;font-size:.85rem}
   .nav-brand{font-size:1.25rem}
 }
-/* 中等屏幕：品牌+导航一行，分类若放下则换行保持可读 */
+/* 涓瓑灞忓箷锛氬搧鐗?瀵艰埅涓€琛岋紝鍒嗙被鑻ユ斁涓嬪垯鎹㈣淇濇寔鍙 */
 @media (min-width:940px) and (max-width:1179px){
-  .nav-cats{display:none}  /* 放不下时先隐藏分类，保证一行 */
+  .nav-cats{display:none}  /* 鏀句笉涓嬫椂鍏堥殣钘忓垎绫伙紝淇濊瘉涓€琛?*/
   .nav-inner{flex-wrap:nowrap}
   .nav-links a{padding:7px 12px;font-size:.9rem}
 }
-/* (导航栏单行方案完成) */
-/* ===== 登录/认证 UI ===== */
+/* (瀵艰埅鏍忓崟琛屾柟妗堝畬鎴? */
+/* ===== 鐧诲綍/璁よ瘉 UI ===== */
 .nav-auth{flex-shrink:0;margin-left:2px}
-.auth-modal{max-width:380px}
+
 .auth-form{display:flex;flex-direction:column;gap:12px;margin-top:8px}
 .auth-form .gallery-input{width:100%}
 .auth-form .btn-primary{width:100%}
@@ -350,13 +350,35 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 }
 
 
-/* ===== 注册验证码 ===== */
+/* ===== 娉ㄥ唽楠岃瘉鐮?===== */
 .captcha-row{display:flex;align-items:center;gap:10px}
 .captcha-question{background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px dashed color-mix(in srgb,var(--sky-blue) 40%,transparent);border-radius:8px;padding:9px 14px;font-weight:600;color:var(--sky-blue);font-size:.95rem;white-space:nowrap;flex-shrink:0}
 .captcha-input{flex:1;min-width:0}
 .captcha-info{color:var(--forest-green);font-size:.88rem;line-height:1.6;background:color-mix(in srgb,var(--forest-green) 8%,transparent);padding:10px 12px;border-radius:8px;margin-bottom:4px}
-/* 登录弹窗：绝对定位精确居中（不受任何容器布局影响） */
-.auth-modal{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-height:90vh;overflow-y:auto}
+/* 鐧诲綍寮圭獥锛氱粷瀵瑰畾浣嶇簿纭眳涓紙涓嶅彈浠讳綍瀹瑰櫒甯冨眬褰卞搷锛?*/
+
 @media (max-height:700px){
-  .auth-modal{max-height:90vh;overflow-y:auto}
+  
 }
+
+/* ===== 登录/注册弹窗（全新独立实现，本次彻底重做） ===== */
+.auth-overlay{
+  position:fixed; inset:0; z-index:2000;
+  background:rgba(15,23,42,.6); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center;
+  padding:20px;
+}
+.auth-dialog{
+  background:var(--bg-card); border-radius:var(--radius);
+  width:100%; max-width:400px; max-height:90vh; overflow-y:auto;
+  padding:32px 28px 26px; position:relative; text-align:center;
+  box-shadow:var(--shadow-lg); border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent);
+}
+.auth-close{position:absolute;top:12px;right:14px;border:none;background:color-mix(in srgb,var(--bg-soft) 70%,transparent);width:30px;height:30px;border-radius:50%;cursor:pointer;color:var(--text-secondary);font-size:1.2rem;line-height:1;transition:all .2s}
+.auth-close:hover{background:var(--coral-pink);color:#fff;transform:rotate(90deg)}
+.auth-title{font-size:1.3rem;font-weight:700;margin-bottom:14px;color:var(--text-main)}
+.auth-form{display:flex;flex-direction:column;gap:12px}
+.auth-input{width:100%;padding:11px 14px;border:1px solid var(--slate-blue);border-radius:10px;background:var(--bg-page);color:var(--text-main);font-size:.95rem;box-sizing:border-box}
+.auth-input:focus{outline:none;border-color:var(--sky-blue)}
+.auth-error{color:var(--coral-pink);font-size:.88rem;margin:0}
+.auth-submit{width:100%;margin-top:4px}
