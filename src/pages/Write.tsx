@@ -4,8 +4,10 @@ import { CATEGORIES, CATEGORY_META, Article, Category } from '../types';
 import { uid, storageKey } from '../context/ArticleContext';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Write() {
+  const { isAdmin } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const { getById, addArticle, updateArticle } = useArticles();
@@ -93,6 +95,17 @@ export default function Write() {
     localStorage.removeItem(storageKey);
     window.location.reload();
   };
+
+  // 非博主无权访问写作页
+  if (!isAdmin) {
+    return (
+      <div className="page">
+        <p style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>
+          无权访问写作页，请以博主身份登录后使用。
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="page write-page">
