@@ -2,6 +2,7 @@ import { useState, ChangeEvent, useRef, FormEvent } from 'react';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 import ProfileCard from '../components/ProfileCard';
+import AvatarCropModal from '../components/AvatarCropModal';
 
 export default function About() {
   const { profile, setProfile } = useProfile();
@@ -11,13 +12,14 @@ export default function About() {
   const [nickname, setNickname] = useState(profile.nickname);
   const [signature, setSignature] = useState(profile.signature);
   const [intro, setIntro] = useState(profile.intro);
+  const [cropImage, setCropImage] = useState<string | null>(null);
 
   const onAvatar = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      setProfile({ ...profile, avatar: String(reader.result) });
+      setCropImage(String(reader.result));
     };
     reader.readAsDataURL(file);
   };
@@ -97,6 +99,16 @@ export default function About() {
         )}
       </div>
       )}
+
+      <AvatarCropModal
+        open={!!cropImage}
+        imageSrc={cropImage}
+        onCancel={() => setCropImage(null)}
+        onConfirm={(cropped) => {
+          setProfile({ ...profile, avatar: cropped });
+          setCropImage(null);
+        }}
+      />
     </div>
   );
 }
