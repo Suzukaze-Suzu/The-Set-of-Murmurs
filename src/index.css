@@ -348,3 +348,11 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 @media (max-width:640px){
   .nav-auth .btn-sm{padding:6px 10px;font-size:.8rem}
 }
+
+/* ===== 登录弹窗强制垂直居中修复 ===== */
+.auth-modal{
+  margin:auto !important;
+  max-height:90vh;
+  overflow-y:auto;
+}
+.modal-overlay{align-items:center !important;justify-content:center !important}
