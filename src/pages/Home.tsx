@@ -3,6 +3,7 @@ import { useProfile } from '../context/ProfileContext';
 import { CATEGORIES, CATEGORY_META, Category } from '../types';
 import { Link } from 'react-router-dom';
 import ArticleCard from '../components/ArticleCard';
+import { useAuth } from '../context/AuthContext';
 
 interface Props {
   query: string;
@@ -10,6 +11,7 @@ interface Props {
 
 export default function Home({ query }: Props) {
   const { articles, getByCategory } = useArticles();
+  const { isAdmin } = useAuth();
   const { profile } = useProfile();
 
   return (
@@ -21,7 +23,7 @@ export default function Home({ query }: Props) {
           <p className="hero-sub">{profile.signature}</p>
           <p className="hero-desc">{profile.intro}</p>
           <div className="hero-cta">
-            <Link to="/write" className="btn btn-light">开始写作</Link>
+            {isAdmin && <Link to="/write" className="btn btn-light">开始写作</Link>}
             <Link to="/articles" className="btn btn-light-outline">浏览全部</Link>
           </div>
         </div>

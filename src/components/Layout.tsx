@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 interface OutletCtx {
   query: string;
@@ -10,6 +11,7 @@ interface OutletCtx {
 
 export default function Layout() {
   const { theme, toggle } = useTheme();
+  const { isAdmin } = useAuth();
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function Layout() {
         <div className="footer-inner">
           <p>呓语集 · 像凉风凉一样认真记录每个小瞬间</p>
           <p className="footer-links">
-            <a href="#/about">关于</a> · <a href="#/guestbook">留言板</a> · <a href="#/write">写作</a>
+            <a href="#/about">关于</a> · <a href="#/guestbook">留言板</a>{isAdmin && <> · <a href="#/write">写作</a></>}
           </p>
           <p className="footer-copy">Powered by React + Vite · {new Date().getFullYear()}</p>
         </div>

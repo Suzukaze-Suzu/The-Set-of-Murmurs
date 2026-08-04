@@ -3,10 +3,12 @@ import { useArticles } from '../context/ArticleContext';
 import { CATEGORY_META, Category } from '../types';
 import ArticleCard from '../components/ArticleCard';
 import { useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export default function SectionPage() {
   const { category } = useParams();
   const { getByCategory } = useArticles();
+  const { isAdmin } = useAuth();
 
   const cat = (category as Category) in CATEGORY_META ? (category as Category) : 'anime';
   const meta = CATEGORY_META[cat];
@@ -30,7 +32,7 @@ export default function SectionPage() {
         <div className="empty-state">
           <span className="empty-icon empty-icon-ghost" />
           <p>这个分类还没有文章</p>
-          <Link to="/write" className="btn btn-primary">去写一篇</Link>
+          {isAdmin && <Link to="/write" className="btn btn-primary">去写一篇</Link>}
         </div>
       ) : (
         <div className="card-grid wide">
