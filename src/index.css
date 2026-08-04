@@ -361,3 +361,14 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .captcha-question{background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px dashed color-mix(in srgb,var(--sky-blue) 40%,transparent);border-radius:8px;padding:9px 14px;font-weight:600;color:var(--sky-blue);font-size:.95rem;white-space:nowrap;flex-shrink:0}
 .captcha-input{flex:1;min-width:0}
 .captcha-info{color:var(--forest-green);font-size:.88rem;line-height:1.6;background:color-mix(in srgb,var(--forest-green) 8%,transparent);padding:10px 12px;border-radius:8px;margin-bottom:4px}
+/* 登录弹窗：绝对定位精确居中（不受任何容器布局影响） */
+.auth-modal{
+  position:fixed;
+  top:50% !important;
+  left:50% !important;
+  transform:translate(-50%,-50%) !important;
+  margin:0 !important;
+}
+@media (max-height:700px){
+  .auth-modal{max-height:90vh;overflow-y:auto}
+}
