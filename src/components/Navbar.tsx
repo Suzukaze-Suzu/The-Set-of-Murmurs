@@ -4,7 +4,6 @@ import { useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
-import AuthButton from './AuthButton';
 
 const CATEGORY_ROUTES: Record<string, string> = {
   anime: '/category/anime',
@@ -17,7 +16,7 @@ const CATEGORY_ROUTES: Record<string, string> = {
 export default function Navbar() {
   const location = useLocation();
   const { profile } = useProfile();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user, signOut } = useAuth();
   const [showIntro, setShowIntro] = useState(false);
 
   return (
@@ -47,7 +46,13 @@ export default function Navbar() {
             ))}
           </div>
           <div className="nav-auth">
-            <AuthButton />
+            {user ? (
+              <button className="btn btn-primary btn-sm" onClick={() => signOut()} title="退出登录">
+                {isAdmin ? '博主' : '已登录'} · 退出
+              </button>
+            ) : (
+              <Link to="/login" className="btn btn-primary btn-sm">登录</Link>
+            )}
           </div>
           <button className="nav-avatar" onClick={() => setShowIntro(true)} title="点击查看我的介绍">
             {profile.avatar ? (

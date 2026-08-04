@@ -14,6 +14,7 @@ import Write from './pages/Write';
 import About from './pages/About';
 import Guestbook from './pages/Guestbook';
 import Gallery from './pages/Gallery';
+import LoginPage from './pages/LoginPage';
 
 // 使用 Outlet context 传递搜索词
 function LayoutRoute() {
@@ -43,6 +44,7 @@ export default function App() {
               <CommentProvider>
               <HashRouter>
                 <Routes>
+                <Route path="/login" element={<LoginPage />} />
                 <Route element={<LayoutRoute />}>
                   <Route path="/" element={<HomeRoute />} />
                   <Route path="/articles" element={<ArticlesRoute />} />
