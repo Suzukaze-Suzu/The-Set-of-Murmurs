@@ -5,16 +5,15 @@ import { useAuth } from '../context/AuthContext';
 const REMEMBER_KEY = 'murmur_remembered';
 
 function generateMathCaptcha(): { text: string; answer: number } {
-  const a = Math.floor(Math.random() * 9) + 1;
-  const b = Math.floor(Math.random() * 9) + 1;
+  // 两位数运算，增加难度防机器人
+  const a = Math.floor(Math.random() * 20) + 5;
+  const b = Math.floor(Math.random() * 20) + 5;
   const ops = ['+', '-', 'x'] as const;
   const op = ops[Math.floor(Math.random() * ops.length)];
   let answer: number;
-  switch (op) {
-    case '+': answer = a + b; break;
-    case '-': answer = a - b; break;
-    default: answer = a * b; break;
-  }
+  if (op === '+') answer = a + b;
+  else if (op === '-') answer = a - b;
+  else answer = a * b;
   return { text: a + ' ' + op + ' ' + b + ' = ?', answer };
 }
 
@@ -61,6 +60,11 @@ export default function LoginPage() {
     if (loading) return;
 
     if (mode === 'signup') {
+      if (!/(?=.*[A-Za-z])(?=.*\d).{8,}/.test(password)) {
+        setError('密码需至少8位，且同时包含字母和数字');
+        setCaptcha(generateMathCaptcha());
+        return;
+      }
       if (password !== confirm) {
         setError('两次输入的密码不一致');
         setCaptcha(generateMathCaptcha());
@@ -82,9 +86,11 @@ export default function LoginPage() {
         if (error) setError(error);
         else navigate('/');
       } else {
-        const { error } = await signUp(email, password);
+        const { error, session } = await signUp(email, password);
         if (error) setError(error);
-        else {
+        else if (session) {
+          navigate('/');   // 免邮箱验证：注册即登录
+        } else {
           setInfo('注册成功！我们已向你的邮箱发送验证链接，请点击验证后再登录。');
           setPassword('');
           setConfirm('');
@@ -142,11 +148,11 @@ export default function LoginPage() {
             <input
               type="password"
               className="login-input"
-              placeholder="密码（至少6位）"
+              placeholder="密码（至少8位，含字母和数字）"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             />
           </div>

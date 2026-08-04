@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: string | null; session: boolean }>;
   signIn: (email: string, password: string, remember?: boolean) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
@@ -39,8 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = !!user && user.id === ADMIN_UUID;
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ email, password });
-    return { error: error ? error.message : null };
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    // 若后台已关闭邮箱确认，signUp 会直接创建会话（session 非空），即注册即登录。
+    return { error: error ? error.message : null, session: !!data?.session };
   };
 
   const signIn = async (email: string, password: string, remember = true) => {
