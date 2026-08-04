@@ -15,3 +15,7 @@ Thumbs.db
 # Vercel / Netlify 本地缓存
 .vercel
 .netlify
+
+# Vercel 配置文件（会导致 "Invalid vercel.json" 报错，已弃用）
+vercel.json
+
