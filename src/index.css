@@ -359,7 +359,19 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .login-page{
   min-height:100vh;position:relative;overflow:hidden;
   display:flex;align-items:center;justify-content:center;padding:24px;
-  background:linear-gradient(135deg,color-mix(in srgb,var(--sky-blue) 16%,var(--bg-page)) 0%,var(--bg-page) 50%,color-mix(in srgb,var(--coral-pink) 14%,var(--bg-page)) 100%);
+  background:linear-gradient(120deg,
+    color-mix(in srgb,var(--sky-blue) 24%,var(--bg-page)),
+    color-mix(in srgb,var(--coral-pink) 22%,var(--bg-page)),
+    color-mix(in srgb,var(--aqua-blue) 22%,var(--bg-page)),
+    color-mix(in srgb,var(--honey-gold) 20%,var(--bg-page)),
+    color-mix(in srgb,var(--sky-blue) 24%,var(--bg-page)));
+  background-size:300% 300%;
+  animation:loginGradient 18s ease-in-out infinite;
+}
+@keyframes loginGradient{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
 }
 .login-deco{position:absolute;border-radius:50%;filter:blur(6px);opacity:.5;pointer-events:none}
 .login-deco-1{width:340px;height:340px;top:-90px;left:-90px;background:radial-gradient(circle,color-mix(in srgb,var(--sky-blue) 40%,transparent),transparent 70%)}
