@@ -1,0 +1,17 @@
+# 依赖
+node_modules
+
+# 构建产物
+dist
+build
+
+# 日志
+*.log
+
+# 开发环境缓存
+.DS_Store
+Thumbs.db
+
+# Vercel / Netlify 本地缓存
+.vercel
+.netlify
