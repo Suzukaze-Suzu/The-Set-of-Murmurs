@@ -1,5 +1,6 @@
 import { useComments } from '../context/CommentContext';
 import CommentSection from '../components/CommentSection';
+import BugFeedback from '../components/BugFeedback';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,6 +18,11 @@ export default function Guestbook() {
           还是给<a href="/">{profile.nickname}</a>的悄悄话，都可以写在这里。
         </p>
       </div>
+
+      {/* Bug 反馈 / 报错区 */}
+      <BugFeedback />
+
+      <h2 className="section-title">留言列表</h2>
 
       <CommentSection comments={guestbook} onAdd={(name, content, parentId, parentName, avatar) => addGuestbook({ name, content, parentId, parentName, avatar })} currentUserId={user?.id} onDelete={(cid) => deleteComment(cid, 'guestbook')} />
     </div>

@@ -50,5 +50,24 @@ export const CATEGORY_META: Record<Category, { label: string; icon: string; colo
   study:   { label: '学习分享',  icon: '', color: '#8A8F9A' },
 };
 
+
+// Bug 反馈（留言板里的报错/bug反馈区）
+export interface BugReport {
+  id: string;
+  userId?: string;      // 提交反馈的用户 id
+  nickname: string;     // 提交者昵称
+  category: string;     // 分类：bug / ui / feature / other
+  content: string;      // 问题/报错描述
+  status: string;       // 状态：待处理 / 已解决
+  date: string;
+}
+
+export const BUG_CATEGORIES: { value: string; label: string }[] = [
+  { value: 'bug', label: 'Bug 报错' },
+  { value: 'ui', label: '界面问题' },
+  { value: 'feature', label: '功能建议' },
+  { value: 'other', label: '其他' },
+];
+
 export const CATEGORIES: Category[] = ['anime', 'essay', 'reading', 'math', 'study'];
 
