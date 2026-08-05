@@ -446,3 +446,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 导航栏 下滑收起/上滑显示 ===== */
 .navbar{transition:transform .32s cubic-bezier(.22,1,.36,1),box-shadow .25s,background .3s}
 .nav-hidden{transform:translateY(-105%);box-shadow:none}
+
+.login-input{padding-right:44px}
+.login-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--slate-blue);display:flex;align-items:center;justify-content:center;padding:4px;border-radius:8px;transition:color .2s,background .2s}
+.login-eye:hover{color:var(--sky-blue);background:color-mix(in srgb,var(--sky-blue) 10%,transparent)}

@@ -24,6 +24,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [remember, setRemember] = useState(true);
   const [captcha, setCaptcha] = useState(generateMathCaptcha);
   const [captchaInput, setCaptchaInput] = useState('');
@@ -143,7 +145,7 @@ export default function LoginPage() {
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </span>
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               className="login-input"
               placeholder="密码（至少8位，含字母和数字）"
               value={password}
@@ -152,6 +154,13 @@ export default function LoginPage() {
               minLength={8}
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             />
+            <button type="button" className="login-eye" onClick={() => setShowPassword((v) => !v)} aria-label="显示/隐藏密码" title={showPassword ? '隐藏密码' : '显示密码'}>
+              {showPassword ? (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              )}
+            </button>
           </div>
           {mode === 'signup' && (
             <div className="login-field">
@@ -159,7 +168,7 @@ export default function LoginPage() {
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </span>
               <input
-                type="password"
+                type={showConfirm ? 'text' : 'password'}
                 className="login-input"
                 placeholder="确认密码"
                 value={confirm}
@@ -168,6 +177,13 @@ export default function LoginPage() {
                 minLength={6}
                 autoComplete="new-password"
               />
+              <button type="button" className="login-eye" onClick={() => setShowConfirm((v) => !v)} aria-label="显示/隐藏密码" title={showConfirm ? '隐藏密码' : '显示密码'}>
+                {showConfirm ? (
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                )}
+              </button>
             </div>
           )}
 
