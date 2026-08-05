@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { CATEGORIES, CATEGORY_META } from '../types';
 import { useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -18,10 +18,24 @@ export default function Navbar() {
   const { profile } = useProfile();
   const { isAdmin, user, signOut } = useAuth();
   const [showIntro, setShowIntro] = useState(false);
+  const [hidden, setHidden] = useState(false);
+
+  // 滚动时：下滑收起导航栏，上滑显示
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > lastY && y > 80) setHidden(true);   // 继续下滑且超过一定高度 → 收起
+      else if (y < lastY) setHidden(false);       // 上滑 → 显示
+      lastY = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
     <>
-      <nav className="navbar">
+      <nav className={`navbar${hidden ? ' nav-hidden' : ''}`}>
         <div className="nav-inner">
           <Link to="/" className="nav-brand">
             <span className="brand-dot" />

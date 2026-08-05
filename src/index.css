@@ -442,3 +442,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   color:var(--text-secondary);font-size:.9rem;padding:12px 14px;border-radius:var(--radius);
   margin-bottom:16px;text-align:center;
 }
+
+/* ===== 导航栏 下滑收起/上滑显示 ===== */
+.navbar{transition:transform .32s cubic-bezier(.22,1,.36,1),box-shadow .25s,background .3s}
+.nav-hidden{transform:translateY(-105%);box-shadow:none}
