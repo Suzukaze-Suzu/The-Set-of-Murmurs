@@ -338,7 +338,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 }
 /* (瀵艰埅鏍忓崟琛屾柟妗堝畬鎴? */
 /* ===== 鐧诲綍/璁よ瘉 UI ===== */
-.nav-auth{flex-shrink:0;margin-left:2px}
+.nav-auth{flex-shrink:0;margin-left:2px;display:flex;align-items:center;gap:10px}
 
 .auth-form{display:flex;flex-direction:column;gap:12px;margin-top:8px}
 .auth-form .gallery-input{width:100%}
