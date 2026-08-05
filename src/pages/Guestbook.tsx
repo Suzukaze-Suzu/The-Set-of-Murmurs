@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useComments } from '../context/CommentContext';
 import CommentSection from '../components/CommentSection';
 import BugFeedback from '../components/BugFeedback';
@@ -8,6 +9,7 @@ export default function Guestbook() {
   const { guestbook, addGuestbook, deleteComment } = useComments();
   const { user } = useAuth();
   const { profile } = useProfile();
+  const [tab, setTab] = useState<'guestbook' | 'bug'>('guestbook');
 
   return (
     <div className="page guestbook-page">
@@ -19,12 +21,26 @@ export default function Guestbook() {
         </p>
       </div>
 
-      {/* Bug 反馈 / 报错区 */}
-      <BugFeedback />
+      <div className="guestbook-tabs">
+        <button
+          className={tab === 'guestbook' ? 'guestbook-tab active' : 'guestbook-tab'}
+          onClick={() => setTab('guestbook')}
+        >
+          留言区
+        </button>
+        <button
+          className={tab === 'bug' ? 'guestbook-tab active' : 'guestbook-tab'}
+          onClick={() => setTab('bug')}
+        >
+          Bug 反馈
+        </button>
+      </div>
 
-      <h2 className="section-title">留言列表</h2>
-
-      <CommentSection comments={guestbook} onAdd={(name, content, parentId, parentName, avatar) => addGuestbook({ name, content, parentId, parentName, avatar })} currentUserId={user?.id} onDelete={(cid) => deleteComment(cid, 'guestbook')} />
+      {tab === 'guestbook' ? (
+        <CommentSection comments={guestbook} onAdd={(name, content, parentId, parentName, avatar) => addGuestbook({ name, content, parentId, parentName, avatar })} currentUserId={user?.id} onDelete={(cid) => deleteComment(cid, 'guestbook')} />
+      ) : (
+        <BugFeedback />
+      )}
     </div>
   );
 }

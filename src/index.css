@@ -523,3 +523,13 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .bug-status-done{background:color-mix(in srgb,var(--sky-blue) 18%,transparent);color:var(--sky-blue)}
 .bug-item-content{color:var(--text-main);white-space:pre-wrap;line-height:1.6;font-size:.92rem}
 .bug-item-author{color:var(--text-secondary);font-size:.8rem}
+
+
+/* ===== 留言板选项卡切换 ===== */
+.guestbook-tabs{display:flex;gap:8px;margin-bottom:20px;padding:4px;background:color-mix(in srgb,var(--bg-card) 60%,transparent);border-radius:var(--radius);width:fit-content;border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
+.guestbook-tab{
+  border:none;cursor:pointer;padding:9px 22px;border-radius:var(--radius-pill);background:transparent;color:var(--text-main);
+  font-size:.9rem;font-weight:600;transition:all .2s;
+}
+.guestbook-tab:hover{color:var(--sky-blue)}
+.guestbook-tab.active{background:var(--sky-blue);color:#fff;box-shadow:0 4px 12px rgba(91,168,216,.3)}
