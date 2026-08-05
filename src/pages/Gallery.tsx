@@ -1,4 +1,4 @@
-import { useState, FormEvent, useRef } from 'react';
+import { useState, FormEvent, useRef, DragEvent } from 'react';
 import { useGallery } from '../context/GalleryContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -8,13 +8,31 @@ export default function Gallery() {
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
   const [error, setError] = useState('');
+  const [dragging, setDragging] = useState(false);
   const [zoomImage, setZoomImage] = useState<{ url: string; caption: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const acceptFile = (f: File | null | undefined) => {
+    if (!f) return;
+    if (!f.type.startsWith('image/')) {
+      setError('请拖入图片文件（jpg/png/gif 等）');
+      return;
+    }
+    setFile(f);
+    setError('');
+  };
+
+  const handleDrop = (e: DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const f = e.dataTransfer.files?.[0];
+    acceptFile(f);
+  };
 
   const handleAdd = async (e: FormEvent) => {
     e.preventDefault();
     if (!file) {
-      setError('请选择要上传的图片文件');
+      setError('请选择或拖入一张图片');
       return;
     }
     setError('');
@@ -39,36 +57,45 @@ export default function Gallery() {
   return (
     <div className="page gallery-page">
       <h1 className="page-title">我喜欢的图片</h1>
-      <p className="gallery-desc">
-        收藏你喜欢的图片吧，可以粘贴任意网络图片链接。
-      </p>
+      <p className="gallery-desc">直接把图片拖进来即可添加，也可以点击选择文件。</p>
 
       {isAdmin && (
-      <form className="gallery-form card" onSubmit={handleAdd}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="gallery-input"
-          onChange={(e) => {
-            const f = e.target.files?.[0] || null;
-            setFile(f);
-            setError('');
-          }}
-        />
+      <form
+        className="gallery-form card"
+        onSubmit={handleAdd}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+      >
+        <div className="gallery-dropzone">
+          <div className="gallery-drop-hint">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+            <p>{dragging ? '松开即可添加！' : '拖拽图片到这里，或点击选择文件'}</p>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="gallery-input"
+            onChange={(e) => acceptFile(e.target.files?.[0])}
+          />
+        </div>
+
         {file && (
           <div className="gallery-file-preview">
             <img src={URL.createObjectURL(file)} alt="预览" />
             <span>{file.name}</span>
           </div>
         )}
+
         <input
           type="text"
           className="gallery-input gallery-input-sm"
-          placeholder="备注（可选）"
+          placeholder="给这张图命名（可选）"
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
         />
+
         {error && <p className="gallery-error">{error}</p>}
         <button type="submit" className="btn btn-primary">添加图片</button>
       </form>
@@ -118,4 +145,3 @@ export default function Gallery() {
     </div>
   );
 }
-
