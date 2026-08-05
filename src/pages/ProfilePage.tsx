@@ -1,32 +1,66 @@
-import { useState, ChangeEvent, useRef, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, ChangeEvent, useRef, FormEvent, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import AvatarCropModal from '../components/AvatarCropModal';
+import { Profile } from '../types';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const viewUserId = searchParams.get('userId') || null;
+
   const { myProfile, setMyProfile } = useProfile();
   const { user } = useAuth();
 
+  // 展示的资料对象：默认为当前用户自己
+  const isSelf = !viewUserId || (!!user && viewUserId === user.id);
+
   const avatarInput = useRef<HTMLInputElement>(null);
   const [editMode, setEditMode] = useState(false);
-  const [nickname, setNickname] = useState(myProfile?.nickname || '');
-  const [signature, setSignature] = useState(myProfile?.signature || '');
-  const [intro, setIntro] = useState(myProfile?.intro || '');
+  const [nickname, setNickname] = useState('');
+  const [signature, setSignature] = useState('');
+  const [intro, setIntro] = useState('');
   const [cropImage, setCropImage] = useState<string | null>(null);
 
-  if (!user) {
-    return (
-      <div className="page">
-        <div className="empty-state">
-          <span className="empty-icon empty-icon-ghost" />
-          <p>请先登录，才能查看和编辑你的个人主页。</p>
-          <button className="btn btn-primary" onClick={() => navigate('/login')}>去登录</button>
-        </div>
-      </div>
-    );
-  }
+  // 展示头像/昵称等（他人只读时用它）
+  const [viewProfile, setViewProfile] = useState<Profile | null>(null);
+
+  const display = isSelf ? (myProfile || null) : viewProfile;
+
+  // 若在查看他人主页，则加载对方的资料
+  useEffect(() => {
+    if (isSelf || !viewUserId) { setViewProfile(null); return; }
+    let mounted = true;
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', viewUserId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!mounted) return;
+        if (data) {
+          setViewProfile({
+            nickname: data.nickname || '未命名用户',
+            avatar: data.avatar || '',
+            signature: data.signature || '',
+            intro: data.intro || '',
+          });
+        } else {
+          setViewProfile({ nickname: '未命名用户', avatar: '', signature: '', intro: '' });
+        }
+      });
+    return () => { mounted = false; };
+  }, [viewUserId, isSelf]);
+
+  // 进入编辑模式时，用当前显示资料填充表单
+  const enterEdit = () => {
+    setNickname(display?.nickname || '');
+    setSignature(display?.signature || '');
+    setIntro(display?.intro || '');
+    setEditMode(true);
+  };
 
   const onAvatar = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,18 +70,11 @@ export default function ProfilePage() {
     reader.readAsDataURL(file);
   };
 
-  const enterEdit = () => {
-    setNickname(myProfile?.nickname || '');
-    setSignature(myProfile?.signature || '');
-    setIntro(myProfile?.intro || '');
-    setEditMode(true);
-  };
-
   const saveProfile = (e: FormEvent) => {
     e.preventDefault();
     const p = {
       nickname: nickname.trim() || '未命名用户',
-      avatar: myProfile?.avatar || '',
+      avatar: myProfile?.avatar || display?.avatar || '',
       signature: signature.trim(),
       intro: intro.trim(),
     };
@@ -55,11 +82,11 @@ export default function ProfilePage() {
     setEditMode(false);
   };
 
-  const display = myProfile;
+  const title = isSelf ? '我的主页' : 'TA 的主页';
 
   return (
     <div className="page profile-page">
-      <h1 className="page-title">我的主页</h1>
+      <h1 className="page-title">{title}</h1>
 
       <div className="profile-card" style={{ alignSelf: 'auto', textAlign: 'center' }}>
         <div className="profile-avatar">
@@ -68,16 +95,22 @@ export default function ProfilePage() {
         <h2 className="profile-name">{display?.nickname || '未命名用户'}</h2>
         <p className="profile-signature">{display?.signature || '这个人很懒，还没有签名'}</p>
         <p className="profile-intro" style={{ whiteSpace: 'pre-wrap' }}>{display?.intro || '还没有填写介绍…'}</p>
-        <div className="form-actions" style={{ justifyContent: 'center', marginTop: 18 }}>
-          {!editMode ? (
-            <button className="btn btn-primary" onClick={enterEdit}>编辑资料</button>
-          ) : (
-            <button className="btn" onClick={() => setEditMode(false)}>取消</button>
-          )}
-        </div>
+        {isSelf && user ? (
+          <div className="form-actions" style={{ justifyContent: 'center', marginTop: 18 }}>
+            {!editMode ? (
+              <button className="btn btn-primary" onClick={enterEdit}>编辑资料</button>
+            ) : (
+              <button className="btn" onClick={() => setEditMode(false)}>取消</button>
+            )}
+          </div>
+        ) : !isSelf && (
+          <div className="form-actions" style={{ justifyContent: 'center', marginTop: 18 }}>
+            <button className="btn" onClick={() => navigate('/')}>返回首页</button>
+          </div>
+        )}
       </div>
 
-      {editMode && (
+      {isSelf && user && editMode && (
         <form className="edit-profile card" onSubmit={saveProfile}>
           <h3>编辑个人主页</h3>
           <button type="button" className="avatar-upload-btn" onClick={() => avatarInput.current?.click()}>
