@@ -9,6 +9,7 @@ export default function Gallery() {
   const [caption, setCaption] = useState('');
   const [error, setError] = useState('');
   const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [zoomImage, setZoomImage] = useState<{ url: string; caption: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,6 +37,7 @@ export default function Gallery() {
       return;
     }
     setError('');
+    setUploading(true);
     try {
       const msg = await addImage(file, caption);
       if (msg) {
@@ -48,6 +50,8 @@ export default function Gallery() {
       setError('上传异常：' + em);
       alert('上传异常：' + em);
       return;
+    } finally {
+      setUploading(false);
     }
     setFile(null);
     setCaption('');
@@ -97,7 +101,7 @@ export default function Gallery() {
         />
 
         {error && <p className="gallery-error">{error}</p>}
-        <button type="submit" className="btn btn-primary">添加图片</button>
+        <button type="submit" className="btn btn-primary" disabled={uploading}>{uploading ? '正在上传…' : '添加图片'}</button>
       </form>
       )}
 
