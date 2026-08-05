@@ -25,7 +25,8 @@ export default function Write() {
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const [panel, setPanel] = useState<'image' | 'music' | null>(null);
   const [imgUploading, setImgUploading] = useState(false);
-  const [musicInfo, setMusicInfo] = useState('');
+    const [musicInfo, setMusicInfo] = useState('');
+  const [imgDragging, setImgDragging] = useState(false);
 
   const loadFile = (file: File) => {
     const reader = new FileReader();
@@ -96,7 +97,7 @@ export default function Write() {
     const idMatch = m.match(/(?:id=|id\/)(\d+)/) || m.match(/^\d+$/);
     const songId = idMatch ? idMatch[1] : '';
     if (!songId) { alert('未能识别网易云音乐 ID'); return; }
-    const line = '\n<iframe class="ncm-embed" src="https://music.163.com/outchain/player?type=2&id=' + songId + '&auto=0&height=66" width="100%" height="86" frameborder="no" allow="autoplay; encrypted-media" loading="lazy"></iframe>\n';
+    const line = '\n<iframe class="ncm-embed" src="//music.163.com/outchain/player?type=2&id=' + songId + '&auto=0&height=66" width="100%" height="86" frameBorder="no" allow="autoplay; encrypted-media" loading="lazy"></iframe>\n\n[▶ 在网易云中播放这首歌曲](https://music.163.com/#/song?id=' + songId + ')\n';
     insertAtCursor(line);
     setMusicInfo('');
     setPanel(null);
@@ -172,14 +173,22 @@ export default function Write() {
 
 
       {panel === 'image' && (
-        <div className="media-panel card">
+        <div
+          className={'media-panel card' + (imgDragging ? ' media-dragging' : '')}
+          onDragOver={(e) => { e.preventDefault(); setImgDragging(true); }}
+          onDragLeave={() => setImgDragging(false)}
+          onDrop={(e) => { e.preventDefault(); setImgDragging(false); const fl = e.dataTransfer.files?.[0]; if (fl) uploadArticleImage(fl); }}
+        >
           <h4>插入图片</h4>
-          <p className="media-panel-desc">选择本地图片上传，会自动插入到光标位置。</p>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => uploadArticleImage(e.target.files?.[0])}
-          />
+          <div className="media-dropzone">
+            <p className="media-drop-icon">＋</p>
+            <p className="media-drop-text">{imgDragging ? '松开即可上传！' : '拖图片到这里，或点击选择'}</p>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => uploadArticleImage(e.target.files?.[0])}
+            />
+          </div>
           {imgUploading && <p className="media-uploading">正在上传…</p>}
           <button className="btn btn-light" onClick={() => setPanel(null)}>关闭</button>
         </div>

@@ -69,7 +69,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .btn-danger:hover{box-shadow:0 12px 28px rgba(232,155,138,.45)}
 .btn-sm{padding:7px 16px;font-size:.85rem}
 /* ===== Hero ===== */
-.hero{border-radius:26px;padding:56px 44px;margin-bottom:36px;color:#fff;text-align:center;background:var(--grad-hero);position:relative;overflow:hidden;box-shadow:var(--shadow-lg)}
+.hero{border-radius:26px;padding:56px 44px;margin-bottom:36px;color:#fff;text-align:center;background:linear-gradient(135deg,#4A90D8,#6EC3EF,#ffd98a,#ff9e8a,#c1a8ff,#4A90D8);background-size:400% 400%;animation:heroBgFlow 6s ease-in-out infinite;position:relative;overflow:hidden;box-shadow:var(--shadow-lg)}
 .hero::before{content:'';position:absolute;inset:0;background:transparent;pointer-events:none}
 .hero::after{content:'';position:absolute;width:260px;height:260px;right:-60px;top:-60px;border-radius:50%;background:rgba(255,255,255,.08);filter:blur(40px);pointer-events:none}
 .hero-inner{position:relative;z-index:2}
@@ -554,3 +554,17 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .markdown-body iframe.ncm-embed{display:block;margin:14px 0;border:none;background:transparent;max-width:100%}
 .markdown-body .ncm-embed{max-width:100%}
 .markdown-body audio{max-width:100%;margin:10px 0}
+
+
+/* ===== 图片拖入面板 ===== */
+.media-dropzone{
+  border:2px dashed color-mix(in srgb,var(--sky-blue) 45%,transparent);border-radius:var(--radius);padding:22px 16px;text-align:center;cursor:pointer;position:relative;transition:.25s;
+}
+.media-dropzone:hover,.media-panel.media-dragging .media-dropzone{border-color:var(--sky-blue);background:color-mix(in srgb,var(--sky-blue) 8%,transparent)}
+.media-dropzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.media-drop-icon{font-size:1.6rem;color:var(--sky-blue);margin:0 0 4px}
+.media-drop-text{color:var(--text-secondary);font-size:.88rem;margin:0}
+
+/* 音乐兜底链接 */
+.markdown-body a[href*="music.163.com"]{display:inline-block;margin-top:4px;padding:6px 14px;border:1px solid color-mix(in srgb,var(--coral-pink) 40%,transparent);border-radius:20px;color:var(--coral-pink);font-size:.85rem;text-decoration:none}
+.markdown-body a[href*="music.163.com"]:hover{background:var(--coral-pink);color:#fff}
