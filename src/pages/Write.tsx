@@ -94,9 +94,13 @@ export default function Write() {
   const insertNetEaseMusic = () => {
     const m = musicInfo.trim();
     if (!m) { alert('请输入网易云歌曲 ID 或歌曲链接'); return; }
+    if (/163cn\.tv/i.test(m)) {
+      alert('这是网易云短链接。请这样拿数字 ID：\n\n1. 在手机或电脑浏览器打开这个短链接；\n2. 链接会跳转到 music.163.com/song?id=数字；\n3. 把等号后面的「数字」填到这里即可。\n\n或在网易云 App 分享时选「复制链接」，一般会带 song?id=。');
+      return;
+    }
     const idMatch = m.match(/(?:id=|id\/)(\d+)/) || m.match(/^\d+$/);
     const songId = idMatch ? idMatch[1] : '';
-    if (!songId) { alert('未能识别网易云音乐 ID'); return; }
+    if (!songId) { alert('未能识别网易云音乐 ID，请直接填写歌曲 ID 数字，或粘贴带 song?id= 的链接'); return; }
     const line = '\n<iframe class="ncm-embed" src="//music.163.com/outchain/player?type=2&id=' + songId + '&auto=0&height=66" width="100%" height="86" frameBorder="no" allow="autoplay; encrypted-media" loading="lazy"></iframe>\n\n[▶ 在网易云中播放这首歌曲](https://music.163.com/#/song?id=' + songId + ')\n';
     insertAtCursor(line);
     setMusicInfo('');
