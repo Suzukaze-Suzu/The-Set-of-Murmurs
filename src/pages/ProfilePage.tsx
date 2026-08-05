@@ -14,7 +14,6 @@ export default function ProfilePage() {
   const { myProfile, setMyProfile } = useProfile();
   const { user } = useAuth();
 
-  // 展示的资料对象：默认为当前用户自己
   const isSelf = !viewUserId || (!!user && viewUserId === user.id);
 
   const avatarInput = useRef<HTMLInputElement>(null);
@@ -24,15 +23,16 @@ export default function ProfilePage() {
   const [intro, setIntro] = useState('');
   const [cropImage, setCropImage] = useState<string | null>(null);
 
-  // 展示头像/昵称等（他人只读时用它）
   const [viewProfile, setViewProfile] = useState<Profile | null>(null);
+  const [viewLoading, setViewLoading] = useState(false);
 
   const display = isSelf ? (myProfile || null) : viewProfile;
 
-  // 若在查看他人主页，则加载对方的资料
   useEffect(() => {
-    if (isSelf || !viewUserId) { setViewProfile(null); return; }
+    if (isSelf || !viewUserId) { setViewProfile(null); setViewLoading(false); return; }
     let mounted = true;
+    setViewLoading(true);
+    setViewProfile(null);
     supabase
       .from('profiles')
       .select('*')
@@ -50,11 +50,11 @@ export default function ProfilePage() {
         } else {
           setViewProfile({ nickname: '未命名用户', avatar: '', signature: '', intro: '' });
         }
+        setViewLoading(false);
       });
     return () => { mounted = false; };
   }, [viewUserId, isSelf]);
 
-  // 进入编辑模式时，用当前显示资料填充表单
   const enterEdit = () => {
     setNickname(display?.nickname || '');
     setSignature(display?.signature || '');
@@ -88,6 +88,14 @@ export default function ProfilePage() {
     <div className="page profile-page">
       <h1 className="page-title">{title}</h1>
 
+      {!isSelf && viewLoading && (
+        <div className="empty-state" style={{ padding: '40px 0' }}>
+          <span className="empty-icon empty-icon-ghost" />
+          <p>正在加载 TA 的主页…</p>
+        </div>
+      )}
+
+      {((isSelf && user) || (!isSelf && !viewLoading)) && (
       <div className="profile-card" style={{ alignSelf: 'auto', textAlign: 'center' }}>
         <div className="profile-avatar">
           {display?.avatar ? <img src={display.avatar} alt="头像" /> : <span className="avatar-placeholder">👤</span>}
@@ -109,6 +117,7 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+      )}
 
       {isSelf && user && editMode && (
         <form className="edit-profile card" onSubmit={saveProfile}>
