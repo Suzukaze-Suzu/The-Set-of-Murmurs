@@ -59,6 +59,9 @@ export default function Navbar() {
         <div className="nav-auth">
           {user ? (
             <>
+              <button className="btn btn-primary btn-sm" onClick={() => signOut()} title="退出登录">
+                {isAdmin ? '博主' : '账号'} · 退出
+              </button>
               <Link
                 to="/profile"
                 className="nav-avatar"
@@ -71,9 +74,7 @@ export default function Navbar() {
                   <span className="nav-avatar-placeholder" />
                 )}
               </Link>
-              <button className="btn btn-primary btn-sm" onClick={() => signOut()} title="退出登录">
-                {isAdmin ? '博主' : '账号'} · 退出
-              </button>
+
             </>
           ) : (
             <Link to="/login" className="btn btn-primary btn-sm">登录</Link>
