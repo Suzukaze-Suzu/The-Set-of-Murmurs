@@ -11,6 +11,7 @@ interface Ctx {
   guestbook: Comment[];
   addArticleComment: (articleId: string, name: string, content: string) => void;
   addGuestbook: (name: string, content: string) => void;
+  deleteComment: (id: string, type: 'comment' | 'guestbook') => void;
 }
 
 const CommentContext = createContext<Ctx | null>(null);
@@ -29,7 +30,7 @@ export function CommentProvider({ children }: { children: ReactNode }) {
       .then(({ data, error }) => {
         if (!mounted) return;
         if (!error && data) {
-          setGuestbook(data.map((r) => ({ id: r.id, articleId: 'guestbook', name: r.name, content: r.content, date: r.date })));
+          setGuestbook(data.map((r) => ({ id: r.id, articleId: 'guestbook', name: r.name, content: r.content, date: r.date, userId: r.user_id || undefined })));
         }
       });
     return () => {
@@ -47,7 +48,7 @@ export function CommentProvider({ children }: { children: ReactNode }) {
       .then(({ data, error }) => {
         if (!mounted) return;
         if (!error && data) {
-          setArticleComments(data.map((r) => ({ id: r.id, articleId: r.article_id, name: r.name, content: r.content, date: r.date })));
+          setArticleComments(data.map((r) => ({ id: r.id, articleId: r.article_id, name: r.name, content: r.content, date: r.date, userId: r.user_id || undefined })));
         }
       });
     return () => {
@@ -57,22 +58,41 @@ export function CommentProvider({ children }: { children: ReactNode }) {
 
   const addArticleComment = (articleId: string, name: string, content: string) => {
     const newComment: Comment = { id: mkId(), articleId, name, content, date: new Date().toISOString() };
-    supabase
-      .from('comments')
-      .insert({ id: newComment.id, article_id: articleId, name, content })
-      .then(() => setArticleComments((prev) => [newComment, ...prev]));
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) newComment.userId = data.user.id;
+      const row: Record<string, unknown> = { id: newComment.id, article_id: articleId, name, content };
+      if (newComment.userId) row.user_id = newComment.userId;
+      supabase
+        .from('comments')
+        .insert(row)
+        .then(() => setArticleComments((prev) => [newComment, ...prev]));
+    });
   };
 
   const addGuestbook = (name: string, content: string) => {
     const newComment: Comment = { id: mkId(), articleId: 'guestbook', name, content, date: new Date().toISOString() };
-    supabase
-      .from('guestbook')
-      .insert({ id: newComment.id, name, content })
-      .then(() => setGuestbook((prev) => [newComment, ...prev]));
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) newComment.userId = data.user.id;
+      const row: Record<string, unknown> = { id: newComment.id, name, content };
+      if (newComment.userId) row.user_id = newComment.userId;
+      supabase
+        .from('guestbook')
+        .insert(row)
+        .then(() => setGuestbook((prev) => [newComment, ...prev]));
+    });
+  };
+
+
+  const deleteComment = (id: string, type: 'comment' | 'guestbook') => {
+    const table = type === 'guestbook' ? 'guestbook' : 'comments';
+    supabase.from(table).delete().eq('id', id).then(() => {
+      if (type === 'guestbook') setGuestbook((prev) => prev.filter((c) => c.id !== id));
+      else setArticleComments((prev) => prev.filter((c) => c.id !== id));
+    });
   };
 
   return (
-    <CommentContext.Provider value={{ articleComments, addArticleComment, guestbook, addGuestbook }}>
+    <CommentContext.Provider value={{ articleComments, addArticleComment, guestbook, addGuestbook, deleteComment }}>
       {children}
     </CommentContext.Provider>
   );

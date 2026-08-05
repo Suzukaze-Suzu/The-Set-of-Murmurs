@@ -1,9 +1,11 @@
 import { useComments } from '../context/CommentContext';
 import CommentSection from '../components/CommentSection';
 import { useProfile } from '../context/ProfileContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Guestbook() {
-  const { guestbook, addGuestbook } = useComments();
+  const { guestbook, addGuestbook, deleteComment } = useComments();
+  const { user } = useAuth();
   const { profile } = useProfile();
 
   return (
@@ -16,7 +18,7 @@ export default function Guestbook() {
         </p>
       </div>
 
-      <CommentSection comments={guestbook} onAdd={(name, content) => addGuestbook(name, content)} />
+      <CommentSection comments={guestbook} onAdd={(name, content) => addGuestbook(name, content)} currentUserId={user?.id} onDelete={(cid) => deleteComment(cid, 'guestbook')} />
     </div>
   );
 }

@@ -10,9 +10,9 @@ import CommentSection from '../components/CommentSection';
 export default function ArticleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { getById, toggleFavorite, deleteArticle } = useArticles();
-  const { articleComments, addArticleComment } = useComments();
+  const { articleComments, addArticleComment, deleteComment } = useComments();
 
   const article = getById(id || '');
   const comments = articleComments.filter((c) => c.articleId === id);
@@ -89,7 +89,7 @@ export default function ArticleDetail() {
     </div>
       )}
 
-      <CommentSection comments={comments} onAdd={(name, content) => addArticleComment(article.id, name, content)} />
+      <CommentSection comments={comments} onAdd={(name, content) => addArticleComment(article.id, name, content)} currentUserId={user?.id} onDelete={(cid) => deleteComment(cid, 'comment')} />
     </div>
   );
 }

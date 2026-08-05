@@ -429,3 +429,16 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .avatar-crop-range{width:100%;margin:0 0 18px;accent-color:var(--sky-blue)}
 .avatar-crop-actions{display:flex;gap:10px;justify-content:center}
 .avatar-crop-actions .btn{letter-spacing:2px}
+
+/* ===== 留言/评论删除 与 登录提示 ===== */
+.comment-delete{
+  margin-left:auto;background:none;border:1px solid color-mix(in srgb,var(--coral-pink) 40%,transparent);
+  color:var(--coral-pink);font-size:.72rem;padding:2px 8px;border-radius:10px;cursor:pointer;transition:.2s;
+}
+.comment-delete:hover{background:var(--coral-pink);color:#fff}
+.comment-login-tip{
+  background:color-mix(in srgb,var(--sky-blue) 10%,transparent);
+  border:1px dashed color-mix(in srgb,var(--sky-blue) 45%,transparent);
+  color:var(--text-secondary);font-size:.9rem;padding:12px 14px;border-radius:var(--radius);
+  margin-bottom:16px;text-align:center;
+}

@@ -24,6 +24,7 @@ export interface Comment {
   name: string;
   content: string;
   date: string;
+  userId?: string;  // 留言/评论的作者（登录用户的 id），未登录为空
 }
 
 export interface Profile {
