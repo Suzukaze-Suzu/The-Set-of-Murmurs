@@ -2,6 +2,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
 import 'highlight.js/styles/github.css';
 
 interface CodeProps {
@@ -14,7 +15,7 @@ export default function MarkdownRenderer({ content }: { content: string }) {
     <div className="markdown-body">
           <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeKatex]}
+        rehypePlugins={[rehypeKatex, rehypeRaw]}
             components={{
           code({ inline, className, children }: CodeProps) {
                 const match = /language-(\w+)/.exec(className || '');

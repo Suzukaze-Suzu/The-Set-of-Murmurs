@@ -540,3 +540,17 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   font-size:.72rem;padding:2px 10px;border-radius:12px;cursor:pointer;transition:.2s;
 }
 .bug-toggle:hover{background:var(--sky-blue);color:#fff}
+
+
+/* ===== 写作页插入图片/音乐 ===== */
+.media-panel{margin-bottom:18px;padding:18px}
+.media-panel h4{margin:0 0 6px;font-size:1rem}
+.media-panel-desc{color:var(--text-secondary);font-size:.85rem;margin:0 0 12px}
+.media-panel input[type=file],.media-panel input[type=text]{width:100%;box-sizing:border-box}
+.media-actions{display:flex;gap:10px;margin-top:12px}
+.media-uploading{color:var(--sky-blue);font-size:.85rem}
+
+/* 网易云 iframe + markdown 内图片 */
+.markdown-body iframe.ncm-embed{display:block;margin:14px 0;border:none;background:transparent;max-width:100%}
+.markdown-body .ncm-embed{max-width:100%}
+.markdown-body audio{max-width:100%;margin:10px 0}
