@@ -96,7 +96,7 @@ export default function Write() {
     const idMatch = m.match(/(?:id=|id\/)(\d+)/) || m.match(/^\d+$/);
     const songId = idMatch ? idMatch[1] : '';
     if (!songId) { alert('未能识别网易云音乐 ID'); return; }
-    const line = '\n<iframe class="ncm-embed" src="https://music.163.com/outchain/player?type=2&id=' + songId + '&auto=0&height=66" width="100%" height="86" frameborder="no" allow="autoplay; encrypted-media"></iframe>\n';
+    const line = '\n<iframe class="ncm-embed" src="https://music.163.com/outchain/player?type=2&id=' + songId + '&auto=0&height=66" width="100%" height="86" frameborder="no" allow="autoplay; encrypted-media" loading="lazy"></iframe>\n';
     insertAtCursor(line);
     setMusicInfo('');
     setPanel(null);

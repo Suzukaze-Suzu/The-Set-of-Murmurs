@@ -28,6 +28,9 @@ export default function MarkdownRenderer({ content }: { content: string }) {
 }
                 return <code className={className}>{children}</code>;
               },
+              img({ src, alt }: any) {
+                return <img src={src} alt={alt} loading="lazy" style={{ maxWidth: '100%', height: 'auto', display: 'block' }} />;
+              },
               pre({ children }: any) {
                 return <pre className="code-block">{children}</pre>;
               },

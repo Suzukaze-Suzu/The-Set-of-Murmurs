@@ -47,6 +47,9 @@ export default function ArticleDetail() {
   };
 
   const afterDelete = () => {
+    if (!window.confirm('确定要删除这篇文章吗？删除后无法恢复。')) return;
+    const confirmed = window.confirm('再次确认：真的要删除「' + article.title + '」吗？');
+    if (!confirmed) return;
     deleteArticle(article.id);
     navigate('/articles');
   };
@@ -85,6 +88,7 @@ export default function ArticleDetail() {
 
       {isAdmin && (
         <div className="detail-actions">
+          <Link to={`/write/${article.id}`} className="btn btn-primary">编辑文章</Link>
           <button className="btn btn-danger" onClick={afterDelete}>删除文章</button>
     </div>
       )}
