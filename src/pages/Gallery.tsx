@@ -18,9 +18,17 @@ export default function Gallery() {
       return;
     }
     setError('');
-    const msg = await addImage(file, caption);
-    if (msg) {
-      setError(msg);
+    try {
+      const msg = await addImage(file, caption);
+      if (msg) {
+        setError(msg);
+        alert('上传失败：' + msg);
+        return;
+      }
+    } catch (err) {
+      const em = err instanceof Error ? err.message : String(err);
+      setError('上传异常：' + em);
+      alert('上传异常：' + em);
       return;
     }
     setFile(null);
