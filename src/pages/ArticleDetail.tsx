@@ -89,7 +89,7 @@ export default function ArticleDetail() {
     </div>
       )}
 
-      <CommentSection comments={comments} onAdd={(name, content) => addArticleComment(article.id, name, content)} currentUserId={user?.id} onDelete={(cid) => deleteComment(cid, 'comment')} />
+      <CommentSection comments={comments} onAdd={(name, content, parentId, parentName) => addArticleComment(article.id, { name, content, parentId, parentName })} currentUserId={user?.id} onDelete={(cid) => deleteComment(cid, 'comment')} />
     </div>
   );
 }

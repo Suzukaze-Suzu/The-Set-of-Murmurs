@@ -462,3 +462,20 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   100%{background-position:0% 50%}
 }
 
+
+
+/* ===== 留言板/评论：回复功能 ===== */
+.reply-target{
+  background:color-mix(in srgb,var(--sky-blue) 10%,transparent);
+  border-radius:8px;padding:8px 12px;font-size:.88rem;color:var(--text-secondary);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+}
+.reply-cancel{border:none;background:none;color:var(--coral-pink);cursor:pointer;font-size:.82rem;text-decoration:underline;padding:0}
+.comment-reply{
+  border:1px solid color-mix(in srgb,var(--sky-blue) 40%,transparent);
+  background:none;color:var(--sky-blue);font-size:.72rem;padding:2px 8px;border-radius:10px;
+  cursor:pointer;transition:.2s;
+}
+.comment-reply:hover{background:var(--sky-blue);color:#fff}
+.comment-name-label em{color:var(--coral-pink);font-style:normal;font-weight:600;margin-right:4px}
+.comment-name-label em::before{content:'@'}

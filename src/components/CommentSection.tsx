@@ -1,28 +1,37 @@
 import { useState, FormEvent } from 'react';
 import { Comment } from '../types';
+import { useProfile } from '../context/ProfileContext';
+import { useAuth } from '../context/AuthContext';
 
 interface Props {
   comments: Comment[];
-  onAdd: (name: string, content: string) => void;
+  onAdd: (name: string, content: string, parentId?: string, parentName?: string) => void;
   currentUserId?: string;
   onDelete?: (id: string) => void;
 }
 
 export default function CommentSection({ comments, onAdd, currentUserId, onDelete }: Props) {
-  const [name, setName] = useState('');
   const [content, setContent] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
+
+  const { myProfile } = useProfile();
+
+  // 默认用登录账号昵称；未登录时为空（由外层决定是否放行）
+  const loginName = (myProfile?.nickname?.trim() || '');
+
+  const needLogin = !currentUserId;
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!content.trim()) return;
-    onAdd(name.trim() || '匿名路人', content.trim());
+    const name = replyingTo ? replyingTo.parentName || loginName : loginName;
+    onAdd(loginName || '匿名路人', content.trim(), replyingTo?.id, replyingTo?.name);
     setContent('');
+    setReplyingTo(null);
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 2000);
   };
-
-  const needLogin = !currentUserId;
 
   return (
     <div className="comment-section">
@@ -32,13 +41,11 @@ export default function CommentSection({ comments, onAdd, currentUserId, onDelet
         <div className="comment-login-tip">登录后才能留言或评论哦～</div>
       ) : (
         <form className="comment-form" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            className="comment-name"
-            placeholder="你的昵称（可留空）"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+          {replyingTo && (
+            <div className="reply-target">
+              回复 @{replyingTo.name} · <button type="button" className="reply-cancel" onClick={() => setReplyingTo(null)}>取消回复</button>
+            </div>
+          )}
           <textarea
             className="comment-content"
             placeholder="说说你的想法吧…"
@@ -59,8 +66,11 @@ export default function CommentSection({ comments, onAdd, currentUserId, onDelet
             <div key={c.id} className="comment-item">
               <div className="comment-head">
                 <span className="comment-avatar">{c.name.trim().charAt(0) || '访'}</span>
-                <span className="comment-name-label">{c.name}</span>
+                <span className="comment-name-label">{c.parentName ? <>@<em>{c.parentName}</em></> : null} {c.name}</span>
                 <span className="comment-date">{new Date(c.date).toLocaleString()}</span>
+                {!needLogin && (
+                  <button className="comment-reply" onClick={() => setReplyingTo({ ...c })}>回复</button>
+                )}
                 {mine && (
                   <button className="comment-delete" onClick={() => { if (window.confirm('确定删除这条留言吗？')) onDelete!(c.id); }}>
                     删除
