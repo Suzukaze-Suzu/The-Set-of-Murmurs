@@ -45,7 +45,7 @@ function CommentRow({ node, depth, currentUserId, onDelete, onStartReply, needLo
   return (
     <div className="comment-item" style={depth > 0 ? { marginLeft: depth * 18, borderLeft: '3px solid color-mix(in srgb,var(--sky-blue) 30%,transparent)', borderTopLeftRadius: 4 } : undefined}>
       <div className="comment-head">
-        <Link to={currentUserId && c.userId === currentUserId ? '/' : (c.userId ? '/profile?userId=' + c.userId : '/')} className="comment-avatar" title={currentUserId && c.userId === currentUserId ? '返回首页' : '查看个人主页'}>
+        <Link to={c.userId ? '/profile?userId=' + c.userId : '/'} className="comment-avatar" title="查看个人主页">
           {c.avatar ? <img src={c.avatar} alt="头像" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (c.name.trim().charAt(0) || '访')}
         </Link>
         <span className="comment-name-label">{c.parentName ? <em>{c.parentName}</em> : null} {c.name}</span>
