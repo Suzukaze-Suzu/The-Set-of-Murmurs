@@ -15,18 +15,16 @@ const CATEGORY_ROUTES: Record<string, string> = {
 
 export default function Navbar() {
   const location = useLocation();
-  const { profile } = useProfile();
+  const { myProfile } = useProfile();
   const { isAdmin, user, signOut } = useAuth();
-  const [showIntro, setShowIntro] = useState(false);
   const [hidden, setHidden] = useState(false);
 
-  // 滚动时：下滑收起导航栏，上滑显示
   useEffect(() => {
     let lastY = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
-      if (y > lastY && y > 80) setHidden(true);   // 继续下滑且超过一定高度 → 收起
-      else if (y < lastY) setHidden(false);       // 上滑 → 显示
+      if (y > lastY && y > 80) setHidden(true);
+      else if (y < lastY) setHidden(false);
       lastY = y;
     };
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -34,71 +32,54 @@ export default function Navbar() {
   }, []);
 
   return (
-    <>
-      <nav className={`navbar${hidden ? ' nav-hidden' : ''}`}>
-        <div className="nav-inner">
-          <Link to="/" className="nav-brand">
-            <span className="brand-dot" />
-            呓语集
-          </Link>
-          <div className="nav-links">
-            <Link to="/" className={location.pathname === '/' ? 'active' : ''}>首页</Link>
-            <Link to="/articles" className={location.pathname === '/articles' ? 'active' : ''}>全部文章</Link>
-            <Link to="/gallery" className={location.pathname === '/gallery' ? 'active' : ''}>图集</Link>
-            <Link to="/guestbook" className={location.pathname === '/guestbook' ? 'active' : ''}>留言板</Link>
-            <Link to="/about" className={location.pathname === '/about' ? 'active' : ''}>关于</Link>
-            {isAdmin && (
-              <Link to="/write" className={location.pathname.startsWith('/write') ? 'active' : ''}>写作</Link>
-            )}
-          </div>
-          <div className="nav-cats">
-            {CATEGORIES.map((c) => (
-              <Link key={c} to={CATEGORY_ROUTES[c]} className={location.pathname === CATEGORY_ROUTES[c] ? 'active' : ''}>
-                <span className="cat-dot" style={{ background: CATEGORY_META[c].color }} />
-                <span className="cat-text">{CATEGORY_META[c].label}</span>
-              </Link>
-            ))}
-          </div>
-          <div className="nav-auth">
-            {user ? (
-              <button className="btn btn-primary btn-sm" onClick={() => signOut()} title="退出登录">
-                {isAdmin ? '博主' : '已登录'} · 退出
-              </button>
-            ) : (
-              <Link to="/login" className="btn btn-primary btn-sm">登录</Link>
-            )}
-          </div>
-          <button className="nav-avatar" onClick={() => setShowIntro(true)} title="点击查看我的介绍">
-            {profile.avatar ? (
-              <img src={profile.avatar} alt="头像" />
-            ) : (
-              <span className="nav-avatar-placeholder" />
-            )}
-          </button>
+    <nav className={hidden ? 'navbar nav-hidden' : 'navbar'}>
+      <div className="nav-inner">
+        <Link to="/" className="nav-brand">
+          <span className="brand-dot" />
+          呓语集
+        </Link>
+        <div className="nav-links">
+          <Link to="/" className={location.pathname === '/' ? 'active' : ''}>首页</Link>
+          <Link to="/articles" className={location.pathname === '/articles' ? 'active' : ''}>全部文章</Link>
+          <Link to="/gallery" className={location.pathname === '/gallery' ? 'active' : ''}>图集</Link>
+          <Link to="/guestbook" className={location.pathname === '/guestbook' ? 'active' : ''}>留言板</Link>
+          <Link to="/about" className={location.pathname === '/about' ? 'active' : ''}>关于</Link>
+          {isAdmin && (
+            <Link to="/write" className={location.pathname.startsWith('/write') ? 'active' : ''}>写作</Link>
+          )}
         </div>
-      </nav>
-
-      {showIntro && (
-        <div className="modal-overlay" onClick={() => setShowIntro(false)}>
-          <div className="intro-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowIntro(false)}>×</button>
-            <div className="intro-avatar">
-              {profile.avatar ? (
-                <img src={profile.avatar} alt="头像" />
-              ) : (
-                <span className="avatar-placeholder" />
-              )}
-            </div>
-            <h2 className="intro-name">{profile.nickname}</h2>
-            <p className="intro-signature">{profile.signature}</p>
-            <p className="intro-bio">{profile.intro}</p>
-            <Link to="/about" className="btn btn-primary btn-sm" onClick={() => setShowIntro(false)}>
-              编辑我的资料
+        <div className="nav-cats">
+          {CATEGORIES.map((c) => (
+            <Link key={c} to={CATEGORY_ROUTES[c]} className={location.pathname === CATEGORY_ROUTES[c] ? 'active' : ''}>
+              <span className="cat-dot" style={{ background: CATEGORY_META[c].color }} />
+              <span className="cat-text">{CATEGORY_META[c].label}</span>
             </Link>
-          </div>
+          ))}
         </div>
-      )}
-    </>
+        <div className="nav-auth">
+          {user ? (
+            <>
+              <Link
+                to="/profile"
+                className="nav-avatar"
+                title="我的主页"
+                style={location.pathname === '/profile' ? { boxShadow: '0 0 0 3px var(--sky-blue)' } : undefined}
+              >
+                {myProfile?.avatar ? (
+                  <img src={myProfile.avatar} alt="头像" />
+                ) : (
+                  <span className="nav-avatar-placeholder" />
+                )}
+              </Link>
+              <button className="btn btn-primary btn-sm" onClick={() => signOut()} title="退出登录">
+                {isAdmin ? '博主' : '账号'} · 退出
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="btn btn-primary btn-sm">登录</Link>
+          )}
+        </div>
+      </div>
+    </nav>
   );
 }
-

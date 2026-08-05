@@ -15,6 +15,7 @@ import About from './pages/About';
 import Guestbook from './pages/Guestbook';
 import Gallery from './pages/Gallery';
 import LoginPage from './pages/LoginPage';
+import ProfilePage from './pages/ProfilePage';
 
 // 使用 Outlet context 传递搜索词
 function LayoutRoute() {
@@ -54,6 +55,7 @@ export default function App() {
                     <Route path="/write" element={<Write />} />
                     <Route path="/write/:id" element={<Write />} />
                     <Route path="/about" element={<About />} />
+                    <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/guestbook" element={<Guestbook />} />
                     <Route path="*" element={<HomeRoute />} />
                 </Route>
