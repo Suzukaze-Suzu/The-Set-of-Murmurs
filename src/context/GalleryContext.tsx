@@ -14,7 +14,7 @@ export function galleryUid() {
 
 interface GalleryContextType {
   images: GalleryImage[];
-  addImage: (url: string, caption?: string) => void;
+  addImage: (file: File, caption?: string) => Promise<string | null>;
   removeImage: (id: string) => void;
   loading: boolean;
 }
@@ -44,28 +44,40 @@ export function GalleryProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const addImage = (url: string, caption = '') => {
-    const trimmed = url.trim();
-    if (!trimmed) return;
+  const addImage = async (file: File, caption = '') => {
     // 只有 admin 能添加图集；普通读者前端隐藏按钮，这里再兜底
-    if (!isAdmin) return;
-    const newImg: GalleryImage = { id: galleryUid(), url: trimmed, caption: caption.trim() };
-    supabase
-      .from('gallery')
-      .insert({ id: newImg.id, url: newImg.url, caption: newImg.caption })
-      .then(({ error }) => {
-        if (!error) setImages((prev) => [newImg, ...prev]);
-      });
+    if (!isAdmin) return '无权限';
+    if (!file) return '请选择图片文件';
+    const id = galleryUid();
+    const safeName = file.name.replace(/[^\w.\-]/g, '_');
+    const path = id + '-' + safeName;
+    const { error: upErr } = await supabase.storage.from('gallery').upload(path, file, { cacheControl: '3600', upsert: false });
+    if (upErr) return '上传失败：' + upErr.message;
+    const { data: pub } = supabase.storage.from('gallery').getPublicUrl(path);
+    const url = pub.publicUrl;
+    const cap = caption.trim();
+    const newImg: GalleryImage = { id, url, caption: cap };
+    const { error } = await supabase.from('gallery').insert({ id, url, caption: cap });
+    if (error) return '保存失败：' + error.message;
+    setImages((prev) => [newImg, ...prev]);
+    return null;
   };
 
   const removeImage = (id: string) => {
     if (!isAdmin) return;
+    const target = images.find((img) => img.id === id);
     supabase
       .from('gallery')
       .delete()
       .eq('id', id)
       .then(({ error }) => {
-        if (!error) setImages((prev) => prev.filter((img) => img.id !== id));
+        if (!error) {
+          if (target && target.url.includes('/storage/v1/object/public/gallery/')) {
+            const path = decodeURIComponent(target.url.split('/gallery/')[1] || '');
+            if (path) supabase.storage.from('gallery').remove([path]);
+          }
+          setImages((prev) => prev.filter((img) => img.id !== id));
+        }
       });
   };
 

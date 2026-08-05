@@ -1,26 +1,31 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useRef } from 'react';
 import { useGallery } from '../context/GalleryContext';
 import { useAuth } from '../context/AuthContext';
 
 export default function Gallery() {
   const { images, addImage, removeImage } = useGallery();
   const { isAdmin } = useAuth();
-  const [url, setUrl] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
   const [error, setError] = useState('');
   const [zoomImage, setZoomImage] = useState<{ url: string; caption: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAdd = (e: FormEvent) => {
+  const handleAdd = async (e: FormEvent) => {
     e.preventDefault();
-    const trimmed = url.trim();
-    if (!/^https?:\/\/.+/i.test(trimmed)) {
-      setError('请输入以 http:// 或 https:// 开头的图片地址');
+    if (!file) {
+      setError('请选择要上传的图片文件');
       return;
     }
-    addImage(trimmed, caption);
-    setUrl('');
-    setCaption('');
     setError('');
+    const msg = await addImage(file, caption);
+    if (msg) {
+      setError(msg);
+      return;
+    }
+    setFile(null);
+    setCaption('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
@@ -33,15 +38,22 @@ export default function Gallery() {
       {isAdmin && (
       <form className="gallery-form card" onSubmit={handleAdd}>
         <input
-          type="text"
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
           className="gallery-input"
-          placeholder="图片链接（http:// 或 https://）"
-          value={url}
           onChange={(e) => {
-            setUrl(e.target.value);
+            const f = e.target.files?.[0] || null;
+            setFile(f);
             setError('');
           }}
         />
+        {file && (
+          <div className="gallery-file-preview">
+            <img src={URL.createObjectURL(file)} alt="预览" />
+            <span>{file.name}</span>
+          </div>
+        )}
         <input
           type="text"
           className="gallery-input gallery-input-sm"
