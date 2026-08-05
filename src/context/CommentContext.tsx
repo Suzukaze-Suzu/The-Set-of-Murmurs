@@ -12,6 +12,7 @@ export interface NewCommentInput {
   content: string;
   parentId?: string;
   parentName?: string;
+  avatar?: string;
 }
 
 interface Ctx {
@@ -41,6 +42,7 @@ export function CommentProvider({ children }: { children: ReactNode }) {
           setGuestbook(data.map((r) => ({
             id: r.id, articleId: 'guestbook', name: r.name, content: r.content, date: r.date,
             userId: r.user_id || undefined, parentId: r.parent_id || undefined, parentName: r.parent_name || undefined,
+            avatar: r.avatar || undefined,
           })));
         }
       });
@@ -60,26 +62,17 @@ export function CommentProvider({ children }: { children: ReactNode }) {
           setArticleComments(data.map((r) => ({
             id: r.id, articleId: r.article_id, name: r.name, content: r.content, date: r.date,
             userId: r.user_id || undefined, parentId: r.parent_id || undefined, parentName: r.parent_name || undefined,
+            avatar: r.avatar || undefined,
           })));
         }
       });
     return () => { mounted = false; };
   }, []);
 
-  const buildRow = async (input: NewCommentInput): Promise<Comment | null> => {
-    const comment: Comment = {
-      id: mkId(), articleId: 'guestbook', name: input.name, content: input.content,
-      date: new Date().toISOString(), parentId: input.parentId, parentName: input.parentName,
-    };
-    const { data } = await supabase.auth.getUser();
-    if (data.user) comment.userId = data.user.id;
-    return comment;
-  };
-
   const addArticleComment = (articleId: string, input: NewCommentInput) => {
     const newComment: Comment = {
       id: mkId(), articleId, name: input.name, content: input.content,
-      date: new Date().toISOString(), parentId: input.parentId, parentName: input.parentName,
+      date: new Date().toISOString(), parentId: input.parentId, parentName: input.parentName, avatar: input.avatar,
     };
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) newComment.userId = data.user.id;
@@ -87,6 +80,7 @@ export function CommentProvider({ children }: { children: ReactNode }) {
       if (newComment.userId) row.user_id = newComment.userId;
       if (input.parentId) row.parent_id = input.parentId;
       if (input.parentName) row.parent_name = input.parentName;
+      if (input.avatar) row.avatar = input.avatar;
       supabase
         .from('comments')
         .insert(row)
@@ -97,7 +91,7 @@ export function CommentProvider({ children }: { children: ReactNode }) {
   const addGuestbook = (input: NewCommentInput) => {
     const newComment: Comment = {
       id: mkId(), articleId: 'guestbook', name: input.name, content: input.content,
-      date: new Date().toISOString(), parentId: input.parentId, parentName: input.parentName,
+      date: new Date().toISOString(), parentId: input.parentId, parentName: input.parentName, avatar: input.avatar,
     };
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) newComment.userId = data.user.id;
@@ -105,6 +99,7 @@ export function CommentProvider({ children }: { children: ReactNode }) {
       if (newComment.userId) row.user_id = newComment.userId;
       if (input.parentId) row.parent_id = input.parentId;
       if (input.parentName) row.parent_name = input.parentName;
+      if (input.avatar) row.avatar = input.avatar;
       supabase
         .from('guestbook')
         .insert(row)

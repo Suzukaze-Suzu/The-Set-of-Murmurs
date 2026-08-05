@@ -27,6 +27,7 @@ export interface Comment {
   userId?: string;  // 留言/评论的作者（登录用户的 id），未登录为空
   parentId?: string;      // 回复对象：被回复的留言 id
   parentName?: string;    // 回复对象：被回复的人昵称（用于显示 @xxx）
+  avatar?: string;        // 留言/评论者的头像
 }
 
 export interface Profile {

@@ -5,9 +5,77 @@ import { useAuth } from '../context/AuthContext';
 
 interface Props {
   comments: Comment[];
-  onAdd: (name: string, content: string, parentId?: string, parentName?: string) => void;
+  onAdd: (name: string, content: string, parentId?: string, parentName?: string, avatar?: string) => void;
   currentUserId?: string;
   onDelete?: (id: string) => void;
+}
+
+// 把扁平评论构造成带 children 的树（用于将回复嵌套在原评论下方）
+interface TreeNode {
+  c: Comment;
+  children: TreeNode[];
+}
+
+function buildTree(comments: Comment[]): TreeNode[] {
+  const map = new Map<string, TreeNode>();
+  comments.forEach((c) => map.set(c.id, { c, children: [] }));
+  const roots: TreeNode[] = [];
+  comments.forEach((c) => {
+    const node = map.get(c.id)!;
+    if (c.parentId && map.has(c.parentId)) {
+      map.get(c.parentId)!.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+  return roots;
+}
+
+function CommentRow({ node, depth, currentUserId, onDelete, onStartReply, needLogin }: {
+  node: TreeNode;
+  depth: number;
+  currentUserId?: string;
+  onDelete?: (id: string) => void;
+  onStartReply: (c: Comment) => void;
+  needLogin: boolean;
+}) {
+  const { c, children } = node;
+  const mine = !!currentUserId && !!onDelete && c.userId === currentUserId;
+  return (
+    <div className="comment-item" style={depth > 0 ? { marginLeft: depth * 18, borderLeft: '3px solid color-mix(in srgb,var(--sky-blue) 30%,transparent)', borderTopLeftRadius: 4 } : undefined}>
+      <div className="comment-head">
+        <span className="comment-avatar">
+          {c.avatar ? <img src={c.avatar} alt="头像" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (c.name.trim().charAt(0) || '访')}
+        </span>
+        <span className="comment-name-label">{c.parentName ? <em>{c.parentName}</em> : null} {c.name}</span>
+        <span className="comment-date">{new Date(c.date).toLocaleString()}</span>
+        {!needLogin && (
+          <button className="comment-reply" onClick={() => onStartReply({ ...c })}>回复</button>
+        )}
+        {mine && (
+          <button className="comment-delete" onClick={() => { if (window.confirm('确定删除这条留言吗？')) onDelete!(c.id); }}>
+            删除
+          </button>
+        )}
+      </div>
+      <p className="comment-body">{c.content}</p>
+      {children.length > 0 && (
+        <div className="comment-children">
+          {children.map((child) => (
+            <CommentRow
+              key={child.c.id}
+              node={child}
+              depth={depth + 1}
+              currentUserId={currentUserId}
+              onDelete={onDelete}
+              onStartReply={onStartReply}
+              needLogin={needLogin}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function CommentSection({ comments, onAdd, currentUserId, onDelete }: Props) {
@@ -16,22 +84,22 @@ export default function CommentSection({ comments, onAdd, currentUserId, onDelet
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
 
   const { myProfile } = useProfile();
-
-  // 默认用登录账号昵称；未登录时为空（由外层决定是否放行）
   const loginName = (myProfile?.nickname?.trim() || '');
+  const loginAvatar = myProfile?.avatar || '';
 
   const needLogin = !currentUserId;
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!content.trim()) return;
-    const name = replyingTo ? replyingTo.parentName || loginName : loginName;
-    onAdd(loginName || '匿名路人', content.trim(), replyingTo?.id, replyingTo?.name);
+    onAdd(loginName || '匿名路人', content.trim(), replyingTo?.id, replyingTo?.name, loginAvatar);
     setContent('');
     setReplyingTo(null);
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 2000);
   };
+
+  const tree = buildTree(comments);
 
   return (
     <div className="comment-section">
@@ -59,28 +127,18 @@ export default function CommentSection({ comments, onAdd, currentUserId, onDelet
       )}
 
       <div className="comment-list">
-        {comments.length === 0 && <p className="empty-tip">还没有留言，来抢沙发吧～</p>}
-        {comments.map((c) => {
-          const mine = !!currentUserId && !!onDelete && c.userId === currentUserId;
-          return (
-            <div key={c.id} className="comment-item">
-              <div className="comment-head">
-                <span className="comment-avatar">{c.name.trim().charAt(0) || '访'}</span>
-                <span className="comment-name-label">{c.parentName ? <>@<em>{c.parentName}</em></> : null} {c.name}</span>
-                <span className="comment-date">{new Date(c.date).toLocaleString()}</span>
-                {!needLogin && (
-                  <button className="comment-reply" onClick={() => setReplyingTo({ ...c })}>回复</button>
-                )}
-                {mine && (
-                  <button className="comment-delete" onClick={() => { if (window.confirm('确定删除这条留言吗？')) onDelete!(c.id); }}>
-                    删除
-                  </button>
-                )}
-              </div>
-              <p className="comment-body">{c.content}</p>
-            </div>
-          );
-        })}
+        {tree.length === 0 && <p className="empty-tip">还没有留言，来抢沙发吧～</p>}
+        {tree.map((node) => (
+          <CommentRow
+            key={node.c.id}
+            node={node}
+            depth={0}
+            currentUserId={currentUserId}
+            onDelete={onDelete}
+            onStartReply={(c) => setReplyingTo(c)}
+            needLogin={needLogin}
+          />
+        ))}
       </div>
     </div>
   );

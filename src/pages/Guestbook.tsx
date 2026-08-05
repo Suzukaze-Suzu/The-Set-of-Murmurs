@@ -18,7 +18,7 @@ export default function Guestbook() {
         </p>
       </div>
 
-      <CommentSection comments={guestbook} onAdd={(name, content, parentId, parentName) => addGuestbook({ name, content, parentId, parentName })} currentUserId={user?.id} onDelete={(cid) => deleteComment(cid, 'guestbook')} />
+      <CommentSection comments={guestbook} onAdd={(name, content, parentId, parentName, avatar) => addGuestbook({ name, content, parentId, parentName, avatar })} currentUserId={user?.id} onDelete={(cid) => deleteComment(cid, 'guestbook')} />
     </div>
   );
 }
