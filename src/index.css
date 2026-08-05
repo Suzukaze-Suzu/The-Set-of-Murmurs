@@ -70,8 +70,8 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .btn-sm{padding:7px 16px;font-size:.85rem}
 /* ===== Hero ===== */
 .hero{border-radius:26px;padding:56px 44px;margin-bottom:36px;color:#fff;text-align:center;background:var(--grad-hero);position:relative;overflow:hidden;box-shadow:var(--shadow-lg)}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.25),transparent 45%)}
-.hero::after{content:'';position:absolute;width:260px;height:260px;right:-60px;top:-60px;border-radius:50%;background:rgba(232,155,138,.25);filter:blur(40px)}
+.hero::before{content:'';position:absolute;inset:0;background:transparent;pointer-events:none}
+.hero::after{content:'';position:absolute;width:260px;height:260px;right:-60px;top:-60px;border-radius:50%;background:rgba(255,255,255,.08);filter:blur(40px);pointer-events:none}
 .hero-inner{position:relative;z-index:2}
 .hero-title{font-size:3.2rem;font-weight:900;text-shadow:0 2px 14px rgba(0,0,0,.18);letter-spacing:2px}
 .hero-sub{font-size:1.3rem;margin:14px 0 8px;opacity:.96;font-weight:600}
@@ -456,15 +456,6 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .gallery-file-preview img{width:64px;height:64px;object-fit:cover;border-radius:8px;box-shadow:var(--shadow-sm)}
 .gallery-file-preview span{font-size:.9rem;color:var(--text-secondary);word-break:break-all}
 
-/* ===== hero 区块：背景渐变流动（覆盖 .hero 背景） ===== */
-.hero{
-  background:linear-gradient(135deg,
-    #4A90D8 0%, #6EC3EF 15%, #7fd8c8 30%,
-    #ffd98a 45%, #ff9e8a 60%, #c1a8ff 75%,
-    #6EC3EF 90%, #4A90D8 100%);
-  background-size:400% 400%;
-  animation:heroBgFlow 6s ease-in-out infinite;
-}
 @keyframes heroBgFlow{
   0%{background-position:0% 50%}
   50%{background-position:200% 50%}
