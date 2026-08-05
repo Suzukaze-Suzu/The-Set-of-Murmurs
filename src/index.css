@@ -459,13 +459,15 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== hero 区块：背景渐变流动（覆盖 .hero 背景） ===== */
 .hero{
   background:linear-gradient(135deg,
-    #5BA8D8 0%, #7fc3e6 20%, #f3d4a8 40%,
-    #e89b8a 55%, #4a9bb8 75%, #5BA8D8 100%);
-  background-size:300% 300%;
-  animation:heroBgFlow 16s ease-in-out infinite;
+    #4A90D8 0%, #6EC3EF 15%, #7fd8c8 30%,
+    #ffd98a 45%, #ff9e8a 60%, #c1a8ff 75%,
+    #6EC3EF 90%, #4A90D8 100%);
+  background-size:400% 400%;
+  animation:heroBgFlow 6s ease-in-out infinite;
 }
 @keyframes heroBgFlow{
   0%{background-position:0% 50%}
-  50%{background-position:100% 50%}
+  50%{background-position:200% 50%}
   100%{background-position:0% 50%}
 }
+
