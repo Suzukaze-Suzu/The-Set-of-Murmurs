@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 
 export default function BugFeedback() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { myProfile } = useProfile();
   const [reports, setReports] = useState<BugReport[]>([]);
   const [content, setContent] = useState('');
@@ -56,6 +56,20 @@ export default function BugFeedback() {
       });
   };
 
+  // 切换状态：待处理 <-> 已处理。博主可改任何，普通用户可改自己的。
+  const toggleStatus = (rep: BugReport) => {
+    const nextStatus = rep.status === '待处理' ? '已处理' : '待处理';
+    const next = reports.map((r) => (r.id === rep.id ? { ...r, status: nextStatus } : r));
+    setReports(next);
+    supabase
+      .from('bug_reports')
+      .update({ status: nextStatus })
+      .eq('id', rep.id)
+      .then(() => {});
+  };
+
+  const canEdit = (rep: BugReport) => !!user && (isAdmin || rep.userId === user.id);
+
   const userCanSubmit = !!user;
 
   return (
@@ -101,6 +115,14 @@ export default function BugFeedback() {
                   <span className="bug-cat-tag" style={{ background: cat ? '#E89B8A' : '#8A8F9A' }}>{cat ? cat.label : rep.category}</span>
                   <span className={stCls}>{rep.status}</span>
                   <span className="comment-date">{new Date(rep.date).toLocaleString()}</span>
+                  {canEdit(rep) && (
+                    <button
+                      className="bug-toggle"
+                      onClick={() => toggleStatus(rep)}
+                    >
+                      {done ? '恢复待处理' : '标记已处理'}
+                    </button>
+                  )}
                 </div>
                 <p className="bug-item-content">{rep.content}</p>
                 <span className="bug-item-author">— {rep.nickname}</span>
