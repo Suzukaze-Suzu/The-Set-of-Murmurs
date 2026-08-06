@@ -1,7 +1,7 @@
 import { useState, ChangeEvent, useRef, FormEvent } from 'react';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
-import { useAbout } from '../context/AboutContext';
+import { useAbout, AboutVersion } from '../context/AboutContext';
 import ProfileCard from '../components/ProfileCard';
 import AvatarCropModal from '../components/AvatarCropModal';
 import MarkdownRenderer from '../components/MarkdownRenderer';
@@ -19,6 +19,7 @@ export default function About() {
   const [editText, setEditText] = useState('');
   const [previewing, setPreviewing] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [previewVersion, setPreviewVersion] = useState<AboutVersion | null>(null);
   const [nickname, setNickname] = useState(profile.nickname);
   const [signature, setSignature] = useState(profile.signature);
   const [intro, setIntro] = useState(profile.intro);
@@ -94,7 +95,7 @@ export default function About() {
                 <h2>本站简介</h2>
                 {isAdmin && (
                 <div className="about-head-actions">
-                  <button className="btn btn-light btn-sm" onClick={() => setShowHistory(true)}>历史版本({versions.length})</button>
+                  <button className="btn btn-light btn-sm" onClick={() => { setPreviewVersion(null); setShowHistory(true); }}>历史版本({versions.length})</button>
                   <button className="btn btn-primary btn-sm" onClick={openEdit}>编辑简介</button>
                 </div>
                 )}
@@ -165,13 +166,23 @@ export default function About() {
                       <span className="history-date">{fmt(v.date)}</span>
                     </div>
                     <div className="history-actions">
-                      <button className="btn btn-light btn-sm" onClick={() => loadVersion(v.id)}>预览</button>
+                      <button className="btn btn-light btn-sm" onClick={() => setPreviewVersion(v)}>预览</button>
                       <button className="btn btn-primary btn-sm" onClick={() => doRollback(v.id)}>设为当前</button>
                     </div>
                   </div>
                 ))
               )}
             </div>
+            {previewVersion && (
+              <div className="history-preview">
+                <div className="history-preview-head">
+                  <strong>正在预览版本</strong>
+                  <span className="history-date">{fmt(previewVersion.date)}</span>
+                  <button className="btn btn-light btn-sm" onClick={() => setPreviewVersion(null)}>收起</button>
+                </div>
+                <div className="history-preview-body"><MarkdownRenderer content={previewVersion.content} /></div>
+              </div>
+            )}
             {versions.length > 1 && (
               <button className="btn btn-ghost btn-sm" onClick={() => reset()}>回到当前版本预览</button>
             )}
