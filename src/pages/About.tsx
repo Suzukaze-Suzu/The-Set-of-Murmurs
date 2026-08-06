@@ -13,7 +13,7 @@ function fmt(iso: string) {
 export default function About() {
   const { profile, setProfile } = useProfile();
   const { isAdmin } = useAuth();
-  const { current, versions, saving, save, loadVersion, rollback, reset } = useAbout();
+  const { current, versions, loading, saving, save, loadVersion, rollback, reset } = useAbout();
   const avatarInput = useRef<HTMLInputElement>(null);
   const [editMode, setEditMode] = useState(false);
   const [editText, setEditText] = useState('');
@@ -93,14 +93,14 @@ export default function About() {
             <>
               <div className="about-content-head">
                 <h2>本站简介</h2>
-                {isAdmin && (
+                {!loading && isAdmin && (
                 <div className="about-head-actions">
                   <button className="btn btn-light btn-sm" onClick={() => { setPreviewVersion(null); setShowHistory(true); }}>历史版本({versions.length})</button>
                   <button className="btn btn-primary btn-sm" onClick={openEdit}>编辑简介</button>
                 </div>
                 )}
               </div>
-              <div className="about-render"><MarkdownRenderer content={current} /></div>
+              <div className="about-render">{loading ? <div className="about-loading"><span className="about-loading-spin"/><p>正在加载简介…</p></div> : <MarkdownRenderer content={current} />}</div>
             </>
           )}
 
