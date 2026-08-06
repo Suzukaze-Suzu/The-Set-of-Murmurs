@@ -86,6 +86,21 @@ export default function ArticleDetail() {
         <MarkdownRenderer content={article.content} />
       </article>
 
+      {article.attachments && article.attachments.length > 0 && (
+      <div className="detail-attachments card">
+        <h3 className="detail-att-ttl">附件（{article.attachments.length}）</h3>
+        <div className="detail-att-list">
+          {article.attachments.map((att, i) => (
+            <a key={i} href={att.url} target="_blank" rel="noreferrer" className="detail-att-item">
+              <span className="detail-att-icon">📎</span>
+              <span className="detail-att-name">{att.name}</span>
+              {att.size ? <span className="detail-att-size">{(att.size/1024).toFixed(1)} KB</span> : null}
+            </a>
+          ))}
+        </div>
+      </div>
+      )}
+
       {isAdmin && (
         <div className="detail-actions">
           <Link to={`/write/${article.id}`} className="btn btn-primary">编辑文章</Link>

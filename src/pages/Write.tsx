@@ -1,6 +1,6 @@
 import { useState, useRef, ChangeEvent } from 'react';
 import { useArticles } from '../context/ArticleContext';
-import { CATEGORIES, CATEGORY_META, Article, Category } from '../types';
+import { CATEGORIES, CATEGORY_META, Article, ArticleAttachment, Category } from '../types';
 import { uid, storageKey } from '../context/ArticleContext';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -23,10 +23,13 @@ export default function Write() {
   const [previewing, setPreviewing] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
-  const [panel, setPanel] = useState<'image' | 'music' | null>(null);
+  const [panel, setPanel] = useState<'image' | 'music' | 'attachment' | null>(null);
   const [imgUploading, setImgUploading] = useState(false);
     const [musicInfo, setMusicInfo] = useState('');
   const [imgDragging, setImgDragging] = useState(false);
+  const [attachments, setAttachments] = useState<ArticleAttachment[]>(editing?.attachments || []);
+  const attachInput = useRef<HTMLInputElement>(null);
+  const [attachUploading, setAttachUploading] = useState(false);
 
   const loadFile = (file: File) => {
     const reader = new FileReader();
@@ -108,6 +111,28 @@ export default function Write() {
   };
 
 
+  const uploadAttachments = async (files: FileList | null, uploadDisabled?: boolean) => {
+    if (!files || files.length === 0) return;
+    setAttachUploading(true);
+    const added: ArticleAttachment[] = [];
+    try {
+      for (const file of Array.from(files)) {
+        const path = 'attachments/' + Date.now().toString(36) + '-' + file.name.replace(/[\/:*?"<>|]/g, '_');
+        const { error } = await supabase.storage.from('articles').upload(path, file, { upsert: false });
+        if (error) { alert('附件「' + file.name + '」上传失败：' + error.message); continue; }
+        const { data: pub } = supabase.storage.from('articles').getPublicUrl(path);
+        added.push({ name: file.name, url: pub.publicUrl, size: file.size });
+      }
+    } finally {
+      setAttachUploading(false);
+    }
+    if (added.length) setAttachments((prev) => [...prev, ...added]);
+  };
+
+  const removeAttachment = (idx: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const save = () => {
     if (!title.trim()) {
       alert('请填写标题');
@@ -123,6 +148,7 @@ export default function Write() {
       date: editing?.date || new Date().toISOString().slice(0, 10),
       favorite,
       pinned: editing?.pinned || false,
+      attachments,
       summary: content.replace(/[#>*`$\\[\]()]/g, '').replace(/\n/g, ' ').slice(0, 120),
     };
     if (editing) {
@@ -172,6 +198,7 @@ export default function Write() {
         <input ref={fileInput} type="file" accept=".md,.markdown,.txt,.tex" style={{ display: 'none' }} onChange={onImport} />
         <button className="btn btn-light" onClick={() => setPanel('image')}>插入图片</button>
         <button className="btn btn-light" onClick={() => setPanel('music')}>插入音乐</button>
+        <button className="btn btn-light" onClick={() => setPanel('attachment')}>添加附件</button>
         <button className="btn btn-light" onClick={clearAll}>重置数据</button>
       </div>
 
@@ -215,6 +242,30 @@ export default function Write() {
         </div>
       )}
 
+      {panel === 'attachment' && (
+        <div className="media-panel card">
+          <h4>添加附件</h4>
+          <p className="media-panel-desc">支持任意文件（PDF、Word、压缩包、图片等）。上传后将显示在文章详情页的“附件”区块，供读者下载。</p>
+          <div className="attach-dropzone">
+            <input ref={attachInput} type="file" multiple onChange={(e) => { uploadAttachments(e.target.files); e.target.value = ''; }} />
+            <button className="btn btn-primary btn-sm" onClick={() => attachInput.current?.click()}>选择文件</button>
+          </div>
+          {attachUploading && <p className="media-uploading">正在上传附件…</p>}
+          {attachments.length > 0 && (
+            <div className="attach-preview-list">
+              {attachments.map((a, i) => (
+                <div key={i} className="attach-preview-item">
+                  <span className="detail-att-icon">📎</span>
+                  <span className="attach-preview-name">{a.name}</span>
+                  {a.size ? <span className="detail-att-size">{(a.size / 1024).toFixed(1)} KB</span> : null}
+                  <button className="attach-remove" onClick={() => removeAttachment(i)} title="移除">×</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <button className="btn btn-light" onClick={() => setPanel(null)}>关闭</button>
+        </div>
+      )}
       <div className="write-form card">
         <input
           type="text"

@@ -6,6 +6,12 @@ export type Category =
   | 'math'       // 数学笔记
   | 'study';     // 学习分享
 
+export interface ArticleAttachment {
+  name: string;   // 文件名
+  url: string;    // 访问/下载地址
+  size?: number;  // 字节数（可选）
+}
+
 export interface Article {
   id: string;
   title: string;
@@ -16,6 +22,7 @@ export interface Article {
   favorite: boolean;      // 收藏/星标
   pinned: boolean;        // 置顶
   summary?: string;
+  attachments?: ArticleAttachment[];  // 附件列表
 }
 
 export interface Comment {

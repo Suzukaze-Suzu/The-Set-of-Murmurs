@@ -15,6 +15,7 @@ function rowToArticle(row: any): Article {
     favorite: !!row.favorite,
     pinned: !!row.pinned,
     summary: row.summary || '',
+    attachments: Array.isArray(row.attachments) ? row.attachments : (typeof row.attachments === 'string' ? JSON.parse(row.attachments) : []),
   };
 }
 
@@ -63,6 +64,7 @@ export function ArticleProvider({ children }: { children: ReactNode }) {
         favorite: article.favorite,
         pinned: article.pinned,
         summary: article.summary || '',
+        attachments: article.attachments || [],
       })
       .then(({ error }) => {
         if (!error) refresh();
@@ -82,6 +84,7 @@ export function ArticleProvider({ children }: { children: ReactNode }) {
         favorite: a.favorite,
         pinned: a.pinned,
         summary: a.summary || '',
+        attachments: a.attachments || [],
       })
       .eq('id', a.id)
       .then(({ error }) => {

@@ -635,3 +635,19 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .history-key-label{font-weight:700;color:var(--sky-blue);font-size:.85rem;margin:8px 0 4px}
 .history-text{font-size:.85rem;color:var(--text-main);min-width:0;word-break:break-all}
 .history-actions .history-text{flex:1}
+
+/* ===== 附件 ===== */
+.detail-attachments{border:1px solid color-mix(in srgb,var(--sky-blue) 16%,transparent)}
+.detail-att-ttl{font-size:1rem;margin:0 0 12px}
+.detail-att-list{display:flex;flex-direction:column;gap:8px}
+.detail-att-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--sky-blue) 18%,transparent);border-radius:var(--radius-sm);background:color-mix(in srgb,var(--sky-blue) 5%,transparent);color:var(--text-main);text-decoration:none;transition:all .2s}
+.detail-att-item:hover{border-color:var(--sky-blue);transform:translateY(-1px)}
+.detail-att-icon{font-size:1.1rem}
+.detail-att-name{flex:1;min-width:0;word-break:break-all;font-size:.9rem}
+.detail-att-size{color:var(--text-secondary);font-size:.8rem;white-space:nowrap}
+.attach-dropzone{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.attach-dropzone input[type=file]{display:none}
+.attach-preview-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.attach-preview-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid color-mix(in srgb,var(--sky-blue) 18%,transparent);border-radius:var(--radius-sm);font-size:.85rem}
+.attach-preview-name{flex:1;min-width:0;word-break:break-all}
+.attach-remove{cursor:pointer;border:none;background:color-mix(in srgb,var(--coral-pink) 15%,transparent);color:var(--coral-pink);width:22px;height:22px;border-radius:50%;font-size:1rem;line-height:1}
