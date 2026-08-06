@@ -32,16 +32,17 @@ function buildTree(comments: Comment[]): TreeNode[] {
   return roots;
 }
 
-function CommentRow({ node, depth, currentUserId, onDelete, onStartReply, needLogin }: {
+function CommentRow({ node, depth, currentUserId, isAdmin, onDelete, onStartReply, needLogin }: {
   node: TreeNode;
   depth: number;
   currentUserId?: string;
+  isAdmin: boolean;
   onDelete?: (id: string) => void;
   onStartReply: (c: Comment) => void;
   needLogin: boolean;
 }) {
   const { c, children } = node;
-  const mine = !!currentUserId && !!onDelete && c.userId === currentUserId;
+  const mine = !!onDelete && (isAdmin || (!!currentUserId && c.userId === currentUserId));
   return (
     <div className="comment-item" style={depth > 0 ? { marginLeft: depth * 18, borderLeft: '3px solid color-mix(in srgb,var(--sky-blue) 30%,transparent)', borderTopLeftRadius: 4 } : undefined}>
       <div className="comment-head">
@@ -68,6 +69,7 @@ function CommentRow({ node, depth, currentUserId, onDelete, onStartReply, needLo
               node={child}
               depth={depth + 1}
               currentUserId={currentUserId}
+              isAdmin={isAdmin}
               onDelete={onDelete}
               onStartReply={onStartReply}
               needLogin={needLogin}
@@ -84,6 +86,7 @@ export default function CommentSection({ comments, onAdd, currentUserId, onDelet
   const [submitted, setSubmitted] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
 
+  const { isAdmin } = useAuth();
   const { myProfile } = useProfile();
   const loginName = (myProfile?.nickname?.trim() || '');
   const loginAvatar = myProfile?.avatar || '';
@@ -135,6 +138,7 @@ export default function CommentSection({ comments, onAdd, currentUserId, onDelet
             node={node}
             depth={0}
             currentUserId={currentUserId}
+            isAdmin={isAdmin}
             onDelete={onDelete}
             onStartReply={(c) => setReplyingTo(c)}
             needLogin={needLogin}
