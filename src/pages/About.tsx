@@ -93,18 +93,16 @@ export default function About() {
               <div className="about-content-head">
                 <h2>本站简介</h2>
                 {isAdmin && (
-                  <button className="btn btn-light btn-sm" onClick={openEdit}>编辑简介</button>
+                <div className="about-head-actions">
+                  <button className="btn btn-light btn-sm" onClick={() => setShowHistory(true)}>历史版本({versions.length})</button>
+                  <button className="btn btn-primary btn-sm" onClick={openEdit}>编辑简介</button>
+                </div>
                 )}
               </div>
               <div className="about-render"><MarkdownRenderer content={current} /></div>
             </>
           )}
 
-          {isAdmin && !editMode && (
-            <div className="about-controls-row">
-              <button className="btn btn-light btn-sm" onClick={() => setShowHistory(true)}>历史版本（{versions.length}）</button>
-            </div>
-          )}
           {msg && <p className="about-msg">{msg}</p>}
 
           {/* 配色装饰（固定） */}

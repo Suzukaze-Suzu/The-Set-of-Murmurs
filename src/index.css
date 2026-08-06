@@ -573,6 +573,10 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 关于页：可编辑简介 + 历史版本 ===== */
 .about-content-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
 .about-content-head h2{margin:0 0 5px;font-size:1.2rem}
+/* 关于页：简介标题右侧的操作按钮 */
+.about-head-actions{display:flex;gap:8px;align-items:center}
+.about-head-actions .btn-sm{white-space:nowrap}
+.about-controls-row{margin-top:10px;display:flex;gap:8px}
 .about-render{width:100%}
 .about-edit-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
 .about-edit-head h2{margin:0;font-size:1.2rem}
