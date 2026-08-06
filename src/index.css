@@ -568,3 +568,28 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* 音乐兜底链接 */
 .markdown-body a[href*="music.163.com"]{display:inline-block;margin-top:4px;padding:6px 14px;border:1px solid color-mix(in srgb,var(--coral-pink) 40%,transparent);border-radius:20px;color:var(--coral-pink);font-size:.85rem;text-decoration:none}
 .markdown-body a[href*="music.163.com"]:hover{background:var(--coral-pink);color:#fff}
+
+
+/* ===== 关于页：可编辑简介 + 历史版本 ===== */
+.about-content-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.about-content-head h2{margin:0 0 5px;font-size:1.2rem}
+.about-render{width:100%}
+.about-edit-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.about-edit-head h2{margin:0;font-size:1.2rem}
+.about-preview-tabs{display:flex;gap:6px}
+.about-editor{min-height:240px}
+.about-actions{display:flex;gap:10px;margin-top:12px}
+.about-controls-row{margin-top:10px;display:flex;gap:8px}
+.about-msg{color:var(--forest-green);font-size:.88rem;margin:8px 0 0;background:color-mix(in srgb,var(--forest-green) 8%,transparent);padding:8px 12px;border-radius:8px}
+.about-history-overlay .modal{max-width:560px;width:100%}
+.about-history-modal .modal-title{margin:0 0 4px}
+.history-hint{color:var(--text-secondary);font-size:.85rem;margin:0 0 12px}
+.history-list{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow:auto}
+.history-item{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid color-mix(in srgb,var(--sky-blue) 16%,transparent);background:color-mix(in srgb,var(--bg-card) 60%,transparent);padding:10px 14px;border-radius:var(--radius)}
+.history-item-info{display:flex;align-items:center;gap:10px;min-width:0}
+.history-badge{font-size:.72rem;padding:3px 10px;border-radius:12px;background:color-mix(in srgb,var(--sky-blue) 14%,transparent);color:var(--sky-blue);white-space:nowrap}
+.history-badge:first-child{font-weight:700}
+.history-date{color:var(--text-secondary);font-size:.82rem}
+.history-actions{display:flex;gap:6px;flex-shrink:0}
+.about-history-modal .history-actions .btn-sm{padding:4px 10px;font-size:.75rem}
+.about-history-modal .btn-ghost{margin-top:12px;background:none;border:1px solid color-mix(in srgb,var(--text-secondary) 30%,transparent)}

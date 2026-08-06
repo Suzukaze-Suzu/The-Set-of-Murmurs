@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ArticleProvider } from './context/ArticleProvider';
 import { CommentProvider } from './context/CommentContext';
 import { ProfileProvider } from './context/ProfileContext';
+import { AboutProvider } from './context/AboutContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { GalleryProvider } from './context/GalleryContext';
 import Layout from './components/Layout';
@@ -40,6 +41,7 @@ export default function App() {
     <ThemeProvider>
               <AuthProvider>
         <ProfileProvider>
+          <AboutProvider>
           <GalleryProvider>
             <ArticleProvider>
               <CommentProvider>
@@ -64,6 +66,7 @@ export default function App() {
               </CommentProvider>
             </ArticleProvider>
           </GalleryProvider>
+          </AboutProvider>
         </ProfileProvider>
       </AuthProvider>
     </ThemeProvider>
