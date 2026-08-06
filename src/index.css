@@ -659,3 +659,15 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .attach-progress-bar{flex:2;height:8px;background:color-mix(in srgb,var(--text-secondary) 18%,transparent);border-radius:6px;overflow:hidden}
 .attach-progress-fill{height:100%;background:linear-gradient(90deg,#5BA8D8,#4A9BB8);border-radius:6px;transition:width .2s ease}
 .attach-progress-pct{width:40px;text-align:right;color:var(--text-secondary)}
+
+/* 媒体/附件面板内的次要按钮(关闭等)在浅色卡片上清晰可见 */
+.media-panel .btn-light{
+  background:color-mix(in srgb,var(--sky-blue) 8%,transparent);
+  color:var(--sky-blue);
+  border:1px solid color-mix(in srgb,var(--sky-blue) 45%,transparent);
+  backdrop-filter:none;
+  box-shadow:none;
+  padding:7px 16px;font-size:.85rem;
+}
+.media-panel .btn-light:hover{ background:var(--sky-blue); color:#fff; transform:translateY(-1px) }
+.media-panel .btn-light:active{ transform:translateY(0) scale(.97) }
