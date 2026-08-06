@@ -2,6 +2,7 @@ import { useState, ChangeEvent, useRef, FormEvent } from 'react';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 import { useAbout, AboutVersion } from '../context/AboutContext';
+import { useFooter, FooterText } from '../context/SiteTextContext';
 import ProfileCard from '../components/ProfileCard';
 import AvatarCropModal from '../components/AvatarCropModal';
 import MarkdownRenderer from '../components/MarkdownRenderer';
@@ -14,6 +15,12 @@ export default function About() {
   const { profile, setProfile } = useProfile();
   const { isAdmin } = useAuth();
   const { current, versions, loading, saving, save, loadVersion, rollback, reset } = useAbout();
+  const { footer, saving: savingFooter, saveFooter, histories } = useFooter();
+  const [footerEdit, setFooterEdit] = useState(false);
+  const [fSlogan, setFSlogan] = useState(footer.slogan);
+  const [fCaption, setFCaption] = useState(footer.caption);
+  const [fCopy, setFCopy] = useState(footer.copyright);
+  const [showFooterHist, setShowFooterHist] = useState(false);
   const avatarInput = useRef<HTMLInputElement>(null);
   const [editMode, setEditMode] = useState(false);
   const [editText, setEditText] = useState('');
@@ -52,6 +59,12 @@ export default function About() {
     } catch (e) {
       alert('保存失败：' + (e instanceof Error ? e.message : String(e)));
     }
+  };
+
+  const openFooterEdit = () => { setFSlogan(footer.slogan); setFCaption(footer.caption); setFCopy(footer.copyright); setFooterEdit(true); };
+  const saveFooterBtn = async () => {
+    try { await saveFooter({ slogan: fSlogan, caption: fCaption, copyright: fCopy }); setFooterEdit(false); setMsg('页脚文字已更新'); setTimeout(() => setMsg(''), 2500); }
+    catch (e) { alert('保存失败：' + (e instanceof Error ? e.message : String(e))); }
   };
 
   const doRollback = async (id: string) => {
@@ -186,6 +199,69 @@ export default function About() {
             {versions.length > 1 && (
               <button className="btn btn-ghost btn-sm" onClick={() => reset()}>回到当前版本预览</button>
             )}
+          </div>
+        </div>
+      )}
+
+
+      {isAdmin && (
+      <div className="edit-profile card footer-edit-card">
+        {footerEdit ? (
+          <>
+            <h3>设置页脚文字</h3>
+            <label>标语（第一行）</label>
+            <input className="gallery-input" type="text" value={fSlogan} onChange={(e) => setFSlogan(e.target.value)} />
+            <label>副标题（可选，留空不显示）</label>
+            <input className="gallery-input" type="text" value={fCaption} onChange={(e) => setFCaption(e.target.value)} />
+            <label>版权行（可用 &#123;year&#125; 表示当前年份）</label>
+            <input className="gallery-input" type="text" value={fCopy} onChange={(e) => setFCopy(e.target.value)} />
+            <div className="form-actions">
+              <button className="btn btn-primary" onClick={saveFooterBtn}>{savingFooter ? '保存中…' : '保存页脚文字'}</button>
+              <button className="btn" onClick={() => setFooterEdit(false)}>取消</button>
+            </div>
+          </>
+        ) : (
+          <div className="profile-controls">
+            <h3>页脚文字管理</h3>
+            <p className="footer-current">
+              标语：{footer.slogan}<br/>
+              {footer.caption && <>副标题：{footer.caption}<br/></>}
+              版权：{footer.copyright.replace('{year}', String(new Date().getFullYear()))}
+            </p>
+            <div className="about-controls-row">
+              <button className="btn btn-primary btn-sm" onClick={openFooterEdit}>编辑页脚文字</button>
+              <button className="btn btn-light btn-sm" onClick={() => setShowFooterHist(true)}>历史记录</button>
+            </div>
+          </div>
+        )}
+      </div>
+      )}
+
+      {showFooterHist && (
+        <div className="modal-overlay about-history-overlay" onClick={() => setShowFooterHist(false)}>
+          <div className="modal about-history-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowFooterHist(false)}>×</button>
+            <h3 className="modal-title">页脚文字修改历史</h3>
+            <div className="history-list">
+              {Object.keys(histories).length === 0 ? (
+                <p className="empty-tip">还没有历史记录。</p>
+              ) : (
+                Object.entries(histories).map(([k, list]) => (
+                  <div key={k} className="history-key-block">
+                    <div className="history-key-label">{k === 'footer_slogan' ? '标语' : k === 'footer_caption' ? '副标题' : '版权行'}</div>
+                    {list.map((v, i) => (
+                      <div key={v.id} className="history-item">
+                        <div className="history-item-info">
+                          <span className="history-badge">{i === 0 ? '当前' : '版本 ' + (i + 1)}</span>
+                          <span className="history-date">{new Date(v.date).toLocaleString()}</span>
+                        </div>
+                        <div className="history-actions"><span className="history-text">{v.content}</span></div>
+                      </div>
+                    ))}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}

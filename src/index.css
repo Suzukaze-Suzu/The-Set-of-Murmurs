@@ -627,3 +627,11 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .about-loading{display:flex;align-items:center;gap:10px;justify-content:center;padding:36px 0;color:var(--text-secondary)}
 .about-loading-spin{width:22px;height:22px;border:3px solid color-mix(in srgb,var(--sky-blue) 30%,transparent);border-top-color:var(--sky-blue);border-radius:50%;animation:aboutspin .8s linear infinite}
 @keyframes aboutspin{to{transform:rotate(360deg)}}
+
+.footer-slogan{font-weight:600;margin:4px 0}
+.footer-caption{font-size:.85rem;opacity:.85;margin:2px 0}
+.footer-current{font-size:.9rem;color:var(--text-secondary);line-height:1.7}
+.history-key-block{margin-bottom:6px}
+.history-key-label{font-weight:700;color:var(--sky-blue);font-size:.85rem;margin:8px 0 4px}
+.history-text{font-size:.85rem;color:var(--text-main);min-width:0;word-break:break-all}
+.history-actions .history-text{flex:1}

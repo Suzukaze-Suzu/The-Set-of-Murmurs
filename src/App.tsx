@@ -4,6 +4,7 @@ import { ArticleProvider } from './context/ArticleProvider';
 import { CommentProvider } from './context/CommentContext';
 import { ProfileProvider } from './context/ProfileContext';
 import { AboutProvider } from './context/AboutContext';
+import { FooterProvider } from './context/SiteTextContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { GalleryProvider } from './context/GalleryContext';
 import Layout from './components/Layout';
@@ -40,6 +41,7 @@ export default function App() {
   return (
     <ThemeProvider>
               <AuthProvider>
+        <FooterProvider>
         <ProfileProvider>
           <AboutProvider>
           <GalleryProvider>
@@ -68,6 +70,7 @@ export default function App() {
           </GalleryProvider>
           </AboutProvider>
         </ProfileProvider>
+        </FooterProvider>
       </AuthProvider>
     </ThemeProvider>
   );
