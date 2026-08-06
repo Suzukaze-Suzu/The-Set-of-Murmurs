@@ -651,3 +651,11 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .attach-preview-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid color-mix(in srgb,var(--sky-blue) 18%,transparent);border-radius:var(--radius-sm);font-size:.85rem}
 .attach-preview-name{flex:1;min-width:0;word-break:break-all}
 .attach-remove{cursor:pointer;border:none;background:color-mix(in srgb,var(--coral-pink) 15%,transparent);color:var(--coral-pink);width:22px;height:22px;border-radius:50%;font-size:1rem;line-height:1}
+
+/* ===== 附件上传进度 ===== */
+.attach-progress-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;width:100%}
+.attach-progress-item{display:flex;align-items:center;gap:10px;font-size:.8rem}
+.attach-progress-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-main)}
+.attach-progress-bar{flex:2;height:8px;background:color-mix(in srgb,var(--text-secondary) 18%,transparent);border-radius:6px;overflow:hidden}
+.attach-progress-fill{height:100%;background:linear-gradient(90deg,#5BA8D8,#4A9BB8);border-radius:6px;transition:width .2s ease}
+.attach-progress-pct{width:40px;text-align:right;color:var(--text-secondary)}

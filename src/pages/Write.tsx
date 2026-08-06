@@ -5,7 +5,7 @@ import { uid, storageKey } from '../context/ArticleContext';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
+import { supabase, SUPABASE_URL } from '../lib/supabase';
 
 export default function Write() {
   const { isAdmin } = useAuth();
@@ -30,6 +30,7 @@ export default function Write() {
   const [attachments, setAttachments] = useState<ArticleAttachment[]>(editing?.attachments || []);
   const attachInput = useRef<HTMLInputElement>(null);
   const [attachUploading, setAttachUploading] = useState(false);
+  const [attachProg, setAttachProg] = useState<Record<string, number>>({});
 
   const loadFile = (file: File) => {
     const reader = new FileReader();
@@ -111,22 +112,53 @@ export default function Write() {
   };
 
 
-  const uploadAttachments = async (files: FileList | null, uploadDisabled?: boolean) => {
+  const uploadOneProgress = (file: File, idx: string): Promise<ArticleAttachment> => {
+    return new Promise(async (resolve, reject) => {
+      const path = 'attachments/' + Date.now().toString(36) + '-' + file.name.replace(/[\\/:*?"<>|]/g, '_') + '_' + idx;
+      try {
+        const sess = await supabase.auth.getSession();
+        const token = sess?.data?.session?.access_token || '';
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', SUPABASE_URL + '/storage/v1/object/articles/' + encodeURI(path));
+        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        xhr.setRequestHeader('x-upsert', 'false');
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setAttachProg((prev) => ({ ...prev, [idx]: e.loaded / e.total }));
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const { data: pub } = supabase.storage.from('articles').getPublicUrl(path);
+            setAttachProg((prev) => ({ ...prev, [idx]: 1 }));
+            resolve({ name: file.name, url: pub.publicUrl, size: file.size });
+          } else {
+            reject(new Error('HTTP ' + xhr.status));
+          }
+        };
+        xhr.onerror = () => reject(new Error('网络错误'));
+        xhr.send(file);
+      } catch (e) { reject(e); }
+    });
+  };
+
+  const uploadAttachments = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setAttachUploading(true);
-    const added: ArticleAttachment[] = [];
     try {
-      for (const file of Array.from(files)) {
-        const path = 'attachments/' + Date.now().toString(36) + '-' + file.name.replace(/[\/:*?"<>|]/g, '_');
-        const { error } = await supabase.storage.from('articles').upload(path, file, { upsert: false });
-        if (error) { alert('附件「' + file.name + '」上传失败：' + error.message); continue; }
-        const { data: pub } = supabase.storage.from('articles').getPublicUrl(path);
-        added.push({ name: file.name, url: pub.publicUrl, size: file.size });
-      }
+      const tasks = Array.from(files).map((file, i) => {
+        const idx = i + '_' + file.name;
+        setAttachProg((prev) => ({ ...prev, [idx]: 0 }));
+        return uploadOneProgress(file, idx).catch((e) => {
+          alert('附件「' + file.name + '」上传失败：' + (e instanceof Error ? e.message : String(e)));
+          return null;
+        });
+      });
+      const results = await Promise.all(tasks);
+      const added = (results.filter(Boolean) as ArticleAttachment[]);
+      setAttachProg((prev) => Object.fromEntries(Object.entries(prev).filter(([, v]) => v < 1)));
+      if (added.length) setAttachments((prev) => [...prev, ...added]);
     } finally {
       setAttachUploading(false);
     }
-    if (added.length) setAttachments((prev) => [...prev, ...added]);
   };
 
   const removeAttachment = (idx: number) => {
@@ -250,7 +282,17 @@ export default function Write() {
             <input ref={attachInput} type="file" multiple onChange={(e) => { uploadAttachments(e.target.files); e.target.value = ''; }} />
             <button className="btn btn-primary btn-sm" onClick={() => attachInput.current?.click()}>选择文件</button>
           </div>
-          {attachUploading && <p className="media-uploading">正在上传附件…</p>}
+          {Object.keys(attachProg).length > 0 && (
+            <div className="attach-progress-list">
+              {Object.entries(attachProg).map(([k, pct]) => (
+                <div key={k} className="attach-progress-item">
+                  <span className="attach-progress-name">{k.slice(k.indexOf('_') + 1)}</span>
+                  <div className="attach-progress-bar"><div className="attach-progress-fill" style={{ width: Math.round(pct * 100) + '%' }} /></div>
+                  <span className="attach-progress-pct">{Math.round(pct * 100)}%</span>
+                </div>
+              ))}
+            </div>
+          )}
           {attachments.length > 0 && (
             <div className="attach-preview-list">
               {attachments.map((a, i) => (
