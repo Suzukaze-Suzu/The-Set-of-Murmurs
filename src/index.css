@@ -199,11 +199,13 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .markdown-body hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--slate-blue),transparent);margin:1.6em 0}
 .math-block-wrap{text-align:center;margin:1.3em 0;overflow-x:auto;padding:10px 0}
 /* ===== LaTeX 公式超长可横向滑动 ===== */
-.markdown-body .katex-display{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:.65em .9em;margin:1.2em 0;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--sky-blue) 75%,#fff) transparent;background:color-mix(in srgb,var(--sky-blue) 7%,transparent);border-left:3px solid var(--sky-blue);border-radius:8px}
+.markdown-body .katex-display{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:.65em .9em;margin:1.2em 0;position:relative;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--sky-blue) 75%,#fff) transparent;background:color-mix(in srgb,var(--sky-blue) 7%,transparent);border-left:3px solid var(--sky-blue);border-radius:8px}
 .markdown-body .katex-display::-webkit-scrollbar{height:8px}
 .markdown-body .katex-display::-webkit-scrollbar-thumb{background:var(--sky-blue);border-radius:4px;border:2px solid var(--bg-page)}
 .markdown-body .katex-display::-webkit-scrollbar-track{background:rgba(255,255,255,.5);border-radius:4px}
 .markdown-body .katex-display>.katex{display:inline-block;max-width:100%}
+.markdown-body .katex-display::after{content:"»";position:absolute;right:10px;bottom:6px;color:var(--sky-blue);font-size:15px;font-weight:700;opacity:0;pointer-events:none;animation:katex-swipe-hint 1.8s ease-in-out .4s infinite}
+@keyframes katex-swipe-hint{0%{opacity:0;transform:translateX(10px)}25%{opacity:.85;transform:translateX(4px)}60%{opacity:.1;transform:translateX(-4px)}100%{opacity:0;transform:translateX(-10px)}}
 /* ===== 璇勮鍖?& 鐣欒█鏉?===== */
 .comment-section{margin-top:36px}
 .comment-title{font-size:1.25rem;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px}
