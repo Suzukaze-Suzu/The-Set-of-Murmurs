@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --sky-blue: #5BA8D8; --sky-blue-soft: #a8d4ec; --sky-blue-dark: #3a86b8;
   --honey-gold: #E8C9A0; --honey-gold-soft: #f3e2c6;
   --coral-pink: #E89B8A; --coral-pink-soft: #f6c6bc;
@@ -198,6 +198,12 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .markdown-body img{max-width:100%;border-radius:10px;box-shadow:var(--shadow-sm)}
 .markdown-body hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--slate-blue),transparent);margin:1.6em 0}
 .math-block-wrap{text-align:center;margin:1.3em 0;overflow-x:auto;padding:10px 0}
+/* ===== LaTeX 公式超长可横向滑动 ===== */
+.markdown-body .katex-display{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:8px 2px;margin:1.3em 0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.markdown-body .katex-display::-webkit-scrollbar{height:6px}
+.markdown-body .katex-display::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--sky-blue) 45%,transparent);border-radius:3px}
+.markdown-body .katex-display::-webkit-scrollbar-track{background:transparent}
+.markdown-body .katex-display>.katex{display:inline-block;max-width:100%}
 /* ===== 璇勮鍖?& 鐣欒█鏉?===== */
 .comment-section{margin-top:36px}
 .comment-title{font-size:1.25rem;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px}
