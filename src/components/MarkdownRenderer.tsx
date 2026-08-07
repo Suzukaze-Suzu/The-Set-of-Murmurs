@@ -1,9 +1,10 @@
-import ReactMarkdown from 'react-markdown';
+﻿import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import 'highlight.js/styles/github.css';
+import { useRef, useEffect } from 'react';
 
 interface CodeProps {
   inline?: boolean;
@@ -11,8 +12,27 @@ interface CodeProps {
   children?: React.ReactNode;
 }
 export default function MarkdownRenderer({ content }: { content: string }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // 检测超宽 LaTeX 块级公式，仅对其添加 math-overflow 类以显示滑动提示箭头
+  useEffect(() => {
+    const check = () => {
+      const root = rootRef.current;
+      if (!root) return;
+      root.querySelectorAll<HTMLElement>('.katex-display').forEach((el) => {
+        const overflow = el.scrollWidth > el.clientWidth + 1;
+        el.classList.toggle('math-overflow', overflow);
+      });
+    };
+    const t = setTimeout(check, 60);
+    window.addEventListener('resize', check);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('resize', check);
+    };
+  }, [content]);
   return (
-    <div className="markdown-body">
+    <div className="markdown-body" ref={rootRef}>
           <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex, rehypeRaw]}

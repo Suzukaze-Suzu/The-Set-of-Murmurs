@@ -204,7 +204,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .markdown-body .katex-display::-webkit-scrollbar-thumb{background:var(--sky-blue);border-radius:4px;border:2px solid var(--bg-page)}
 .markdown-body .katex-display::-webkit-scrollbar-track{background:rgba(255,255,255,.5);border-radius:4px}
 .markdown-body .katex-display>.katex{display:inline-block;max-width:100%}
-.markdown-body .katex-display::after{content:"»";position:absolute;right:10px;bottom:6px;color:var(--sky-blue);font-size:15px;font-weight:700;opacity:0;pointer-events:none;animation:katex-swipe-hint 1.8s ease-in-out .4s infinite}
+.markdown-body .katex-display.math-overflow::after{content:"»";position:absolute;right:10px;bottom:6px;color:var(--sky-blue);font-size:15px;font-weight:700;opacity:0;pointer-events:none;animation:katex-swipe-hint 1.8s ease-in-out .4s infinite}
 @keyframes katex-swipe-hint{0%{opacity:0;transform:translateX(10px)}25%{opacity:.85;transform:translateX(4px)}60%{opacity:.1;transform:translateX(-4px)}100%{opacity:0;transform:translateX(-10px)}}
 /* ===== 璇勮鍖?& 鐣欒█鏉?===== */
 .comment-section{margin-top:36px}
