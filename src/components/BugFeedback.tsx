@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from 'react';
+﻿import { useState, useEffect, FormEvent } from 'react';
 import { BugReport, BUG_CATEGORIES } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -59,13 +59,21 @@ export default function BugFeedback() {
   // 切换状态：待处理 <-> 已处理。博主可改任何，普通用户可改自己的。
   const toggleStatus = (rep: BugReport) => {
     const nextStatus = rep.status === '待处理' ? '已处理' : '待处理';
-    const next = reports.map((r) => (r.id === rep.id ? { ...r, status: nextStatus } : r));
-    setReports(next);
+    // 乐观更新 UI
+    setReports((prev) => prev.map((r) => (r.id === rep.id ? { ...r, status: nextStatus } : r)));
+    // 写入数据库；失败则回滚并提示，避免出现"假成功"（前端已改但数据库没写入）
     supabase
       .from('bug_reports')
       .update({ status: nextStatus })
       .eq('id', rep.id)
-      .then(() => {});
+      .then(({ error: err }) => {
+        if (err) {
+          setReports((prev) => prev.map((r) => (r.id === rep.id ? { ...r, status: rep.status } : r)));
+          setError('状态更新失败：' + err.message);
+        } else {
+          setError('');
+        }
+      });
   };
 
   const canEdit = (rep: BugReport) => !!user && (isAdmin || rep.userId === user.id);
