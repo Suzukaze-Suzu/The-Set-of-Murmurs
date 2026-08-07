@@ -32,7 +32,7 @@ function buildTree(comments: Comment[]): TreeNode[] {
   return roots;
 }
 
-const MAX_DEPTH = 2; // 留言最多展示 2 层（顶层 + 一层回复），更深折叠平铺
+const MAX_DEPTH = 1; // 仅顶层留言展示为卡片，所有回复折叠平铺
 
 // 收集某节点的所有后代（任意深度），用于折叠后平铺展示
 function collectDescendants(node: TreeNode): TreeNode[] {
