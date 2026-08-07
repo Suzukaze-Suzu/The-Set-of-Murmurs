@@ -75,6 +75,9 @@ function FoldedReplies({ root, currentUserId, isAdmin, onDelete, onStartReply, n
                   </Link>
                   <span className="comment-name-label">{n.c.parentName ? <em>{n.c.parentName}</em> : null} {n.c.name}</span>
                   <span className="comment-date">{new Date(n.c.date).toLocaleString()}</span>
+                  {!needLogin && (
+                    <button className="comment-reply" onClick={() => onStartReply({ ...n.c })}>回复</button>
+                  )}
                   {mine && (
                     <button className="comment-delete" onClick={() => { if (window.confirm('确定删除这条留言吗？')) onDelete!(n.c.id); }}>
                       删除
