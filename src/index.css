@@ -497,6 +497,10 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .comment-reply-row .comment-head{margin-bottom:2px}
 .comment-reply-row .comment-body{color:var(--text-secondary);line-height:1.7;font-size:.92rem}
 .comment-reply-row .comment-head .comment-avatar{width:26px;height:26px;font-size:.8rem}
+.comment-fold{margin-left:16px;border-left:2px solid color-mix(in srgb,var(--sky-blue) 28%,transparent);padding-left:14px;margin-top:8px;display:flex;flex-direction:column;gap:8px}
+.comment-fold-btn{border:1px dashed color-mix(in srgb,var(--sky-blue) 45%,transparent);background:none;color:var(--sky-blue);font-size:.8rem;padding:4px 10px;border-radius:12px;cursor:pointer;transition:.2s;align-self:flex-start}
+.comment-fold-btn:hover{background:color-mix(in srgb,var(--sky-blue) 12%,transparent)}
+.comment-fold-list{display:flex;flex-direction:column;gap:8px}
 
 
 /* ===== 图集：拖拽上传 ===== */

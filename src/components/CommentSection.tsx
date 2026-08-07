@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+﻿import { useState, FormEvent } from 'react';
 import { Comment } from '../types';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
@@ -32,6 +32,65 @@ function buildTree(comments: Comment[]): TreeNode[] {
   return roots;
 }
 
+const MAX_DEPTH = 3; // 留言最多展示的层级（顶层 + 回复 + 二级回复）
+
+// 收集某节点的所有后代（任意深度），用于折叠后平铺展示
+function collectDescendants(node: TreeNode): TreeNode[] {
+  const arr: TreeNode[] = [];
+  (function walk(n: TreeNode) {
+    for (const ch of n.children) {
+      arr.push(ch);
+      walk(ch);
+    }
+  })(node);
+  return arr;
+}
+
+// 超过最大层级的回复：折叠成「+N 条回复」，展开后平铺显示
+function FoldedReplies({ root, currentUserId, isAdmin, onDelete, onStartReply, needLogin }: {
+  root: TreeNode;
+  currentUserId?: string;
+  isAdmin: boolean;
+  onDelete?: (id: string) => void;
+  onStartReply: (c: Comment) => void;
+  needLogin: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const items = collectDescendants(root);
+  if (items.length === 0) return null;
+  return (
+    <div className="comment-fold">
+      <button className="comment-fold-btn" onClick={() => setOpen((o) => !o)}>
+        {open ? '收起折叠回复' : `+ ${items.length} 条回复`}
+      </button>
+      {open && (
+        <div className="comment-fold-list">
+          {items.map((n) => {
+            const mine = !!onDelete && (isAdmin || (!!currentUserId && n.c.userId === currentUserId));
+            return (
+              <div className="comment-reply-row" key={n.c.id}>
+                <div className="comment-head">
+                  <Link to={n.c.userId ? '/profile?userId=' + n.c.userId : '/'} className="comment-avatar" title="查看个人主页">
+                    {n.c.avatar ? <img src={n.c.avatar} alt="头像" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (n.c.name.trim().charAt(0) || '访')}
+                  </Link>
+                  <span className="comment-name-label">{n.c.parentName ? <em>{n.c.parentName}</em> : null} {n.c.name}</span>
+                  <span className="comment-date">{new Date(n.c.date).toLocaleString()}</span>
+                  {mine && (
+                    <button className="comment-delete" onClick={() => { if (window.confirm('确定删除这条留言吗？')) onDelete!(n.c.id); }}>
+                      删除
+                    </button>
+                  )}
+                </div>
+                <p className="comment-body">{n.c.content}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CommentRow({ node, depth, currentUserId, isAdmin, onDelete, onStartReply, needLogin }: {
   node: TreeNode;
   depth: number;
@@ -63,20 +122,31 @@ function CommentRow({ node, depth, currentUserId, isAdmin, onDelete, onStartRepl
       </div>
       <p className="comment-body">{c.content}</p>
       {children.length > 0 && (
-        <div className="comment-children">
-          {children.map((child) => (
-            <CommentRow
-              key={child.c.id}
-              node={child}
-              depth={depth + 1}
-              currentUserId={currentUserId}
-              isAdmin={isAdmin}
-              onDelete={onDelete}
-              onStartReply={onStartReply}
-              needLogin={needLogin}
-            />
-          ))}
-        </div>
+        depth >= MAX_DEPTH - 1 ? (
+          <FoldedReplies
+            root={node}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
+            onDelete={onDelete}
+            onStartReply={onStartReply}
+            needLogin={needLogin}
+          />
+        ) : (
+          <div className="comment-children">
+            {children.map((child) => (
+              <CommentRow
+                key={child.c.id}
+                node={child}
+                depth={depth + 1}
+                currentUserId={currentUserId}
+                isAdmin={isAdmin}
+                onDelete={onDelete}
+                onStartReply={onStartReply}
+                needLogin={needLogin}
+              />
+            ))}
+          </div>
+        )
       )}
     </div>
   );
