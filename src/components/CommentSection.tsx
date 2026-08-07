@@ -43,8 +43,9 @@ function CommentRow({ node, depth, currentUserId, isAdmin, onDelete, onStartRepl
 }) {
   const { c, children } = node;
   const mine = !!onDelete && (isAdmin || (!!currentUserId && c.userId === currentUserId));
+  const rowCls = depth === 0 ? 'comment-item' : 'comment-reply-row';
   return (
-    <div className="comment-item" style={depth > 0 ? { marginLeft: depth * 18, borderLeft: '3px solid color-mix(in srgb,var(--sky-blue) 30%,transparent)', borderTopLeftRadius: 4 } : undefined}>
+    <div className={rowCls}>
       <div className="comment-head">
         <Link to={c.userId ? '/profile?userId=' + c.userId : '/'} className="comment-avatar" title="查看个人主页">
           {c.avatar ? <img src={c.avatar} alt="头像" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (c.name.trim().charAt(0) || '访')}
