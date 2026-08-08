@@ -1,8 +1,8 @@
 // 文章分类
 export type Category =
-  | 'anime'      // 动漫
+  | 'anime'      // 读后感
   | 'essay'      // 随笔
-  | 'reading'    // 读后感
+  | 'reading'    // 小说
   | 'math'       // 数学笔记
   | 'study';     // 学习分享
 
@@ -50,9 +50,9 @@ export interface SiteSettings {
 }
 
 export const CATEGORY_META: Record<Category, { label: string; icon: string; color: string }> = {
-  anime:   { label: '动漫',      icon: '', color: '#5BA8D8' },
+  anime:   { label: '读后感',      icon: '', color: '#5BA8D8' },
   essay:   { label: '随笔',      icon: '', color: '#E89B8A' },
-  reading: { label: '读后感',    icon: '', color: '#2F6B4F' },
+  reading: { label: '小说',    icon: '', color: '#2F6B4F' },
   math:    { label: '数学笔记',  icon: '', color: '#4A9BB8' },
   study:   { label: '学习分享',  icon: '', color: '#8A8F9A' },
 };
