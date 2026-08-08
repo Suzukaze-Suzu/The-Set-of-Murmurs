@@ -238,25 +238,37 @@ export default function Write() {
       return;
     }
     const tagsArr = tags.split(/[,，]/).map((t) => t.trim()).filter(Boolean);
-    const isNovelMode = category === 'reading' && chapters.length > 0;
-    const sortedChapters = chapters.slice().sort((a, b) => a.order - b.order);
+    // 小说模式：整理有效章节（标题为空时自动补编号）
+    const isReading = category === 'reading';
+    const validChapters = chapters
+      .filter((ch) => ch.title.trim() || ch.content.trim())
+      .map((ch, i) => ({
+        ...ch,
+        title: ch.title.trim() || ('第' + (i + 1) + '章'),
+        order: i,
+      }));
+    if (isReading && validChapters.length === 0) {
+      alert('作为小说发布需要至少一个章节。\n\n请在“章节”区域点「＋ 新增章节」并填写正文，\n或直接「导入 txt 自动分章」。');
+      return;
+    }
+    const isNovelMode = isReading && validChapters.length > 0;
     let novelObj: Article['novel'];
     if (isNovelMode) {
-      const allWordCount = sortedChapters.reduce((s, ch) => s + (ch.content || '').replace(/\s/g, '').length, 0);
+      const allWordCount = validChapters.reduce((s, ch) => s + (ch.content || '').replace(/\s/g, '').length, 0);
       novelObj = {
         author: author.trim() || undefined,
         cover: cover.trim() || undefined,
         status: nstatus,
         synopsis: synopsis.trim() || undefined,
-        chapters: sortedChapters,
+        chapters: validChapters,
         wordCount: allWordCount,
       };
     }
-    const novelSummary = (synopsis.trim() || sortedChapters[0]?.content.replace(/[#>*`$\\[\]()]/g, '').replace(/\n/g, ' ').slice(0, 120) || '');
+    const novelSummary = (synopsis.trim() || validChapters[0]?.content.replace(/[#>*`$\\[\]()]/g, '').replace(/\n/g, ' ').slice(0, 120) || '');
     const article: Article = {
       id: editing?.id || uid(),
       title: title.trim(),
-      content: isNovelMode ? sortedChapters.map((ch) => ch.content).join('\n\n') : content,
+      content: isNovelMode ? validChapters.map((ch) => ch.content).join('\n\n') : content,
       category,
       tags: tagsArr,
       date: editing?.date || new Date().toISOString().slice(0, 10),
@@ -266,6 +278,13 @@ export default function Write() {
       summary: isNovelMode ? novelSummary : content.replace(/[#>*`$\\[\]()]/g, '').replace(/\n/g, ' ').slice(0, 120),
       novel: isNovelMode ? novelObj : undefined,
     };
+    // 发布前确认：清晰展示即将发布的内容
+    const confirmMsg = isNovelMode
+      ? '即将发布小说《' + article.title + '》\n作者：' + (novelObj?.author || '（未填写）') + '\n章节数：' + validChapters.length + ' 章\n总字数：' + (novelObj?.wordCount || 0) + ' 字\n\n点击「确定」即可发布到小说书架。'
+      : '即将发布文章《' + article.title + '》\n\n点击「确定」即可发布。';
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
     if (editing) {
       updateArticle(article);
     } else {
@@ -511,8 +530,14 @@ export default function Write() {
       </div>
 
       <div className="write-actions">
+        {category === 'reading' && (
+          <div className="novel-publish-hint">
+            你当前在 <strong>小说模式</strong>：发布时会保存 书名、作者、封面、章节、简介，并在「小说书架」以封面形式展示。
+            发布前若没有章节，会提示你补充。
+          </div>
+        )}
         <button className="btn btn-primary" onClick={save}>
-          {editing ? '保存修改' : '发布文章'}
+          {editing ? '保存修改' : category === 'reading' ? '发布这本小说' : '发布文章'}
         </button>
       </div>
     </div>
