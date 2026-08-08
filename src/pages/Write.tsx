@@ -4,6 +4,7 @@ import { CATEGORIES, CATEGORY_META, Article, ArticleAttachment, Category, NovelC
 import { NOVEL_STATUS_META } from '../types';
 import { uid, storageKey } from '../context/ArticleContext';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import NovelComposer from '../components/NovelComposer';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase, SUPABASE_URL } from '../lib/supabase';
@@ -21,6 +22,7 @@ export default function Write() {
   const [category, setCategory] = useState<Category>(editing?.category || 'essay');
   const [tags, setTags] = useState(editing?.tags.join(', ') || '');
   const [favorite, setFavorite] = useState(editing?.favorite || false);
+  const [composer, setComposer] = useState<'article' | 'novel'>(editing?.novel ? 'novel' : 'article');
   const [previewing, setPreviewing] = useState(false);
   // 小说（chapter）编辑状态（仅 category=reading 使用）
   const [author, setAuthor] = useState(editing?.novel?.author || '');
@@ -320,10 +322,27 @@ export default function Write() {
     );
   }
 
+  if (composer === 'novel') {
+    return (
+      <div className="page write-page">
+        <h1 className="page-title">{editing ? '编辑小说' : '写小说'}</h1>
+        <div className="composer-switch">
+          <button className="mode-tab" onClick={() => setComposer('article')}>写普通文章</button>
+          <button className="mode-tab on" onClick={() => setComposer('novel')}>写小说</button>
+        </div>
+        <p className="novel-composer-desc">小说逐章上传：首次创建书籍时填写书名 / 作者 / 封面 / 简介，之后只需选择书籍、上传新章节正文即可。</p>
+        <NovelComposer />
+      </div>
+    );
+  }
+
   return (
     <div className="page write-page">
       <h1 className="page-title">{editing ? '编辑文章' : '写作'}</h1>
-
+      <div className="composer-switch">
+        <button className="mode-tab on" onClick={() => setComposer('article')}>写普通文章</button>
+        <button className="mode-tab" onClick={() => setComposer('novel')}>写小说</button>
+      </div>
       <div className="toolbar">
         <button className="btn btn-light" onClick={exportAs}>导出 .md / .tex</button>
         <button className="btn btn-light" onClick={() => fileInput.current?.click()}>
@@ -445,65 +464,6 @@ export default function Write() {
           </label>
         </div>
 
-        {category === 'reading' && (
-          <div className="novel-editor card">
-            <h3 className="novel-editor-title">小说信息</h3>
-            <div className="novel-fields">
-              <div className="meta-field">
-                <label>作者（名著主名）</label>
-                <input type="text" placeholder="同学名字" value={author} onChange={(e) => setAuthor(e.target.value)} />
-              </div>
-              <div className="meta-field">
-                <label>封面图 URL（可选）</label>
-                <input type="text" placeholder="https://…/cover.jpg" value={cover} onChange={(e) => setCover(e.target.value)} />
-              </div>
-              <div className="meta-field">
-                <label>状态</label>
-                <select value={nstatus} onChange={(e) => setNstatus(e.target.value as NovelStatus)}>
-                  {Object.entries(NOVEL_STATUS_META).map(([k, m]) => (
-                    <option key={k} value={k}>{m.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="novel-field-full">
-              <label>简介</label>
-              <textarea rows={2} placeholder="一句话介绍这本书…" value={synopsis} onChange={(e) => setSynopsis(e.target.value)} />
-            </div>
-
-            <div className="novel-ch-tools">
-              <h4>章节</h4>
-              <button className="btn btn-light btn-sm" onClick={() => addChapter()}>＋ 新增章节</button>
-              <label className="btn btn-light btn-sm file-btn">
-                导入 txt 自动分章
-                <input type="file" accept=".txt,.md,.markdown" style={{ display: 'none' }} onChange={(e) => importChapterFile(e, true)} />
-              </label>
-              <label className="btn btn-light btn-sm file-btn">
-                追加 txt 为一章
-                <input type="file" accept=".txt,.md,.markdown" style={{ display: 'none' }} onChange={(e) => importChapterFile(e, false)} />
-              </label>
-            </div>
-
-            {chapters.length === 0 && (
-              <p className="novel-empty-tip">还没有章节，可「新增章节」，或直接导入同学的 txt 自动分章。</p>
-            )}
-
-            <div className="novel-ch-list">
-              {chapters.map((ch, ix) => (
-                <div className="novel-ch-item" key={ch.id}>
-                  <div className="novel-ch-head">
-                    <input className="novel-ch-title-input" value={ch.title} onChange={(e) => updateChapter(ch.id, { title: e.target.value })} placeholder="章节标题" />
-                    <span className="novel-ch-wc">{ch.wordCount ?? 0} 字</span>
-                    <button className="btn btn-light btn-sm" disabled={ix === 0} onClick={() => moveChapter(ch.id, -1)}>↑</button>
-                    <button className="btn btn-light btn-sm" disabled={ix === chapters.length - 1} onClick={() => moveChapter(ch.id, 1)}>↓</button>
-                    <button className="btn btn-danger btn-sm" onClick={() => removeChapter(ch.id)}>删除</button>
-                  </div>
-                  <textarea className="novel-ch-content" value={ch.content} onChange={(e) => updateChapter(ch.id, { content: e.target.value })} rows={6} placeholder="本章正文（支持 Markdown 与 LaTeX）" />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
         <div className="editor-tabs">
           <button className={`tab-btn ${!previewing ? 'active' : ''}`} onClick={() => setPreviewing(false)}>
             编辑
