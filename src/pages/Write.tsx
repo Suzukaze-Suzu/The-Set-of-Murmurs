@@ -175,16 +175,16 @@ export default function Write() {
   // —— 小说章节辅助 ——
   const splitByChapters = (text: string): { title: string; content: string }[] => {
     const lines = text.split(/\r?\n/);
-    const headingRe = /^\s*第\s*\d+\s*[章卷节回部集]\s*(.*)$/;
+    const headingRe = /^\s*第\s*([0-9一二三四五六七八九十百千零两]+)\s*[章卷节回部集]\s*(.*)$/;
     const result: { title: string; content: string }[] = [];
     let cur: { title: string; content: string } | null = null;
     for (const raw of lines) {
       const m = raw.match(headingRe);
       if (m) {
         if (cur) result.push(cur);
-        cur = { title: '第' + (result.length + 1) + '章 ' + (m[1] || '').trim(), content: '' };
+        cur = { title: raw.replace(/^\s+/, ''), content: '' };
       } else if (cur) {
-        cur.content += raw + '\\n';
+        cur.content += raw + '\n';
       }
     }
     if (cur) result.push(cur);
@@ -256,7 +256,7 @@ export default function Write() {
     const article: Article = {
       id: editing?.id || uid(),
       title: title.trim(),
-      content: isNovelMode ? sortedChapters.map((ch) => ch.content).join('\\n\\n') : content,
+      content: isNovelMode ? sortedChapters.map((ch) => ch.content).join('\n\n') : content,
       category,
       tags: tagsArr,
       date: editing?.date || new Date().toISOString().slice(0, 10),
