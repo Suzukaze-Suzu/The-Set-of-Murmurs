@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { CATEGORIES, CATEGORY_META } from '../types';
 import ArticleCard from '../components/ArticleCard';
+import NovelCard from '../components/NovelCard';
 
 interface Props {
   query: string;
@@ -59,9 +60,13 @@ export default function Articles({ query }: Props) {
         </div>
       ) : (
         <div className="card-grid wide">
-          {sorted.map((a) => (
-            <ArticleCard key={a.id} article={a} />
-          ))}
+          {sorted.map((a) =>
+            a.novel?.chapters?.length ? (
+              <NovelCard key={a.id} article={a} />
+            ) : (
+              <ArticleCard key={a.id} article={a} />
+            )
+          )}
         </div>
       )}
     </div>

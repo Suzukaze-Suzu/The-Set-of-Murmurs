@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { CATEGORY_META } from '../types';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import CommentSection from '../components/CommentSection';
+import NovelReader from '../components/NovelReader';
 
 export default function ArticleDetail() {
   const { id } = useParams();
@@ -15,7 +16,7 @@ export default function ArticleDetail() {
   const { articleComments, addArticleComment, deleteComment } = useComments();
 
   const article = getById(id || '');
-  const comments = articleComments.filter((c) => c.articleId === id);
+  const comments = articleComments.filter((c) => c.articleId === id || (id ? c.articleId.startsWith(id + '::') : false));
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -32,6 +33,8 @@ export default function ArticleDetail() {
   }
 
   const meta = CATEGORY_META[article.category];
+
+  const isNovel = article.category === 'reading' && !!(article.novel?.chapters?.length);
 
   // 导出为 .md 文件
   const exportMarkdown = () => {
@@ -82,9 +85,19 @@ export default function ArticleDetail() {
       </div>
       </div>
 
-      <article className="detail-body card">
-        <MarkdownRenderer content={article.content} />
-      </article>
+      {isNovel ? (
+        <NovelReader
+          article={article}
+          allComments={comments}
+          onAddComment={(articleId, input) => addArticleComment(articleId, input)}
+          onDeleteComment={(cid) => deleteComment(cid, 'comment')}
+          currentUserId={user?.id}
+        />
+      ) : (
+        <article className="detail-body card">
+          <MarkdownRenderer content={article.content} />
+        </article>
+      )}
 
       {article.attachments && article.attachments.length > 0 && (
       <div className="detail-attachments card">
@@ -108,7 +121,9 @@ export default function ArticleDetail() {
     </div>
       )}
 
+      {!isNovel && (
       <CommentSection comments={comments} onAdd={(name, content, parentId, parentName, avatar) => addArticleComment(article.id, { name, content, parentId, parentName, avatar })} currentUserId={user?.id} onDelete={(cid) => deleteComment(cid, 'comment')} />
+      )}
     </div>
   );
 }

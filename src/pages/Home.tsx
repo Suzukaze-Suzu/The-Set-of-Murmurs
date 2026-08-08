@@ -3,6 +3,7 @@ import { useProfile } from '../context/ProfileContext';
 import { CATEGORIES, CATEGORY_META, Category } from '../types';
 import { Link } from 'react-router-dom';
 import ArticleCard from '../components/ArticleCard';
+import NovelCard from '../components/NovelCard';
 import { useAuth } from '../context/AuthContext';
 
 interface Props {
@@ -73,9 +74,13 @@ export default function Home({ query }: Props) {
                 </Link>
               </div>
               <div className="card-grid">
-                {catArticles.slice(0, query ? 50 : 3).map((a) => (
-                  <ArticleCard key={a.id} article={a} />
-                ))}
+                {catArticles.slice(0, query ? 50 : 3).map((a) =>
+                  a.novel?.chapters?.length ? (
+                    <NovelCard key={a.id} article={a} />
+                  ) : (
+                    <ArticleCard key={a.id} article={a} />
+                  )
+                )}
               </div>
             </section>
           );

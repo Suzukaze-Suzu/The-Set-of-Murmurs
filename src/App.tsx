@@ -11,6 +11,7 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import Articles from './pages/Articles';
 import SectionPage from './pages/SectionPage';
+import Novels from './pages/Novels';
 import ArticleDetail from './pages/ArticleDetail';
 import Write from './pages/Write';
 import About from './pages/About';
@@ -54,6 +55,7 @@ export default function App() {
                   <Route path="/" element={<HomeRoute />} />
                   <Route path="/articles" element={<ArticlesRoute />} />
                     <Route path="/gallery" element={<Gallery />} />
+                    <Route path="/novels" element={<Novels />} />
                     <Route path="/category/:category" element={<SectionPage />} />
                     <Route path="/article/:id" element={<ArticleDetail />} />
                     <Route path="/write" element={<Write />} />

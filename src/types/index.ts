@@ -23,6 +23,7 @@ export interface Article {
   pinned: boolean;        // 置顶
   summary?: string;
   attachments?: ArticleAttachment[];  // 附件列表
+  novel?: NovelMeta;              // 小说扩展（仅 category=reading 使用）
 }
 
 export interface Comment {
@@ -77,4 +78,30 @@ export const BUG_CATEGORIES: { value: string; label: string }[] = [
 ];
 
 export const CATEGORIES: Category[] = ['anime', 'essay', 'reading', 'math', 'study'];
+
+// 小说扩展数据（仅 category = 'reading' 使用）
+export interface NovelChapter {
+  id: string;        // 章节 id
+  title: string;     // 章节标题（如 第一章 风起）
+  content: string;   // 该章正文（Markdown）
+  order: number;     // 章节顺序
+  wordCount?: number; // 该章字数
+}
+
+export type NovelStatus = 'serializing' | 'completed' | 'paused';
+
+export interface NovelMeta {
+  author?: string;                       // 作者（同学名字）
+  cover?: string;                        // 封面图 URL
+  status?: NovelStatus;                  // serializing 连载 / completed 完结 / paused 暂停
+  synopsis?: string;                     // 简介
+  chapters?: NovelChapter[];             // 章节列表（按 order 排序）
+  wordCount?: number;                    // 总字数
+}
+
+export const NOVEL_STATUS_META: Record<NovelStatus, { label: string; color: string }> = {
+  serializing: { label: '连载中', color: '#4A9BB8' },
+  completed:   { label: '已完结', color: '#2F6B4F' },
+  paused:      { label: '暂停更新', color: '#8A8F9A' },
+};
 

@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useArticles } from '../context/ArticleContext';
 import { CATEGORY_META, Category } from '../types';
 import ArticleCard from '../components/ArticleCard';
+import NovelCard from '../components/NovelCard';
 import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
@@ -36,9 +37,13 @@ export default function SectionPage() {
         </div>
       ) : (
         <div className="card-grid wide">
-          {list.map((a) => (
-            <ArticleCard key={a.id} article={a} />
-          ))}
+          {list.map((a) =>
+            a.novel?.chapters?.length ? (
+              <NovelCard key={a.id} article={a} />
+            ) : (
+              <ArticleCard key={a.id} article={a} />
+            )
+          )}
         </div>
       )}
     </div>

@@ -16,6 +16,7 @@ function rowToArticle(row: any): Article {
     pinned: !!row.pinned,
     summary: row.summary || '',
     attachments: Array.isArray(row.attachments) ? row.attachments : (typeof row.attachments === 'string' ? JSON.parse(row.attachments) : []),
+    novel: row.novel ? (typeof row.novel === 'string' ? JSON.parse(row.novel) : row.novel) : undefined,
   };
 }
 
@@ -65,6 +66,7 @@ export function ArticleProvider({ children }: { children: ReactNode }) {
         pinned: article.pinned,
         summary: article.summary || '',
         attachments: article.attachments || [],
+        novel: article.novel ? JSON.stringify(article.novel) : null,
       })
       .then(({ error }) => {
         if (!error) refresh();
@@ -85,6 +87,7 @@ export function ArticleProvider({ children }: { children: ReactNode }) {
         pinned: a.pinned,
         summary: a.summary || '',
         attachments: a.attachments || [],
+        novel: a.novel ? JSON.stringify(a.novel) : null,
       })
       .eq('id', a.id)
       .then(({ error }) => {

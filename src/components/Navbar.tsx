@@ -41,6 +41,7 @@ export default function Navbar() {
         <div className="nav-links">
           <Link to="/" className={location.pathname === '/' ? 'active' : ''}>首页</Link>
           <Link to="/articles" className={location.pathname === '/articles' ? 'active' : ''}>全部文章</Link>
+          <Link to="/novels" className={location.pathname === '/novels' ? 'active' : ''}>小说书架</Link>
           <Link to="/gallery" className={location.pathname === '/gallery' ? 'active' : ''}>图集</Link>
           <Link to="/guestbook" className={location.pathname === '/guestbook' ? 'active' : ''}>留言板</Link>
           <Link to="/about" className={location.pathname === '/about' ? 'active' : ''}>关于</Link>

@@ -1,6 +1,7 @@
 import { useState, useRef, ChangeEvent } from 'react';
 import { useArticles } from '../context/ArticleContext';
-import { CATEGORIES, CATEGORY_META, Article, ArticleAttachment, Category } from '../types';
+import { CATEGORIES, CATEGORY_META, Article, ArticleAttachment, Category, NovelChapter, NovelStatus } from '../types';
+import { NOVEL_STATUS_META } from '../types';
 import { uid, storageKey } from '../context/ArticleContext';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -21,6 +22,12 @@ export default function Write() {
   const [tags, setTags] = useState(editing?.tags.join(', ') || '');
   const [favorite, setFavorite] = useState(editing?.favorite || false);
   const [previewing, setPreviewing] = useState(false);
+  // 小说（chapter）编辑状态（仅 category=reading 使用）
+  const [author, setAuthor] = useState(editing?.novel?.author || '');
+  const [cover, setCover] = useState(editing?.novel?.cover || '');
+  const [nstatus, setNstatus] = useState<NovelStatus>(editing?.novel?.status || 'serializing');
+  const [synopsis, setSynopsis] = useState(editing?.novel?.synopsis || '');
+  const [chapters, setChapters] = useState<NovelChapter[]>(editing?.novel?.chapters?.slice() || []);
   const fileInput = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const [panel, setPanel] = useState<'image' | 'music' | 'attachment' | null>(null);
@@ -165,23 +172,99 @@ export default function Write() {
     setAttachments((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  // —— 小说章节辅助 ——
+  const splitByChapters = (text: string): { title: string; content: string }[] => {
+    const lines = text.split(/\r?\n/);
+    const headingRe = /^\s*第\s*\d+\s*[章卷节回部集]\s*(.*)$/;
+    const result: { title: string; content: string }[] = [];
+    let cur: { title: string; content: string } | null = null;
+    for (const raw of lines) {
+      const m = raw.match(headingRe);
+      if (m) {
+        if (cur) result.push(cur);
+        cur = { title: '第' + (result.length + 1) + '章 ' + (m[1] || '').trim(), content: '' };
+      } else if (cur) {
+        cur.content += raw + '\\n';
+      }
+    }
+    if (cur) result.push(cur);
+    return result.length ? result : [{ title: '第1章', content: text }];
+  };
+  const mkChapterId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const addChapter = (chapterTitle = '', ccontent = '') => {
+    setChapters((prev) => [...prev, { id: mkChapterId(), title: chapterTitle, content: ccontent, order: prev.length, wordCount: ccontent.replace(/\s/g, '').length }]);
+  };
+  const updateChapter = (cid: string, patch: Partial<NovelChapter>) => {
+    setChapters((prev) => prev.map((ch) =>
+      ch.id === cid
+        ? { ...ch, ...patch, order: ch.order, wordCount: patch.content !== undefined ? patch.content.replace(/\s/g, '').length : ch.wordCount }
+        : ch
+    ));
+  };
+  const removeChapter = (cid: string) => {
+    setChapters((prev) => prev.filter((ch) => ch.id !== cid).map((ch, i) => ({ ...ch, order: i })));
+  };
+  const moveChapter = (cid: string, dir: -1 | 1) => {
+    setChapters((prev) => {
+      const idx = prev.findIndex((ch) => ch.id === cid);
+      const to = idx + dir;
+      if (idx < 0 || to < 0 || to >= prev.length) return prev;
+      const arr = [...prev];
+      const cc = arr.splice(idx, 1)[0];
+      arr.splice(to, 0, cc);
+      return arr.map((ch, i) => ({ ...ch, order: i }));
+    });
+  };
+  const importChapterFile = (e: ChangeEvent<HTMLInputElement>, whole: boolean) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result || '');
+      if (whole) {
+        const parts = splitByChapters(text);
+        setChapters(parts.map((p, i) => ({ id: mkChapterId(), title: p.title, content: p.content, order: i, wordCount: p.content.replace(/\s/g, '').length })));
+      } else {
+        setChapters((prev) => [...prev, { id: mkChapterId(), title: '第' + (prev.length + 1) + '章', content: text, order: prev.length, wordCount: text.replace(/\s/g, '').length }]);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const save = () => {
     if (!title.trim()) {
       alert('请填写标题');
       return;
     }
     const tagsArr = tags.split(/[,，]/).map((t) => t.trim()).filter(Boolean);
+    const isNovelMode = category === 'reading' && chapters.length > 0;
+    const sortedChapters = chapters.slice().sort((a, b) => a.order - b.order);
+    let novelObj: Article['novel'];
+    if (isNovelMode) {
+      const allWordCount = sortedChapters.reduce((s, ch) => s + (ch.content || '').replace(/\s/g, '').length, 0);
+      novelObj = {
+        author: author.trim() || undefined,
+        cover: cover.trim() || undefined,
+        status: nstatus,
+        synopsis: synopsis.trim() || undefined,
+        chapters: sortedChapters,
+        wordCount: allWordCount,
+      };
+    }
+    const novelSummary = (synopsis.trim() || sortedChapters[0]?.content.replace(/[#>*`$\\[\]()]/g, '').replace(/\n/g, ' ').slice(0, 120) || '');
     const article: Article = {
       id: editing?.id || uid(),
       title: title.trim(),
-      content,
+      content: isNovelMode ? sortedChapters.map((ch) => ch.content).join('\\n\\n') : content,
       category,
       tags: tagsArr,
       date: editing?.date || new Date().toISOString().slice(0, 10),
       favorite,
       pinned: editing?.pinned || false,
       attachments,
-      summary: content.replace(/[#>*`$\\[\]()]/g, '').replace(/\n/g, ' ').slice(0, 120),
+      summary: isNovelMode ? novelSummary : content.replace(/[#>*`$\\[\]()]/g, '').replace(/\n/g, ' ').slice(0, 120),
+      novel: isNovelMode ? novelObj : undefined,
     };
     if (editing) {
       updateArticle(article);
@@ -343,6 +426,65 @@ export default function Write() {
           </label>
         </div>
 
+        {category === 'reading' && (
+          <div className="novel-editor card">
+            <h3 className="novel-editor-title">小说信息</h3>
+            <div className="novel-fields">
+              <div className="meta-field">
+                <label>作者（名著主名）</label>
+                <input type="text" placeholder="同学名字" value={author} onChange={(e) => setAuthor(e.target.value)} />
+              </div>
+              <div className="meta-field">
+                <label>封面图 URL（可选）</label>
+                <input type="text" placeholder="https://…/cover.jpg" value={cover} onChange={(e) => setCover(e.target.value)} />
+              </div>
+              <div className="meta-field">
+                <label>状态</label>
+                <select value={nstatus} onChange={(e) => setNstatus(e.target.value as NovelStatus)}>
+                  {Object.entries(NOVEL_STATUS_META).map(([k, m]) => (
+                    <option key={k} value={k}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="novel-field-full">
+              <label>简介</label>
+              <textarea rows={2} placeholder="一句话介绍这本书…" value={synopsis} onChange={(e) => setSynopsis(e.target.value)} />
+            </div>
+
+            <div className="novel-ch-tools">
+              <h4>章节</h4>
+              <button className="btn btn-light btn-sm" onClick={() => addChapter()}>＋ 新增章节</button>
+              <label className="btn btn-light btn-sm file-btn">
+                导入 txt 自动分章
+                <input type="file" accept=".txt,.md,.markdown" style={{ display: 'none' }} onChange={(e) => importChapterFile(e, true)} />
+              </label>
+              <label className="btn btn-light btn-sm file-btn">
+                追加 txt 为一章
+                <input type="file" accept=".txt,.md,.markdown" style={{ display: 'none' }} onChange={(e) => importChapterFile(e, false)} />
+              </label>
+            </div>
+
+            {chapters.length === 0 && (
+              <p className="novel-empty-tip">还没有章节，可「新增章节」，或直接导入同学的 txt 自动分章。</p>
+            )}
+
+            <div className="novel-ch-list">
+              {chapters.map((ch, ix) => (
+                <div className="novel-ch-item" key={ch.id}>
+                  <div className="novel-ch-head">
+                    <input className="novel-ch-title-input" value={ch.title} onChange={(e) => updateChapter(ch.id, { title: e.target.value })} placeholder="章节标题" />
+                    <span className="novel-ch-wc">{ch.wordCount ?? 0} 字</span>
+                    <button className="btn btn-light btn-sm" disabled={ix === 0} onClick={() => moveChapter(ch.id, -1)}>↑</button>
+                    <button className="btn btn-light btn-sm" disabled={ix === chapters.length - 1} onClick={() => moveChapter(ch.id, 1)}>↓</button>
+                    <button className="btn btn-danger btn-sm" onClick={() => removeChapter(ch.id)}>删除</button>
+                  </div>
+                  <textarea className="novel-ch-content" value={ch.content} onChange={(e) => updateChapter(ch.id, { content: e.target.value })} rows={6} placeholder="本章正文（支持 Markdown 与 LaTeX）" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="editor-tabs">
           <button className={`tab-btn ${!previewing ? 'active' : ''}`} onClick={() => setPreviewing(false)}>
             编辑
