@@ -69,7 +69,12 @@ export function ArticleProvider({ children }: { children: ReactNode }) {
         novel: article.novel ? JSON.stringify(article.novel) : null,
       })
       .then(({ error }) => {
-        if (!error) refresh();
+        if (error) {
+          console.error('文章发布失败：', error);
+          alert('发布失败：' + error.message + (/column|novel|relation/i.test(error.message || '') ? '\n\n数据库 articles 表可能缺少 novel 列，请在 Supabase 执行：\nALTER TABLE articles ADD COLUMN IF NOT EXISTS novel jsonb;' : ''));
+          return;
+        }
+        refresh();
       });
   };
 
@@ -91,7 +96,12 @@ export function ArticleProvider({ children }: { children: ReactNode }) {
       })
       .eq('id', a.id)
       .then(({ error }) => {
-        if (!error) refresh();
+        if (error) {
+          console.error('文章更新失败：', error);
+          alert('更新失败：' + error.message);
+          return;
+        }
+        refresh();
       });
   };
 
