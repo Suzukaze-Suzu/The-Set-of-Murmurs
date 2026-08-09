@@ -703,39 +703,88 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-synopsis{color:var(--text-secondary);font-size:.85rem;line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;flex:1;margin:0}
 .novel-stats{display:flex;gap:6px;color:var(--text-secondary);font-size:.8rem}
 
-/* ===== 小说阅读器 ===== */
-.novel-reader{--novel-bg:var(--bg-page);--novel-text:var(--text-main);--novel-card:var(--bg-card);--novel-secondary:var(--text-secondary);background:var(--novel-bg);color:var(--novel-text)}
-.novel-reader-sepia{--novel-bg:#f5ecd9;--novel-text:#4a3f2f;--novel-card:#fbf4e3;--novel-secondary:#6f6450}
-.novel-reader-night{--novel-bg:#12161f;--novel-text:#cfd8e6;--novel-card:#1c2230;--novel-secondary:#8b97ab}
-.novel-topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid color-mix(in srgb,var(--slate-blue) 20%,transparent);margin-bottom:18px}
-.novel-top-left,.novel-top-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.novel-top-right{justify-content:flex-end}
-.novel-btn{background:color-mix(in srgb,var(--slate-blue) 12%,transparent);border:1px solid color-mix(in srgb,var(--slate-blue) 25%,transparent);color:var(--novel-text);border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.85rem}
-.novel-btn.on{background:var(--sky-blue);color:#fff;border-color:var(--sky-blue)}
-.novel-progress{color:var(--novel-secondary);font-size:.9rem}
-.novel-theme-label{color:var(--novel-secondary);font-size:.8rem}
-.novel-bookhead{display:flex;gap:20px;align-items:flex-start;padding:20px 0;border-bottom:1px solid color-mix(in srgb,var(--slate-blue) 18%,transparent);margin-bottom:20px}
-.novel-head-cover{width:150px;aspect-ratio:3/4;object-fit:cover;border-radius:var(--radius-sm);box-shadow:var(--shadow-sm);display:block}
-.novel-head-cover-ph{display:flex;align-items:center;justify-content:center;font-size:58px;color:#fff;font-weight:800;background:linear-gradient(135deg,#2F6B4F,#4A9BB8)}
-.novel-head-info{flex:1;display:flex;flex-direction:column;gap:8px}
-.novel-cat{align-self:flex-start;padding:2px 10px;border-radius:20px;background:color-mix(in srgb,var(--sky-blue) 16%,transparent);color:var(--sky-blue);font-size:.8rem;text-decoration:none}
-.novel-book-title{font-size:1.7rem;font-weight:800;line-height:1.3;color:var(--novel-text);margin:0}
-.novel-book-author{color:var(--novel-secondary)}
-.novel-book-synopsis{color:var(--novel-secondary);line-height:1.7;margin:0}
-.novel-book-meta{display:flex;gap:10px;color:var(--novel-secondary);font-size:.85rem}
-.novel-chapter{padding:26px 30px;background:var(--novel-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid color-mix(in srgb,var(--slate-blue) 14%,transparent)}
-.novel-chapter-title{font-size:1.4rem;font-weight:800;color:var(--novel-text);margin:0 0 18px;padding-bottom:14px;border-bottom:1px solid color-mix(in srgb,var(--slate-blue) 18%,transparent)}
-.novel-reader .markdown-body{font-size:inherit;line-height:inherit}
-.novel-nav{display:flex;align-items:center;justify-content:center;gap:18px;margin:26px 0}
-.novel-nav-hint{color:var(--novel-secondary);font-size:.8rem}
-.novel-toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;justify-content:flex-end}
-.novel-toc{width:min(340px,85vw);height:100%;background:var(--novel-card);color:var(--novel-text);box-shadow:-8px 0 30px rgba(0,0,0,.2);display:flex;flex-direction:column}
-.novel-toc-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid color-mix(in srgb,var(--slate-blue) 18%,transparent);font-weight:700}
-.novel-toc-list{overflow-y:auto;flex:1;padding:10px}
-.novel-toc-item{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;padding:11px 12px;border:none;background:transparent;color:var(--novel-text);border-bottom:1px solid color-mix(in srgb,var(--slate-blue) 8%,transparent);cursor:pointer;border-radius:6px}
-.novel-toc-item:hover{background:color-mix(in srgb,var(--slate-blue) 10%,transparent)}
-.novel-toc-item.current{color:var(--sky-blue);font-weight:700}
-.novel-toc-wc{color:var(--novel-secondary);font-size:.75rem;white-space:nowrap}
+
+/* ===== 小说阅读器（沉浸式） ===== */
+.novel-reader{--reader-bg:var(--bg-card);--reader-text:var(--text-main);--reader-secondary:var(--text-secondary);--reader-soft:var(--bg-soft)}
+.novel-reader-night{--reader-bg:#10151d;--reader-text:#cdd6e4;--reader-secondary:#8b97ab;--reader-soft:#1a2332}
+
+/* --- 书头详情页 --- */
+.nreader-shelf{display:flex;flex-direction:column;gap:22px;padding:8px 0 18px}
+.nreader-cover-hero{display:flex;gap:26px;align-items:flex-start}
+.nreader-hero-cover{width:170px;aspect-ratio:3/4;object-fit:cover;border-radius:var(--radius);box-shadow:var(--shadow);display:block;flex-shrink:0}
+.nreader-hero-cover-ph{display:flex;align-items:center;justify-content:center;font-size:64px;color:#fff;font-weight:800;background:linear-gradient(135deg,#2F6B4F,#4A9BB8)}
+.nreader-hero-info{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.nreader-cat{align-self:flex-start;padding:3px 12px;border-radius:20px;background:color-mix(in srgb,var(--sky-blue) 16%,transparent);color:var(--sky-blue);font-size:.82rem;text-decoration:none}
+.nreader-book-title{font-size:2rem;font-weight:800;line-height:1.25;color:var(--text-main);margin:0}
+.nreader-book-author{color:var(--text-secondary);font-size:.95rem}
+.nreader-status-badge{display:inline-block;padding:2px 12px;border-radius:20px;font-size:.8rem;font-weight:600;align-self:flex-start}
+.nreader-book-meta{display:flex;gap:12px;color:var(--text-secondary);font-size:.88rem;flex-wrap:wrap}
+.nreader-synopsis{color:var(--text-secondary);line-height:1.9;font-size:.98rem;padding:16px 18px;background:var(--bg-soft);border-radius:var(--radius-sm);border-left:4px solid var(--sky-blue);margin:0}
+.nreader-shelf-actions{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.nreader-start-btn{display:inline-flex;align-items:center;gap:10px;background:var(--grad-main);color:#fff;border:none;font-size:1.05rem;font-weight:700;padding:14px 30px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:0 10px 26px rgba(91,168,216,.35);transition:all .25s}
+.nreader-start-btn:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(91,168,216,.45)}
+.nreader-start-ico{font-size:.85rem}
+.nreader-toc-btn{padding:14px 26px;border-radius:var(--radius-pill);font-size:1rem;font-weight:600;cursor:pointer;background:var(--bg-card);color:var(--text-main);border:1px solid color-mix(in srgb,var(--sky-blue) 25%,transparent);transition:all .25s}
+.nreader-toc-btn:hover{background:var(--bg-soft)}
+.nreader-book-comments{margin-top:6px}
+.nreader-book-comments summary{cursor:pointer;font-weight:700;color:var(--sky-blue-dark);font-size:1rem;padding:8px 0;list-style:none}
+.nreader-book-comments[open] summary{border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 15%,transparent);margin-bottom:14px}
+
+/* --- 沉浸阅读页 --- */
+.nreader-page{min-height:60vh}
+.nreader-topbar{position:sticky;top:60px;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px;background:var(--reader-bg);border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent)}
+.nreader-top-left,.nreader-top-right{display:flex;align-items:center;gap:10px;min-width:0}
+.nreader-top-title{font-size:.95rem;font-weight:700;color:var(--reader-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nreader-top-progress{color:var(--reader-secondary);font-size:.85rem;font-weight:600}
+.nreader-top-btn{background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px solid color-mix(in srgb,var(--sky-blue) 20%,transparent);color:var(--reader-text);border-radius:var(--radius-pill);padding:6px 14px;cursor:pointer;font-size:.88rem;transition:background .2s}
+.nreader-top-btn:hover{background:color-mix(in srgb,var(--sky-blue) 20%,transparent)}
+.nreader-top-btn.back{width:32px;padding:6px 0;font-size:1.3rem;line-height:1}
+.nreader-progressbar{height:4px;background:color-mix(in srgb,var(--slate-blue) 18%,transparent);border-radius:2px;margin:4px 0 26px;overflow:hidden;cursor:pointer}
+.nreader-progress-fill{height:100%;background:var(--grad-main);transition:width .3s ease;border-radius:2px;min-width:2px}
+.nreader-chapter{padding:6px 6px 12px;max-width:760px;margin:0 auto;color:var(--reader-text)}
+.nreader-chapter-title{font-size:1.55rem;font-weight:800;color:var(--reader-text);margin:0 0 26px;padding-bottom:16px;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 16%,transparent);text-align:center;line-height:1.4}
+.nreader-page .markdown-body{font-size:inherit;line-height:inherit;color:var(--reader-text)}
+.nreader-page .markdown-body p{margin:1.05em 0}
+.nreader-page .markdown-body blockquote{background:var(--reader-soft)}
+.nreader-page .markdown-body code{background:color-mix(in srgb,var(--coral-pink) 12%,transparent)}
+.nreader-page .markdown-body table th,.nreader-page .markdown-body td{border-color:color-mix(in srgb,var(--slate-blue) 22%,transparent)}
+.nreader-footnav{display:flex;align-items:stretch;gap:12px;max-width:760px;margin:26px auto;justify-content:space-between}
+.nreader-foot-btn{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:13px 18px;background:var(--bg-card);border:1px solid color-mix(in srgb,var(--sky-blue) 18%,transparent);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;color:var(--text-main);text-align:left}
+.nreader-foot-btn:hover:not(:disabled){background:var(--bg-soft);transform:translateY(-1px)}
+.nreader-foot-btn:disabled{opacity:.38;cursor:not-allowed}
+.nreader-foot-btn.right{align-items:flex-end;text-align:right}
+.nreader-foot-btn.foot-center{flex:0 0 auto;align-items:center;justify-content:center;min-width:96px;font-weight:600;color:var(--sky-blue-dark)}
+.nreader-foot-dir{font-size:.86rem;font-weight:700;white-space:nowrap}
+.nreader-foot-name{font-size:.78rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.nreader-chapter-comments{margin-top:34px;padding-top:22px;border-top:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent)}
+.nreader-comments-ttl{font-size:1rem;font-weight:700;color:var(--reader-text);margin:0 0 14px}
+
+/* --- 目录抽屉 --- */
+.nreader-toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;justify-content:flex-end;backdrop-filter:blur(2px)}
+.nreader-toc{width:min(360px,86vw);height:100%;background:var(--reader-bg);color:var(--reader-text);box-shadow:-10px 0 36px rgba(0,0,0,.25);display:flex;flex-direction:column;animation:nreader-slide-in .28s ease}
+@keyframes nreader-slide-in{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.nreader-toc-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 16%,transparent);font-weight:700;font-size:1.05rem}
+.nreader-toc-list{overflow-y:auto;flex:1;padding:10px}
+.nreader-toc-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 12px;border:none;background:transparent;color:var(--reader-text);border-bottom:1px solid color-mix(in srgb,var(--slate-blue) 8%,transparent);cursor:pointer;border-radius:8px}
+.nreader-toc-item:hover{background:color-mix(in srgb,var(--sky-blue) 8%,transparent)}
+.nreader-toc-item.current{background:color-mix(in srgb,var(--sky-blue) 12%,transparent);color:var(--sky-blue);font-weight:700}
+.nreader-toc-no{width:26px;height:26px;flex-shrink:0;border-radius:50%;background:color-mix(in srgb,var(--slate-blue) 15%,transparent);color:var(--reader-secondary);font-size:.78rem;display:flex;align-items:center;justify-content:center;font-weight:600}
+.nreader-toc-item.current .nreader-toc-no{background:var(--sky-blue);color:#fff}
+.nreader-toc-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nreader-toc-wc{color:var(--reader-secondary);font-size:.75rem;white-space:nowrap;flex-shrink:0}
+
+/* --- 设置底部面板 --- */
+.nreader-set-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:flex;align-items:flex-end;backdrop-filter:blur(2px)}
+.nreader-sheet{width:100%;max-width:640px;margin:0 auto;background:var(--reader-bg);color:var(--reader-text);border-radius:20px 20px 0 0;padding:14px 24px 30px;box-shadow:0 -10px 40px rgba(0,0,0,.2);animation:nreader-sheet-up .28s ease;display:flex;flex-direction:column;gap:16px}
+@keyframes nreader-sheet-up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.nreader-sheet-grip{width:42px;height:4px;border-radius:2px;background:color-mix(in srgb,var(--slate-blue) 30%,transparent);margin:0 auto 6px}
+.nreader-sheet-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nreader-sheet-label{font-size:.92rem;font-weight:600;color:var(--reader-text);min-width:56px}
+.nreader-sheet-group{display:flex;align-items:center;gap:10px}
+.nreader-size-val{color:var(--reader-secondary);font-size:.85rem;min-width:40px;text-align:center}
+.nreader-pill{padding:8px 18px;border-radius:var(--radius-pill);border:1px solid color-mix(in srgb,var(--sky-blue) 24%,transparent);background:transparent;color:var(--reader-text);cursor:pointer;font-size:.9rem;transition:all .2s;min-width:70px}
+.nreader-pill.on{background:var(--sky-blue);color:#fff;border-color:var(--sky-blue)}
+.nreader-pill:hover{background:color-mix(in srgb,var(--sky-blue) 14%,transparent)}
 
 /* ===== 小说写作编辑器 ===== */
 .novel-editor{margin-top:24px;padding:22px;background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
