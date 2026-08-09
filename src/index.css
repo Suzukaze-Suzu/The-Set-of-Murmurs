@@ -839,3 +839,27 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-ch-ed-head{display:flex;flex-direction:column;gap:6px}
 .novel-ch-ed-head .novel-ch-title-input{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-size:1rem;font-weight:600}
 .novel-ch-ed-head .novel-ch-title-input:focus{outline:none;border-color:var(--sky-blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--sky-blue) 18%,transparent)}
+
+/* === 小说写作区按钮在浅色卡片上清晰可见（覆盖 btn-light 的白色样式） === */
+.novel-newbox .btn-light,
+.novel-existingbox .btn-light,
+.novel-chapter-editor .btn-light,
+.novel-ch-tools .btn-light{
+  color:var(--sky-blue-dark);
+  background:color-mix(in srgb,var(--sky-blue) 9%,transparent);
+  border:1px solid color-mix(in srgb,var(--sky-blue) 45%,transparent);
+  backdrop-filter:none;
+  box-shadow:none;
+}
+.novel-newbox .btn-light:hover,
+.novel-existingbox .btn-light:hover,
+.novel-chapter-editor .btn-light:hover,
+.novel-ch-tools .btn-light:hover{
+  background:var(--sky-blue);color:#fff;transform:translateY(-1px)
+}
+.novel-newbox .btn-light:disabled,
+.novel-existingbox .btn-light:disabled,
+.novel-chapter-editor .btn-light:disabled,
+.novel-ch-tools .btn-light:disabled{
+  opacity:.55;cursor:not-allowed;transform:none
+}
