@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Article, Comment, NOVEL_STATUS_META } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
@@ -13,8 +13,8 @@ interface Props {
   currentUserId?: string;
 }
 
-const FONT_SIZES = ['1rem', '1.15rem', '1.3rem', '1.45rem'];
-const LINE_HEIGHTS = ['1.8', '2', '2.3'];
+const FONT_SIZES = ['1.05rem', '1.2rem', '1.35rem', '1.5rem'];
+const LINE_HEIGHTS = ['1.8', '2', '2.2'];
 
 export default function NovelReader({ article, allComments, onAddComment, onDeleteComment, currentUserId }: Props) {
   const novel = article.novel;
@@ -33,6 +33,10 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
   const [tocOpen, setTocOpen] = useState(false);
   const [settingOpen, setSettingOpen] = useState(false);
   const [view, setView] = useState<'shelf' | 'reader'>('shelf');
+  const [barsVisible, setBarsVisible] = useState(true); // 工具条是否显示
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startIx = Math.max(0, chapters.findIndex((ch) => ch.id === progress.chapterId));
   const [curIx, setCurIx] = useState(Math.min(startIx, Math.max(0, chapters.length - 1)));
@@ -54,7 +58,8 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
     saveProgress(next);
     setTocOpen(false);
     setSettingOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    else window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // 开始阅读：进入沉浸阅读页
@@ -63,7 +68,9 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
     saveProgress(ix);
     setView('reader');
     setTocOpen(false);
-    window.scrollTo({ top: 0 });
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: 0 });
+    else window.scrollTo({ top: 0 });
   };
 
   // 返回书头页
@@ -71,9 +78,25 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
     setTocOpen(false);
     setSettingOpen(false);
     setView('shelf');
+    setBarsVisible(true);
   };
 
-  // 键盘翻页
+  // 工具条自动隐藏：滚动时隐藏，鼠标移动/触摸时短暂显示
+  const showBars = () => {
+    setBarsVisible(true);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => {
+      if (!tocOpen && !settingOpen) setBarsVisible(false);
+    }, 2600);
+  };
+
+  // 点屏幕中间唤出/隐藏工具条
+  const toggleBars = () => {
+    setBarsVisible((v) => !v);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+  };
+
+  // 键盘
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -89,7 +112,7 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [curIx, total]);
 
-  // 当前章评论：article.id::chapterId
+  // 当前章评论
   const curComments = useMemo(
     () => cur ? allComments.filter((c) => c.articleId === article.id + '::' + cur.id) : [],
     [allComments, article.id, cur]
@@ -101,11 +124,12 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
   );
 
   if (total === 0) {
-    return null; // 无章节时回到普通渲染（由外层判断 handle）
+    return null;
   }
 
   const themeCls = theme === 'night' ? 'novel-reader-night' : '';
   const fullscreenCls = view === 'reader' ? ' nreader-fullscreen' : '';
+  const barsCls = barsVisible ? '' : ' nreader-bars-hidden';
 
   return (
     <div className={'novel-reader ' + themeCls + fullscreenCls}>
@@ -159,25 +183,47 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
         </div>
       )}
 
-      {/* ===== 沉浸阅读页 ===== */}
+      {/* ===== 沉浸阅读页（Apple Books 风） ===== */}
       {view === 'reader' && (
-        <div className="nreader-page">
+        <div
+          className={'nreader-page' + barsCls}
+          ref={scrollRef}
+          onScroll={() => {
+            if (barsVisible) {
+              if (hideTimer.current) clearTimeout(hideTimer.current);
+              hideTimer.current = setTimeout(() => {
+                if (!tocOpen && !settingOpen) setBarsVisible(false);
+              }, 900);
+            }
+          }}
+          onMouseMove={() => { if (!barsVisible) showBars(); }}
+          onClick={(e) => {
+            // 点击正文中间唤出/隐藏工具条（忽略点击按钮、链接、评论时）
+            const t = e.target as HTMLElement;
+            if (t.closest('button, a, .nreader-toc, .nreader-sheet, textarea, input, .comment-section')) return;
+            const r = e.currentTarget.getBoundingClientRect();
+            const mx = e.clientX - r.left;
+            const midW = r.width / 3;
+            if (mx > midW && mx < r.width - midW) {
+              toggleBars();
+            }
+          }}
+        >
+          {/* 顶栏 */}
           <div className="nreader-topbar">
             <div className="nreader-top-left">
-              <button className="nreader-top-btn back" onClick={backToShelf}>‹ 返回书籍</button>
-              <span className="nreader-top-title">{article.title}</span>
+              <button className="nreader-top-btn back" onClick={backToShelf} title="返回书籍">‹</button>
             </div>
+            <button className="nreader-top-title" onClick={() => setTocOpen(true)} title="章节目录">
+              {cur.title}
+            </button>
             <div className="nreader-top-right">
               <span className="nreader-top-progress">{curIx + 1}/{total}</span>
-              <button className="nreader-top-btn" onClick={() => setTocOpen(true)}>目录</button>
-              <button className="nreader-top-btn" onClick={() => setSettingOpen(true)}>Aa</button>
+              <button className="nreader-top-btn" onClick={() => setSettingOpen(true)} title="设置">Aa</button>
             </div>
           </div>
 
-          <div className="nreader-progressbar">
-            <div className="nreader-progress-fill" style={{ width: readPct + '%' }} />
-          </div>
-
+          {/* 正文 */}
           <article
             className="nreader-chapter"
             style={{ fontSize: FONT_SIZES[fontIx], lineHeight: LINE_HEIGHTS[lineIx] }}
@@ -186,22 +232,18 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
             <MarkdownRenderer content={cur.content} />
           </article>
 
+          {/* 底部分页导航 */}
           <div className="nreader-footnav">
             <button
               className="nreader-foot-btn"
               disabled={curIx <= 0}
               onClick={() => goTo(curIx - 1)}
             >
-              <span className="nreader-foot-dir">← 上一章</span>
+              <span className="nreader-foot-dir">上一章</span>
               <span className="nreader-foot-name">{curIx > 0 ? chapters[curIx - 1].title : ''}</span>
             </button>
-            <button className="nreader-foot-btn foot-center" onClick={() => setTocOpen(true)}>目录</button>
-            <button
-              className="nreader-foot-btn right"
-              disabled={curIx >= total - 1}
-              onClick={() => goTo(curIx + 1)}
-            >
-              <span className="nreader-foot-dir">下一章 →</span>
+            <button className="nreader-foot-btn right" disabled={curIx >= total - 1} onClick={() => goTo(curIx + 1)}>
+              <span className="nreader-foot-dir">下一章</span>
               <span className="nreader-foot-name">{curIx < total - 1 ? chapters[curIx + 1].title : ''}</span>
             </button>
           </div>
@@ -217,6 +259,11 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
               />
             </div>
           )}
+
+          {/* 底部整本进度细线 */}
+          <div className="nreader-book-progress">
+            <div className="nreader-book-progress-fill" style={{ width: readPct + '%' }} />
+          </div>
         </div>
       )}
 

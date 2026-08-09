@@ -707,7 +707,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 小说阅读器（沉浸式） ===== */
 .novel-reader{--reader-bg:var(--bg-card);--reader-text:var(--text-main);--reader-secondary:var(--text-secondary);--reader-soft:var(--bg-soft)}
 .novel-reader-night{--reader-bg:#10151d;--reader-text:#cdd6e4;--reader-secondary:#8b97ab;--reader-soft:#1a2332}
-.novel-reader.nreader-fullscreen{position:fixed;inset:0;z-index:150;background:var(--reader-bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.novel-reader.nreader-fullscreen{position:fixed;inset:0;z-index:150;background:var(--reader-bg);display:flex;flex-direction:column}
 
 /* --- 书头详情页 --- */
 .nreader-shelf{display:flex;flex-direction:column;gap:22px;padding:8px 0 18px}
@@ -731,34 +731,42 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-book-comments summary{cursor:pointer;font-weight:700;color:var(--sky-blue-dark);font-size:1rem;padding:8px 0;list-style:none}
 .nreader-book-comments[open] summary{border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 15%,transparent);margin-bottom:14px}
 
-/* --- 沉浸阅读页 --- */
-.nreader-page{min-height:60vh}
-.nreader-topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px;background:var(--reader-bg);border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent)}
-.nreader-top-left,.nreader-top-right{display:flex;align-items:center;gap:10px;min-width:0}
-.nreader-top-title{font-size:.95rem;font-weight:700;color:var(--reader-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nreader-top-progress{color:var(--reader-secondary);font-size:.85rem;font-weight:600}
-.nreader-top-btn{background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px solid color-mix(in srgb,var(--sky-blue) 20%,transparent);color:var(--reader-text);border-radius:var(--radius-pill);padding:6px 14px;cursor:pointer;font-size:.88rem;transition:background .2s}
-.nreader-top-btn:hover{background:color-mix(in srgb,var(--sky-blue) 20%,transparent)}
-.nreader-top-btn.back{width:32px;padding:6px 0;font-size:1.3rem;line-height:1}
-.nreader-progressbar{height:4px;background:color-mix(in srgb,var(--slate-blue) 18%,transparent);border-radius:2px;margin:4px 0 26px;overflow:hidden;cursor:pointer}
-.nreader-progress-fill{height:100%;background:var(--grad-main);transition:width .3s ease;border-radius:2px;min-width:2px}
-.nreader-chapter{padding:6px 6px 12px;max-width:760px;margin:0 auto;color:var(--reader-text)}
-.nreader-chapter-title{font-size:1.2rem;font-weight:800;color:var(--reader-text);margin:0 0 26px;padding-bottom:16px;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 16%,transparent);text-align:center;line-height:1.4}
+
+/* --- 沉浸阅读页（Apple Books 风） --- */
+.nreader-page{flex:1;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0;position:relative}
+.nreader-topbar{position:fixed;top:0;left:0;right:0;z-index:65;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;background:color-mix(in srgb,var(--reader-bg) 84%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid color-mix(in srgb,var(--reader-secondary) 14%,transparent);transition:opacity .32s ease,transform .32s ease}
+.nreader-top-left,.nreader-top-right{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.nreader-top-left{justify-content:flex-start}
+.nreader-top-right{justify-content:flex-end}
+.nreader-top-title{flex:0 1 auto;max-width:60%;font-size:1.05rem;font-weight:600;color:var(--reader-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:transparent;border:none;cursor:pointer;padding:4px 10px;border-radius:8px;transition:background .2s;text-align:center}
+.nreader-top-title:hover{background:color-mix(in srgb,var(--reader-secondary) 12%,transparent)}
+.nreader-top-progress{color:var(--reader-secondary);font-size:.82rem;font-weight:500;white-space:nowrap}
+.nreader-top-btn{background:transparent;border:none;color:var(--reader-text);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.nreader-top-btn:hover{background:color-mix(in srgb,var(--reader-secondary) 14%,transparent)}
+.nreader-top-btn.back{font-size:1.6rem;line-height:1}
+.nreader-chapter{padding:88px 26px 40px;max-width:900px;margin:0 auto;color:var(--reader-text)}
+.nreader-chapter-title{font-size:1.24rem;font-weight:700;color:var(--reader-text);margin:0 0 30px;text-align:center;line-height:1.5;letter-spacing:.5px}
 .nreader-page .markdown-body{font-size:inherit;line-height:inherit;color:var(--reader-text)}
-.nreader-page .markdown-body p{margin:1.05em 0}
-.nreader-page .markdown-body blockquote{background:var(--reader-soft)}
+.nreader-page .markdown-body p{text-align:justify;margin:1.15em 0}
+.nreader-page .markdown-body blockquote{background:var(--reader-soft);border-left-width:3px}
 .nreader-page .markdown-body code{background:color-mix(in srgb,var(--coral-pink) 12%,transparent)}
 .nreader-page .markdown-body table th,.nreader-page .markdown-body td{border-color:color-mix(in srgb,var(--slate-blue) 22%,transparent)}
-.nreader-footnav{display:flex;align-items:stretch;gap:12px;max-width:760px;margin:26px auto;justify-content:space-between}
-.nreader-foot-btn{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:13px 18px;background:var(--bg-card);border:1px solid color-mix(in srgb,var(--sky-blue) 18%,transparent);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;color:var(--text-main);text-align:left}
-.nreader-foot-btn:hover:not(:disabled){background:var(--bg-soft);transform:translateY(-1px)}
-.nreader-foot-btn:disabled{opacity:.38;cursor:not-allowed}
+.nreader-footnav{display:flex;align-items:stretch;gap:12px;max-width:900px;margin:30px auto 60px;padding:0 26px}
+.nreader-foot-btn{flex:1;display:flex;flex-direction:column;gap:3px;padding:14px 18px;background:transparent;border:1px solid color-mix(in srgb,var(--reader-secondary) 18%,transparent);border-radius:14px;cursor:pointer;transition:all .22s;color:var(--reader-text);text-align:left}
+.nreader-foot-btn:hover:not(:disabled){background:color-mix(in srgb,var(--reader-secondary) 8%,transparent);transform:translateY(-1px)}
+.nreader-foot-btn:disabled{opacity:.3;cursor:not-allowed}
 .nreader-foot-btn.right{align-items:flex-end;text-align:right}
-.nreader-foot-btn.foot-center{flex:0 0 auto;align-items:center;justify-content:center;min-width:96px;font-weight:600;color:var(--sky-blue-dark)}
-.nreader-foot-dir{font-size:.86rem;font-weight:700;white-space:nowrap}
-.nreader-foot-name{font-size:.78rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.nreader-chapter-comments{margin-top:34px;padding-top:22px;border-top:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent)}
+.nreader-foot-dir{font-size:.88rem;font-weight:600;white-space:nowrap}
+.nreader-foot-name{font-size:.76rem;color:var(--reader-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.nreader-chapter-comments{margin-top:34px;padding:22px 26px 40px;max-width:900px;margin-left:auto;margin-right:auto;border-top:1px solid color-mix(in srgb,var(--reader-secondary) 14%,transparent)}
 .nreader-comments-ttl{font-size:1rem;font-weight:700;color:var(--reader-text);margin:0 0 14px}
+/* 底部整本进度细线（固定在视口底部） */
+.nreader-book-progress{position:fixed;left:0;right:0;bottom:0;height:3px;background:transparent;z-index:65}
+.nreader-book-progress-fill{height:100%;background:var(--reader-secondary);opacity:.85;transition:width .3s ease}
+/* 工具条自动隐藏 */
+.nreader-bars-hidden .nreader-topbar{opacity:0;transform:translateY(-100%);pointer-events:none}
+.nreader-bars-hidden .nreader-footnav{opacity:0;transform:translateY(10px);pointer-events:none}
+.nreader-bars-hidden .nreader-book-progress{opacity:.35}
 
 /* --- 目录抽屉 --- */
 .nreader-toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;justify-content:flex-end;backdrop-filter:blur(2px)}
