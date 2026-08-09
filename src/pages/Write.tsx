@@ -427,7 +427,7 @@ export default function Write() {
                 {editingCh ? (
                   <div className="novel-chapter-editor card">
                     <div className="novel-ch-ed-head">
-                      <input className="novel-ch-title-input" placeholder="本章标题" value={chDraftTitle} onChange={(e) => setChDraftTitle(e.target.value)} />
+                      <input className="novel-ch-title-input" placeholder="本章标题" value={chDraftTitle} onChange={(e) => { setChDraftTitle(e.target.value); updateChapter(editChId, { title: e.target.value, content: chDraftContent }); }} />
                     </div>
                     <div className="editor-tabs">
                       <button className={'tab-btn' + (!chPreview ? ' active' : '')} onClick={() => setChPreview(false)}>编辑</button>
@@ -436,11 +436,9 @@ export default function Write() {
                     {chPreview ? (
                       <div className="editor-preview"><MarkdownRenderer content={chDraftContent} /></div>
                     ) : (
-                      <textarea className="editor-textarea" rows={16} value={chDraftContent} onChange={(e) => setChDraftContent(e.target.value)} placeholder="本章正文（支持 Markdown 与 LaTeX）" />
+                      <textarea className="editor-textarea" rows={16} value={chDraftContent} onChange={(e) => { setChDraftContent(e.target.value); updateChapter(editChId, { title: chDraftTitle, content: e.target.value }); }} placeholder="本章正文（支持 Markdown 与 LaTeX）" />
                     )}
-                    <div className="novel-edit-save-ch">
-                      <button className="btn btn-primary" onClick={() => { updateChapter(editChId, { title: chDraftTitle, content: chDraftContent }); alert('已保存本章《' + (chDraftTitle.trim() || '第' + chapters.findIndex((c) => c.id === editChId) + 1 + '章') + '》'); }}>保存本章</button>
-                    </div>
+
                   </div>
                 ) : (
                   <div className="novel-edit-placeholder">
