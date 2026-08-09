@@ -40,6 +40,13 @@ export default function Write() {
   const attachInput = useRef<HTMLInputElement>(null);
   const [attachUploading, setAttachUploading] = useState(false);
   const [attachProg, setAttachProg] = useState<Record<string, number>>({});
+  // 小说章节编辑（编辑已有书）
+  const [editChId, setEditChId] = useState('');
+  const [chDraftTitle, setChDraftTitle] = useState('');
+  const [chDraftContent, setChDraftContent] = useState('');
+  const [chPreview, setChPreview] = useState(false);
+  const coverInput = useRef<HTMLInputElement>(null);
+  const chapterFileInput = useRef<HTMLInputElement>(null);
 
   const loadFile = (file: File) => {
     const reader = new FileReader();
@@ -194,7 +201,9 @@ export default function Write() {
   };
   const mkChapterId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   const addChapter = (chapterTitle = '', ccontent = '') => {
-    setChapters((prev) => [...prev, { id: mkChapterId(), title: chapterTitle, content: ccontent, order: prev.length, wordCount: ccontent.replace(/\s/g, '').length }]);
+    const id = mkChapterId();
+    setChapters((prev) => [...prev, { id, title: chapterTitle, content: ccontent, order: prev.length, wordCount: ccontent.replace(/\s/g, '').length }]);
+    return id;
   };
   const updateChapter = (cid: string, patch: Partial<NovelChapter>) => {
     setChapters((prev) => prev.map((ch) =>
@@ -216,6 +225,20 @@ export default function Write() {
       arr.splice(to, 0, cc);
       return arr.map((ch, i) => ({ ...ch, order: i }));
     });
+  };
+  // 上传封面到 novel/cover/
+  const uploadCover = async (file: File | null | undefined) => {
+    if (!file) { alert('请选择封面图片'); return; }
+    try {
+      const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+      const path = 'novel/cover/' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      const { error } = await supabase.storage.from('articles').upload(path, file, { upsert: false });
+      if (error) { alert('封面上传失败：' + error.message); return; }
+      const { data: pub } = supabase.storage.from('articles').getPublicUrl(path);
+      setCover(pub.publicUrl);
+    } catch (err) {
+      alert('封面上传异常：' + (err instanceof Error ? err.message : String(err)));
+    }
   };
   const importChapterFile = (e: ChangeEvent<HTMLInputElement>, whole: boolean) => {
     const file = e.target.files?.[0];
@@ -323,6 +346,119 @@ export default function Write() {
   }
 
   if (composer === 'novel') {
+    // 编辑已有小说：进入章节级编辑界面（点选某章修改，或增删章节/调整顺序/改书籍信息）
+    if (editing?.novel) {
+      const editingCh = chapters.find((c) => c.id === editChId);
+      return (
+        <div className="page write-page">
+          <h1 className="page-title">编辑小说《{editing.title}》</h1>
+          <div className="composer-switch">
+            <button className="mode-tab" onClick={() => setComposer('article')}>写普通文章</button>
+            <button className="mode-tab on" onClick={() => setComposer('novel')}>写小说</button>
+          </div>
+
+          <div className="novel-edit-wrap card">
+            <div className="novel-edit-cols">
+              {/* 左：书籍信息 + 章节列表 */}
+              <div className="novel-edit-left">
+                <div className="novel-edit-section">
+                  <div className="novel-edit-section-head">书籍信息</div>
+                  <div className="novel-edit-cover-row">
+                    <div className="novel-cover-preview">
+                      {cover ? <img src={cover} alt="封面" className="novel-cover-img" /> : <span className="novel-cover-ph">{title.slice(0, 1) || '书'}</span>}
+                    </div>
+                    <div className="novel-cover-actions">
+                      <button className="btn btn-light btn-sm" onClick={() => coverInput.current?.click()}>{cover ? '更换封面' : '上传封面'}</button>
+                      <input ref={coverInput} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { uploadCover(e.target.files?.[0]); e.target.value = ''; }} />
+                      <p className="novel-cover-hint">封面将显示在书架</p>
+                    </div>
+                  </div>
+                  <div className="novel-fields">
+                    <div className="meta-field"><label>书名（必填）</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+                    <div className="meta-field"><label>作者</label><input type="text" value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="未填写" /></div>
+                    <div className="meta-field"><label>状态</label>
+                      <select value={nstatus} onChange={(e) => setNstatus(e.target.value as NovelStatus)}>
+                        {Object.entries(NOVEL_STATUS_META).map(([k, m]) => (<option key={k} value={k}>{m.label}</option>))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="novel-field-full">
+                    <label>简介</label>
+                    <textarea rows={2} value={synopsis} onChange={(e) => setSynopsis(e.target.value)} placeholder="一句话介绍这本书…" />
+                  </div>
+                </div>
+
+                <div className="novel-edit-section">
+                  <div className="novel-edit-chlist-head">
+                    <span className="novel-edit-chlist-title">章节（{chapters.length}）</span>
+                    <div className="novel-edit-chlist-actions">
+                      <button className="btn btn-light btn-sm" onClick={() => { const id = addChapter('', ''); setEditChId(id); setChDraftTitle(''); setChDraftContent(''); setChPreview(false); }}>＋ 新增章节</button>
+                      <button className="btn btn-light btn-sm" onClick={() => chapterFileInput.current?.click()}>导入 txt 分章</button>
+                      <input ref={chapterFileInput} type="file" accept=".txt,.md,.markdown" style={{ display: 'none' }} onChange={(e) => { importChapterFile(e, true); e.target.value = ''; }} />
+                    </div>
+                  </div>
+                  <div className="novel-edit-chitems">
+                    {chapters.length === 0 && (
+                      <p className="novel-edit-empty">还没有章节，点「＋ 新增章节」或「导入 txt 分章」开始。</p>
+                    )}
+                    {chapters.map((ch, i) => (
+                      <div key={ch.id} className={'novel-edit-chitem' + (editChId === ch.id ? ' active' : '')}>
+                        <button
+                          className="novel-edit-chname"
+                          onClick={() => { setEditChId(ch.id); setChDraftTitle(ch.title); setChDraftContent(ch.content); setChPreview(false); }}
+                        >
+                          <span className="novel-edit-ch-order">{i + 1}</span>
+                          <span className="novel-edit-ch-title-text">{ch.title || ('第' + (i + 1) + '章')}</span>
+                          <span className="novel-toc-wc">{ch.wordCount || 0} 字</span>
+                        </button>
+                        <div className="novel-edit-chops">
+                          <button onClick={() => moveChapter(ch.id, -1)} disabled={i === 0} title="上移">↑</button>
+                          <button onClick={() => moveChapter(ch.id, 1)} disabled={i === chapters.length - 1} title="下移">↓</button>
+                          <button onClick={() => { if (window.confirm('确定删除该章节？')) removeChapter(ch.id); }} title="删除">×</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 右：章节编辑器 */}
+              <div className="novel-edit-right">
+                {editingCh ? (
+                  <div className="novel-chapter-editor card">
+                    <div className="novel-ch-ed-head">
+                      <input className="novel-ch-title-input" placeholder="本章标题" value={chDraftTitle} onChange={(e) => setChDraftTitle(e.target.value)} />
+                    </div>
+                    <div className="editor-tabs">
+                      <button className={'tab-btn' + (!chPreview ? ' active' : '')} onClick={() => setChPreview(false)}>编辑</button>
+                      <button className={'tab-btn' + (chPreview ? ' active' : '')} onClick={() => setChPreview(true)}>预览</button>
+                    </div>
+                    {chPreview ? (
+                      <div className="editor-preview"><MarkdownRenderer content={chDraftContent} /></div>
+                    ) : (
+                      <textarea className="editor-textarea" rows={16} value={chDraftContent} onChange={(e) => setChDraftContent(e.target.value)} placeholder="本章正文（支持 Markdown 与 LaTeX）" />
+                    )}
+                    <div className="novel-edit-save-ch">
+                      <button className="btn btn-primary" onClick={() => { updateChapter(editChId, { title: chDraftTitle, content: chDraftContent }); alert('已保存本章《' + (chDraftTitle.trim() || '第' + chapters.findIndex((c) => c.id === editChId) + 1 + '章') + '》'); }}>保存本章</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="novel-edit-placeholder">
+                    <p>从左侧点选一个章节进行编辑，或点「＋ 新增章节」「导入 txt 分章」。</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="write-actions">
+            <button className="btn btn-primary" onClick={save}>保存修改</button>
+          </div>
+        </div>
+      );
+    }
+
+    // 新建小说：走 NovelComposer
     return (
       <div className="page write-page">
         <h1 className="page-title">{editing ? '编辑小说' : '写小说'}</h1>

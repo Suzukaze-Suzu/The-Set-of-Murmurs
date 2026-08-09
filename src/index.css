@@ -863,3 +863,37 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-ch-tools .btn-light:disabled{
   opacity:.55;cursor:not-allowed;transform:none
 }
+
+/* === 小说编辑界面（编辑已有书） === */
+.novel-edit-wrap{padding:0;overflow:hidden}
+.novel-edit-cols{display:grid;grid-template-columns:minmax(320px,380px) 1fr;gap:0}
+.novel-edit-left{display:flex;flex-direction:column;border-right:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent);background:color-mix(in srgb,var(--bg-soft) 45%,transparent)}
+.novel-edit-section{padding:18px;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
+.novel-edit-section:last-child{border-bottom:none}
+.novel-edit-section-head{font-size:.95rem;font-weight:700;color:var(--sky-blue-dark);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent)}
+.novel-edit-cover-row{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.novel-edit-cover-row .novel-cover-preview{width:84px;height:112px}
+.novel-edit-cover-row .novel-cover-actions{flex:1}
+.novel-edit-chlist-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.novel-edit-chlist-title{font-size:.98rem;font-weight:700;color:var(--text-main)}
+.novel-edit-chlist-actions{display:flex;gap:8px;flex-wrap:wrap}
+.novel-edit-chitems{display:flex;flex-direction:column;gap:7px;max-height:420px;overflow-y:auto;padding-right:4px}
+.novel-edit-chitem{display:flex;align-items:center;gap:6px;border:1px solid color-mix(in srgb,var(--sky-blue) 16%,transparent);border-radius:10px;padding:7px 8px;background:var(--bg-card);transition:all .2s}
+.novel-edit-chitem:hover{border-color:color-mix(in srgb,var(--sky-blue) 35%,transparent)}
+.novel-edit-chitem.active{border-color:var(--sky-blue);box-shadow:0 0 0 2px color-mix(in srgb,var(--sky-blue) 22%,transparent)}
+.novel-edit-chname{flex:1;display:flex;align-items:center;gap:9px;min-width:0;text-align:left;background:transparent;border:none;cursor:pointer;color:var(--text-main)}
+.novel-edit-ch-order{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:color-mix(in srgb,var(--sky-blue) 14%,transparent);color:var(--sky-blue-dark);font-size:.74rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.novel-edit-ch-title-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem;font-weight:600}
+.novel-edit-chops{display:flex;gap:3px;flex-shrink:0}
+.novel-edit-chops button{width:26px;height:26px;border:none;border-radius:7px;background:color-mix(in srgb,var(--sky-blue) 9%,transparent);color:var(--text-secondary);font-size:.9rem;cursor:pointer;transition:all .18s}
+.novel-edit-chops button:hover:not(:disabled){background:var(--coral-pink);color:#fff}
+.novel-edit-chops button:disabled{opacity:.3;cursor:not-allowed}
+.novel-edit-empty,.novel-edit-placeholder{color:var(--text-secondary);font-size:.88rem;line-height:1.7;text-align:center;padding:30px 18px}
+.novel-edit-right{padding:20px;min-width:0;display:flex;align-items:stretch}
+.novel-edit-right .novel-chapter-editor{width:100%;margin:0}
+.novel-edit-save-ch{display:flex;justify-content:flex-end;margin-top:14px}
+@media (max-width:860px){
+  .novel-edit-cols{grid-template-columns:1fr}
+  .novel-edit-left{border-right:none;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent)}
+  .novel-edit-chitems{max-height:280px}
+}
