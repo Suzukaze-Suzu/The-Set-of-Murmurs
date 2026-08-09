@@ -707,6 +707,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 小说阅读器（沉浸式） ===== */
 .novel-reader{--reader-bg:var(--bg-card);--reader-text:var(--text-main);--reader-secondary:var(--text-secondary);--reader-soft:var(--bg-soft)}
 .novel-reader-night{--reader-bg:#10151d;--reader-text:#cdd6e4;--reader-secondary:#8b97ab;--reader-soft:#1a2332}
+.novel-reader.nreader-fullscreen{position:fixed;inset:0;z-index:150;background:var(--reader-bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
 
 /* --- 书头详情页 --- */
 .nreader-shelf{display:flex;flex-direction:column;gap:22px;padding:8px 0 18px}
@@ -732,7 +733,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 
 /* --- 沉浸阅读页 --- */
 .nreader-page{min-height:60vh}
-.nreader-topbar{position:sticky;top:60px;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px;background:var(--reader-bg);border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent)}
+.nreader-topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px;background:var(--reader-bg);border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent)}
 .nreader-top-left,.nreader-top-right{display:flex;align-items:center;gap:10px;min-width:0}
 .nreader-top-title{font-size:.95rem;font-weight:700;color:var(--reader-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nreader-top-progress{color:var(--reader-secondary);font-size:.85rem;font-weight:600}
@@ -742,7 +743,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-progressbar{height:4px;background:color-mix(in srgb,var(--slate-blue) 18%,transparent);border-radius:2px;margin:4px 0 26px;overflow:hidden;cursor:pointer}
 .nreader-progress-fill{height:100%;background:var(--grad-main);transition:width .3s ease;border-radius:2px;min-width:2px}
 .nreader-chapter{padding:6px 6px 12px;max-width:760px;margin:0 auto;color:var(--reader-text)}
-.nreader-chapter-title{font-size:1.55rem;font-weight:800;color:var(--reader-text);margin:0 0 26px;padding-bottom:16px;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 16%,transparent);text-align:center;line-height:1.4}
+.nreader-chapter-title{font-size:1.2rem;font-weight:800;color:var(--reader-text);margin:0 0 26px;padding-bottom:16px;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 16%,transparent);text-align:center;line-height:1.4}
 .nreader-page .markdown-body{font-size:inherit;line-height:inherit;color:var(--reader-text)}
 .nreader-page .markdown-body p{margin:1.05em 0}
 .nreader-page .markdown-body blockquote{background:var(--reader-soft)}

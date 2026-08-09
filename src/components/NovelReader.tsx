@@ -105,9 +105,10 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
   }
 
   const themeCls = theme === 'night' ? 'novel-reader-night' : '';
+  const fullscreenCls = view === 'reader' ? ' nreader-fullscreen' : '';
 
   return (
-    <div className={'novel-reader ' + themeCls}>
+    <div className={'novel-reader ' + themeCls + fullscreenCls}>
       {/* ===== 书头详情页 ===== */}
       {view === 'shelf' && (
         <div className="nreader-shelf">
