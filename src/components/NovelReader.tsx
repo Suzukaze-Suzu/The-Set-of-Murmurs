@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Article, Comment, NOVEL_STATUS_META } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
@@ -226,6 +226,9 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
             className="nreader-chapter"
             style={{ fontSize: FONT_SIZES[fontIx], lineHeight: LINE_HEIGHTS[lineIx] }}
           >
+            {cur.part && (curIx === 0 || chapters[curIx - 1]?.part !== cur.part) && (
+              <h1 className="nreader-part-title"># {cur.part}</h1>
+            )}
             <h2 className="nreader-chapter-title">{cur.title}</h2>
             <MarkdownRenderer content={cur.content} />
           </article>
@@ -272,17 +275,22 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
               <button className="nreader-top-btn" onClick={() => setTocOpen(false)}>✕</button>
             </div>
             <div className="nreader-toc-list">
-              {chapters.map((ch, ix) => (
-                <button
-                  key={ch.id}
-                  className={'nreader-toc-item' + (ix === curIx ? ' current' : '')}
-                  onClick={() => goTo(ix)}
-                >
-                  <span className="nreader-toc-no">{ix + 1}</span>
-                  <span className="nreader-toc-name">{ch.title}</span>
-                  {ch.wordCount ? <span className="nreader-toc-wc">{ch.wordCount} 字</span> : null}
-                </button>
-              ))}
+              {chapters.map((ch, ix) => {
+                const isPartStart = ch.part && (ix === 0 || chapters[ix - 1]?.part !== ch.part);
+                return (
+                  <Fragment key={ch.id}>
+                    {isPartStart && <div className="nreader-toc-part">{ch.part}</div>}
+                    <button
+                      className={'nreader-toc-item' + (ix === curIx ? ' current' : '')}
+                      onClick={() => goTo(ix)}
+                    >
+                      <span className="nreader-toc-no">{ix + 1}</span>
+                      <span className="nreader-toc-name">{ch.title}</span>
+                      {ch.wordCount ? <span className="nreader-toc-wc">{ch.wordCount} 字</span> : null}
+                    </button>
+                  </Fragment>
+                );
+              })}
             </div>
           </div>
         </div>

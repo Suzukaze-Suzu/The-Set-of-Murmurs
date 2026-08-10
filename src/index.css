@@ -897,3 +897,13 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .novel-edit-left{border-right:none;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent)}
   .novel-edit-chitems{max-height:280px}
 }
+
+/* === 小说分部分 === */
+.nreader-part-title{font-size:2rem;font-weight:800;color:var(--reader-text);text-align:center;margin:0 0 34px;line-height:1.4;text-shadow:none;letter-spacing:1px;border:none}
+.nreader-part-title::before{content:"— ";color:var(--reader-secondary);font-weight:400}
+.nreader-part-title::after{content:" —";color:var(--reader-secondary);font-weight:400}
+.nreader-toc-part{margin:14px 6px 6px;padding:5px 12px;font-size:.88rem;font-weight:700;color:var(--sky-blue-dark);background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border-left:3px solid var(--sky-blue);border-radius:6px}
+.nreader-toc-part:first-child{margin-top:4px}
+.novel-ch-part-input{width:100%;padding:9px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 26%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-size:.9rem}
+.novel-ch-part-input:focus{outline:none;border-color:var(--sky-blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--sky-blue) 16%,transparent)}
+.novel-edit-ch-part{flex-shrink:0;font-size:.7rem;color:var(--sky-blue-dark);background:color-mix(in srgb,var(--sky-blue) 12%,transparent);padding:1px 8px;border-radius:10px;white-space:nowrap}

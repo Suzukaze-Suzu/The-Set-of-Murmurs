@@ -85,6 +85,7 @@ export interface NovelChapter {
   title: string;     // 章节标题（如 第一章 风起）
   content: string;   // 该章正文（Markdown）
   order: number;     // 章节顺序
+  part?: string;     // 所属部分名（可选），该部分首章渲染为 # 大标题
   wordCount?: number; // 该章字数
 }
 

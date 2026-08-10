@@ -45,6 +45,7 @@ export default function Write() {
   const [chDraftTitle, setChDraftTitle] = useState('');
   const [chDraftContent, setChDraftContent] = useState('');
   const [chPreview, setChPreview] = useState(false);
+  const [chDraftPart, setChDraftPart] = useState('');
   const coverInput = useRef<HTMLInputElement>(null);
   const chapterFileInput = useRef<HTMLInputElement>(null);
 
@@ -392,7 +393,7 @@ export default function Write() {
                   <div className="novel-edit-chlist-head">
                     <span className="novel-edit-chlist-title">章节（{chapters.length}）</span>
                     <div className="novel-edit-chlist-actions">
-                      <button className="btn btn-light btn-sm" onClick={() => { const id = addChapter('', ''); setEditChId(id); setChDraftTitle(''); setChDraftContent(''); setChPreview(false); }}>＋ 新增章节</button>
+                      <button className="btn btn-light btn-sm" onClick={() => { const id = addChapter('', ''); setEditChId(id); setChDraftTitle(''); setChDraftContent(''); setChDraftPart(''); setChPreview(false); }}>＋ 新增章节</button>
                       <button className="btn btn-light btn-sm" onClick={() => chapterFileInput.current?.click()}>导入 txt 分章</button>
                       <input ref={chapterFileInput} type="file" accept=".txt,.md,.markdown" style={{ display: 'none' }} onChange={(e) => { importChapterFile(e, true); e.target.value = ''; }} />
                     </div>
@@ -405,10 +406,11 @@ export default function Write() {
                       <div key={ch.id} className={'novel-edit-chitem' + (editChId === ch.id ? ' active' : '')}>
                         <button
                           className="novel-edit-chname"
-                          onClick={() => { setEditChId(ch.id); setChDraftTitle(ch.title); setChDraftContent(ch.content); setChPreview(false); }}
+                          onClick={() => { setEditChId(ch.id); setChDraftTitle(ch.title); setChDraftContent(ch.content); setChDraftPart(ch.part || ''); setChPreview(false); }}
                         >
                           <span className="novel-edit-ch-order">{i + 1}</span>
                           <span className="novel-edit-ch-title-text">{ch.title || ('第' + (i + 1) + '章')}</span>
+                          {ch.part ? <span className="novel-edit-ch-part">{ch.part}</span> : null}
                           <span className="novel-toc-wc">{ch.wordCount || 0} 字</span>
                         </button>
                         <div className="novel-edit-chops">
@@ -427,7 +429,8 @@ export default function Write() {
                 {editingCh ? (
                   <div className="novel-chapter-editor card">
                     <div className="novel-ch-ed-head">
-                      <input className="novel-ch-title-input" placeholder="本章标题" value={chDraftTitle} onChange={(e) => { setChDraftTitle(e.target.value); updateChapter(editChId, { title: e.target.value, content: chDraftContent }); }} />
+                      <input className="novel-ch-title-input" placeholder="本章标题" value={chDraftTitle} onChange={(e) => { setChDraftTitle(e.target.value); updateChapter(editChId, { title: e.target.value, content: chDraftContent, part: chDraftPart }); }} />
+                      <input className="novel-ch-part-input" placeholder="所属部分（选填，如：第一卷 校园篇）" value={chDraftPart} onChange={(e) => { setChDraftPart(e.target.value); updateChapter(editChId, { title: chDraftTitle, content: chDraftContent, part: e.target.value }); }} />
                     </div>
                     <div className="editor-tabs">
                       <button className={'tab-btn' + (!chPreview ? ' active' : '')} onClick={() => setChPreview(false)}>编辑</button>
@@ -436,7 +439,7 @@ export default function Write() {
                     {chPreview ? (
                       <div className="editor-preview"><MarkdownRenderer content={chDraftContent} /></div>
                     ) : (
-                      <textarea className="editor-textarea" rows={16} value={chDraftContent} onChange={(e) => { setChDraftContent(e.target.value); updateChapter(editChId, { title: chDraftTitle, content: e.target.value }); }} placeholder="本章正文（支持 Markdown 与 LaTeX）" />
+                      <textarea className="editor-textarea" rows={16} value={chDraftContent} onChange={(e) => { setChDraftContent(e.target.value); updateChapter(editChId, { title: chDraftTitle, content: e.target.value, part: chDraftPart }); }} placeholder="本章正文（支持 Markdown 与 LaTeX）" />
                     )}
 
                   </div>
