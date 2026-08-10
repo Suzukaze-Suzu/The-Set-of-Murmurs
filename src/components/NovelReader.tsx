@@ -164,7 +164,7 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
           <div className="nreader-shelf-actions">
             <button className="nreader-start-btn" onClick={() => startReading(startIx)}>
               <span className="nreader-start-ico">▶</span>
-              {readPct > 0 ? `继续阅读 · 第${curIx + 1}章` : '开始阅读'}
+              {readPct > 0 ? '继续阅读 · ' + cur.title : '开始阅读'}
             </button>
             <button className="nreader-toc-btn" onClick={() => setTocOpen(true)}>目录</button>
           </div>
