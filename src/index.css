@@ -751,7 +751,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-page .markdown-body blockquote{background:var(--reader-soft);border-left-width:3px}
 .nreader-page .markdown-body code{background:color-mix(in srgb,var(--coral-pink) 12%,transparent)}
 .nreader-page .markdown-body table th,.nreader-page .markdown-body td{border-color:color-mix(in srgb,var(--slate-blue) 22%,transparent)}
-.nreader-footnav{display:flex;align-items:stretch;gap:12px;max-width:900px;margin:30px auto 60px;padding:0 26px}
+.nreader-footnav{position:sticky;bottom:0;z-index:60;display:flex;align-items:stretch;gap:12px;max-width:900px;margin:20px auto 0;padding:14px 26px 12px;background:color-mix(in srgb,var(--reader-bg) 94%,transparent);backdrop-filter:blur(12px);border-top:1px solid color-mix(in srgb,var(--reader-secondary) 16%,transparent)}
 .nreader-foot-btn{flex:1;display:flex;flex-direction:column;gap:3px;padding:14px 18px;background:transparent;border:1px solid color-mix(in srgb,var(--reader-secondary) 18%,transparent);border-radius:14px;cursor:pointer;transition:all .22s;color:var(--reader-text);text-align:left}
 .nreader-foot-btn:hover:not(:disabled){background:color-mix(in srgb,var(--reader-secondary) 8%,transparent);transform:translateY(-1px)}
 .nreader-foot-btn:disabled{opacity:.3;cursor:not-allowed}
@@ -765,7 +765,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-book-progress-fill{height:100%;background:var(--reader-secondary);opacity:.85;transition:width .3s ease}
 /* 工具条自动隐藏 */
 .nreader-bars-hidden .nreader-topbar{opacity:0;transform:translateY(-100%);pointer-events:none}
-.nreader-bars-hidden .nreader-footnav{opacity:0;transform:translateY(10px);pointer-events:none}
+/* .nreader-bars-hidden .nreader-footnav 已注释：上一章/下一章固定不隐藏 */
 .nreader-bars-hidden .nreader-book-progress{opacity:.35}
 
 /* --- 目录抽屉 --- */
