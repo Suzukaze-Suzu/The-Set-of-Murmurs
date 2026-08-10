@@ -169,17 +169,15 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
             <button className="nreader-toc-btn" onClick={() => setTocOpen(true)}>目录</button>
           </div>
 
-          {bookComments.length > 0 && (
-            <details className="nreader-book-comments" open>
-              <summary>整本评论（{bookComments.length}）</summary>
-              <CommentSection
-                comments={bookComments}
-                onAdd={(name, content, parentId, parentName, avatar) => onAddComment(article.id, { name, content, parentId, parentName, avatar })}
-                currentUserId={currentUserId}
-                onDelete={(id) => onDeleteComment(id)}
-              />
-            </details>
-          )}
+          <details className="nreader-book-comments" open>
+            <summary>整本评论（{bookComments.length}）</summary>
+            <CommentSection
+              comments={bookComments}
+              onAdd={(name, content, parentId, parentName, avatar) => onAddComment(article.id, { name, content, parentId, parentName, avatar })}
+              currentUserId={currentUserId}
+              onDelete={(id) => onDeleteComment(id)}
+            />
+          </details>
         </div>
       )}
 
@@ -248,17 +246,15 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
             </button>
           </div>
 
-          {curComments.length > 0 && (
-            <div className="nreader-chapter-comments">
-              <h3 className="nreader-comments-ttl">本章评论（{curComments.length}）</h3>
-              <CommentSection
-                comments={curComments}
-                onAdd={(name, content, parentId, parentName, avatar) => onAddComment(article.id + '::' + cur.id, { name, content, parentId, parentName, avatar })}
-                currentUserId={currentUserId}
-                onDelete={(id) => onDeleteComment(id)}
-              />
-            </div>
-          )}
+          <div className="nreader-chapter-comments">
+            <h3 className="nreader-comments-ttl">本章评论（{curComments.length}）</h3>
+            <CommentSection
+              comments={curComments}
+              onAdd={(name, content, parentId, parentName, avatar) => onAddComment(article.id + '::' + cur.id, { name, content, parentId, parentName, avatar })}
+              currentUserId={currentUserId}
+              onDelete={(id) => onDeleteComment(id)}
+            />
+          </div>
 
           {/* 底部整本进度细线 */}
           <div className="nreader-book-progress">
