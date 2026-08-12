@@ -15,6 +15,20 @@ export interface NewCommentInput {
   avatar?: string;
 }
 
+// 解析评论作者：已登录则按真实 userId 反查 profile 昵称/头像，
+// 避免依赖前端异步加载的 myProfile（否则可能因时序/未设昵称而误存为匿名路人）。
+async function resolveAuthor(input: NewCommentInput): Promise<{ name: string; avatar?: string; userId?: string }> {
+  const { data } = await supabase.auth.getUser();
+  if (data.user) {
+    const userId = data.user.id;
+    const fallback = (data.user.email?.split('@')[0] || '').trim() || '匿名路人';
+    const { data: p } = await supabase.from('profiles').select('nickname, avatar').eq('id', userId).maybeSingle();
+    const nickname = (p?.nickname || '').trim() || fallback;
+    return { userId, name: nickname, avatar: (p?.avatar || '') || undefined };
+  }
+  return { name: (input.name || '').trim() || '匿名路人' };
+}
+
 interface Ctx {
   articleComments: Comment[];
   guestbook: Comment[];
@@ -70,17 +84,17 @@ export function CommentProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addArticleComment = (articleId: string, input: NewCommentInput) => {
-    const newComment: Comment = {
-      id: mkId(), articleId, name: input.name, content: input.content,
-      date: new Date().toISOString(), parentId: input.parentId, parentName: input.parentName, avatar: input.avatar,
-    };
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) newComment.userId = data.user.id;
-      const row: Record<string, unknown> = { id: newComment.id, article_id: articleId, name: input.name, content: input.content };
+    resolveAuthor(input).then((author) => {
+      const newComment: Comment = {
+        id: mkId(), articleId, name: author.name, content: input.content,
+        date: new Date().toISOString(), parentId: input.parentId, parentName: input.parentName, avatar: author.avatar,
+        userId: author.userId,
+      };
+      const row: Record<string, unknown> = { id: newComment.id, article_id: articleId, name: author.name, content: input.content };
       if (newComment.userId) row.user_id = newComment.userId;
       if (input.parentId) row.parent_id = input.parentId;
       if (input.parentName) row.parent_name = input.parentName;
-      if (input.avatar) row.avatar = input.avatar;
+      if (author.avatar) row.avatar = author.avatar;
       supabase
         .from('comments')
         .insert(row)
@@ -89,17 +103,17 @@ export function CommentProvider({ children }: { children: ReactNode }) {
   };
 
   const addGuestbook = (input: NewCommentInput) => {
-    const newComment: Comment = {
-      id: mkId(), articleId: 'guestbook', name: input.name, content: input.content,
-      date: new Date().toISOString(), parentId: input.parentId, parentName: input.parentName, avatar: input.avatar,
-    };
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) newComment.userId = data.user.id;
-      const row: Record<string, unknown> = { id: newComment.id, name: input.name, content: input.content };
+    resolveAuthor(input).then((author) => {
+      const newComment: Comment = {
+        id: mkId(), articleId: 'guestbook', name: author.name, content: input.content,
+        date: new Date().toISOString(), parentId: input.parentId, parentName: input.parentName, avatar: author.avatar,
+        userId: author.userId,
+      };
+      const row: Record<string, unknown> = { id: newComment.id, name: author.name, content: input.content };
       if (newComment.userId) row.user_id = newComment.userId;
       if (input.parentId) row.parent_id = input.parentId;
       if (input.parentName) row.parent_name = input.parentName;
-      if (input.avatar) row.avatar = input.avatar;
+      if (author.avatar) row.avatar = author.avatar;
       supabase
         .from('guestbook')
         .insert(row)
