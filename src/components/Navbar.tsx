@@ -44,6 +44,7 @@ export default function Navbar() {
           <Link to="/novels" className={location.pathname === '/novels' ? 'active' : ''}>小说书架</Link>
           <Link to="/gallery" className={location.pathname === '/gallery' ? 'active' : ''}>图集</Link>
           <Link to="/guestbook" className={location.pathname === '/guestbook' ? 'active' : ''}>留言板</Link>
+          <Link to="/friends" className={location.pathname === '/friends' ? 'active' : ''}>友链</Link>
           <Link to="/about" className={location.pathname === '/about' ? 'active' : ''}>关于</Link>
           {isAdmin && (
             <Link to="/write" className={location.pathname.startsWith('/write') ? 'active' : ''}>写作</Link>

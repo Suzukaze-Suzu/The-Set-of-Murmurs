@@ -106,3 +106,14 @@ export const NOVEL_STATUS_META: Record<NovelStatus, { label: string; color: stri
   paused:      { label: '暂停更新', color: '#8A8F9A' },
 };
 
+
+
+// 友情链接
+export interface FriendLink {
+  id: string;
+  name: string;      // 站点名称
+  url: string;       // 网址
+  desc?: string;     // 一句话描述
+  avatar?: string;   // 站点图标图 URL
+  order: number;     // 排序（小在前）
+}

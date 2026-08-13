@@ -7,6 +7,7 @@ import { AboutProvider } from './context/AboutContext';
 import { FooterProvider } from './context/SiteTextContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { GalleryProvider } from './context/GalleryContext';
+import { FriendLinkProvider } from './context/FriendLinkContext';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Articles from './pages/Articles';
@@ -17,6 +18,7 @@ import Write from './pages/Write';
 import About from './pages/About';
 import Guestbook from './pages/Guestbook';
 import Gallery from './pages/Gallery';
+import Friends from './pages/Friends';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 
@@ -41,40 +43,42 @@ function ArticlesRoute() {
 export default function App() {
   return (
     <ThemeProvider>
-              <AuthProvider>
+      <AuthProvider>
         <FooterProvider>
-        <ProfileProvider>
-          <AboutProvider>
-          <GalleryProvider>
-            <ArticleProvider>
-              <CommentProvider>
-              <HashRouter>
-                <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route element={<LayoutRoute />}>
-                  <Route path="/" element={<HomeRoute />} />
-                  <Route path="/articles" element={<ArticlesRoute />} />
-                    <Route path="/gallery" element={<Gallery />} />
-                    <Route path="/novels" element={<Novels />} />
-                    <Route path="/category/:category" element={<SectionPage />} />
-                    <Route path="/article/:id" element={<ArticleDetail />} />
-                    <Route path="/write" element={<Write />} />
-                    <Route path="/write/:id" element={<Write />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/guestbook" element={<Guestbook />} />
-                    <Route path="*" element={<HomeRoute />} />
-                </Route>
-              </Routes>
-            </HashRouter>
-              </CommentProvider>
-            </ArticleProvider>
-          </GalleryProvider>
-          </AboutProvider>
-        </ProfileProvider>
+          <ProfileProvider>
+            <AboutProvider>
+              <GalleryProvider>
+                <ArticleProvider>
+                  <CommentProvider>
+                    <FriendLinkProvider>
+                      <HashRouter>
+                        <Routes>
+                          <Route path="/login" element={<LoginPage />} />
+                          <Route element={<LayoutRoute />}>
+                            <Route path="/" element={<HomeRoute />} />
+                            <Route path="/articles" element={<ArticlesRoute />} />
+                            <Route path="/gallery" element={<Gallery />} />
+                            <Route path="/novels" element={<Novels />} />
+                            <Route path="/category/:category" element={<SectionPage />} />
+                            <Route path="/article/:id" element={<ArticleDetail />} />
+                            <Route path="/write" element={<Write />} />
+                            <Route path="/write/:id" element={<Write />} />
+                            <Route path="/about" element={<About />} />
+                            <Route path="/profile" element={<ProfilePage />} />
+                            <Route path="/guestbook" element={<Guestbook />} />
+                            <Route path="/friends" element={<Friends />} />
+                            <Route path="*" element={<HomeRoute />} />
+                          </Route>
+                        </Routes>
+                      </HashRouter>
+                    </FriendLinkProvider>
+                  </CommentProvider>
+                </ArticleProvider>
+              </GalleryProvider>
+            </AboutProvider>
+          </ProfileProvider>
         </FooterProvider>
       </AuthProvider>
     </ThemeProvider>
   );
 }
-
