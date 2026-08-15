@@ -61,6 +61,16 @@ export default function Navbar() {
     <>
       <nav className={`navbar${hidden ? ' nav-hidden' : ''}${scrolled ? ' navbar-scrolled' : ''}`}>
         <div className="nav-inner">
+          <button
+            className={`nav-burger${menuOpen ? ' open' : ''}`}
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label="打开菜单"
+            aria-expanded={menuOpen}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
           <Link to="/" className="nav-brand">
             <span className="brand-dot" />
             呓语集
@@ -111,17 +121,6 @@ export default function Navbar() {
               <Link to="/login" className="btn btn-primary btn-sm">登录</Link>
             )}
           </div>
-
-          <button
-            className={`nav-burger${menuOpen ? ' open' : ''}`}
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-label="打开菜单"
-            aria-expanded={menuOpen}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
         </div>
       </nav>
 
@@ -131,6 +130,7 @@ export default function Navbar() {
           <div className="nav-drawer-head">
             <span className="brand-dot" />
             菜单
+            <button className="nav-drawer-close" onClick={() => setMenuOpen(false)} aria-label="关闭菜单">✕</button>
           </div>
           <div className="nav-drawer-links">
             <Link to="/" className={linkClass('/')}>首页</Link>

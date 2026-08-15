@@ -957,10 +957,12 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 
 .nav-overlay{position:fixed;inset:0;z-index:120;background:rgba(15,23,42,.45);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .28s ease}
 .nav-overlay.open{opacity:1;pointer-events:auto}
-.nav-drawer{position:absolute;top:0;right:0;bottom:0;width:min(300px,85vw);background:var(--bg-card);box-shadow:-12px 0 32px rgba(30,41,59,.18);transform:translateX(100%);transition:transform .32s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column;overflow-y:auto}
+.nav-drawer{position:absolute;top:0;left:0;bottom:0;width:min(300px,85vw);background:var(--bg-card);box-shadow:12px 0 32px rgba(30,41,59,.18);transform:translateX(-100%);transition:transform .32s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column;overflow-y:auto}
 .nav-drawer.open{transform:translateX(0)}
 .nav-drawer-head{display:flex;align-items:center;gap:9px;padding:18px 22px 14px;font-weight:800;font-size:1.05rem;color:var(--text-main);border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent);letter-spacing:1px}
 .nav-drawer-head .brand-dot{width:10px;height:10px}
+.nav-drawer-close{margin-left:auto;border:none;background:color-mix(in srgb,var(--bg-soft) 80%,transparent);width:30px;height:30px;border-radius:50%;cursor:pointer;color:var(--text-secondary);font-size:.95rem;line-height:1;transition:all .2s}
+.nav-drawer-close:hover{background:var(--coral-pink);color:#fff;transform:rotate(90deg)}
 .nav-drawer-links{display:flex;flex-direction:column;padding:10px 14px 20px;gap:2px}
 .nav-drawer-links a{padding:12px 14px;border-radius:var(--radius-sm);color:var(--text-secondary);font-size:.96rem;font-weight:500;transition:all .2s;display:flex;align-items:center;gap:10px}
 .nav-drawer-links a:hover{color:var(--sky-blue-dark);background:var(--bg-soft)}
@@ -973,5 +975,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .nav-burger{display:flex}
   .nav-links{display:none}
   .nav-cats{display:none}
-  .nav-inner{flex-wrap:nowrap;gap:10px}
+  .nav-inner{flex-wrap:nowrap;gap:8px}
+  .nav-auth{margin-left:auto}
+  .nav-brand{font-size:1.2rem}
 }
