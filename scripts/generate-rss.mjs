@@ -1,8 +1,7 @@
 // 构建时脚本：从 Supabase 读取公开文章，生成 public/rss.xml（随 Vite 构建发布到 dist/）
 // 说明：
 //   - 阅读权限依赖 articles 表的 RLS（匿名可读，与前端一致）
-//   - 站点域名：部署后请在 Netlify 构建环境设置 SITE_URL（如 https://yiyuji.netlify.app），
-//     否则 RSS 里的链接使用下方占位域名
+//   - 站点域名：默认使用 https://www.the-set-of-murmurs.me/，可用环境变量 SITE_URL 覆盖
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://ghzcvuemtoqejyciirks.supabase.co';
 const ANON_KEY =
   process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_9M23ej9D_HWgfmtM5wfCng_T9N9WVGY';
-const SITE_URL = process.env.SITE_URL || 'https://yiyuji.example.com';
+const SITE_URL = process.env.SITE_URL || 'https://www.the-set-of-murmurs.me';
 
 const CATEGORY_LABEL = { anime: '读后感', essay: '随笔', reading: '小说', math: '数学笔记', study: '学习分享' };
 
