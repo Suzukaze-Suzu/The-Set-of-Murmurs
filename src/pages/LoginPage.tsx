@@ -1,6 +1,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const REMEMBER_KEY = 'murmur_remembered';
 
@@ -18,6 +19,7 @@ function generateMathCaptcha(): { text: string; answer: number } {
 }
 
 export default function LoginPage() {
+  usePageTitle('登录');
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');

@@ -7,7 +7,7 @@ export default function ProfileCard() {
     <div className="profile-card">
       <div className="profile-avatar">
         {profile.avatar ? (
-          <img src={profile.avatar} alt="头像" />
+          <img src={profile.avatar} alt="头像" loading="lazy" />
         ) : (
           <span className="avatar-placeholder" />
         )}

@@ -2,6 +2,7 @@ import { useState, FormEvent, ChangeEvent, DragEvent, useRef } from 'react';
 import { useFriendLinks } from '../context/FriendLinkContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 interface Draft {
   name: string;
@@ -18,6 +19,7 @@ function initials(name: string) {
 }
 
 export default function Friends() {
+  usePageTitle('友链');
   const { friends, loading, addFriend, updateFriend, deleteFriend } = useFriendLinks();
   const { isAdmin } = useAuth();
   const [showForm, setShowForm] = useState(false);

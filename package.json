@@ -6,7 +6,7 @@
   "description": "呓语集 - 个人博客，以凉风凉为主题设计的活泼博客",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "node scripts/generate-rss.mjs && tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

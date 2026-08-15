@@ -7,6 +7,7 @@ import { CATEGORY_META } from '../types';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import CommentSection from '../components/CommentSection';
 import NovelReader from '../components/NovelReader';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 export default function ArticleDetail() {
   const { id } = useParams();
@@ -16,6 +17,8 @@ export default function ArticleDetail() {
   const { articleComments, addArticleComment, deleteComment } = useComments();
 
   const article = getById(id || '');
+
+  usePageTitle(article?.title);
   const comments = articleComments.filter((c) => c.articleId === id || (id ? c.articleId.startsWith(id + '::') : false));
 
   useEffect(() => {

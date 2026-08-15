@@ -16,7 +16,7 @@ export default function NovelCard({ article }: Props) {
     <div className="novel-card">
       {novel?.cover ? (
         <div className="novel-cover-wrap">
-          <img src={novel.cover} alt={article.title} className="novel-cover" />
+          <img src={novel.cover} alt={article.title} className="novel-cover" loading="lazy" />
         </div>
       ) : (
         <div className="novel-cover novel-cover-placeholder">

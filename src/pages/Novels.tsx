@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import NovelCard from '../components/NovelCard';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 export default function Novels() {
+  usePageTitle('小说书架');
   const { articles } = useArticles();
 
   const novels = useMemo(

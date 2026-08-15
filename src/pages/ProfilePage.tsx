@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import AvatarCropModal from '../components/AvatarCropModal';
 import { Profile } from '../types';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ export default function ProfilePage() {
   const { user } = useAuth();
 
   const isSelf = !viewUserId || (!!user && viewUserId === user.id);
+
+  usePageTitle(viewUserId && !isSelf ? '访客主页' : '我的主页');
 
   const avatarInput = useRef<HTMLInputElement>(null);
   const [editMode, setEditMode] = useState(false);

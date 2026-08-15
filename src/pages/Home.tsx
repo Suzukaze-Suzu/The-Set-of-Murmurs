@@ -5,12 +5,14 @@ import { Link } from 'react-router-dom';
 import ArticleCard from '../components/ArticleCard';
 import NovelCard from '../components/NovelCard';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 interface Props {
   query: string;
 }
 
 export default function Home({ query }: Props) {
+  usePageTitle();
   const { articles, getByCategory } = useArticles();
   const { isAdmin } = useAuth();
   const { profile } = useProfile();

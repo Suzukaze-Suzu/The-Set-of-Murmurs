@@ -1,19 +1,30 @@
 import { useParams, Link } from 'react-router-dom';
+import { useMemo, useEffect } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { CATEGORY_META, Category } from '../types';
 import ArticleCard from '../components/ArticleCard';
 import NovelCard from '../components/NovelCard';
-import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
+import { useInfiniteList } from '../hooks/useInfiniteList';
+
+const PAGE_SIZE = 12;
 
 export default function SectionPage() {
   const { category } = useParams();
-  const { getByCategory } = useArticles();
+  const { articles } = useArticles();
   const { isAdmin } = useAuth();
 
   const cat = (category as Category) in CATEGORY_META ? (category as Category) : 'anime';
   const meta = CATEGORY_META[cat];
-  const list = getByCategory(cat);
+  usePageTitle(meta.label);
+
+  const list = useMemo(
+    () => articles.filter((a) => a.category === cat).sort((a, b) => b.date.localeCompare(a.date)),
+    [articles, cat]
+  );
+
+  const { visible, hasMore, total, sentinelRef } = useInfiniteList(list, PAGE_SIZE);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -36,15 +47,22 @@ export default function SectionPage() {
           {isAdmin && <Link to="/write" className="btn btn-primary">去写一篇</Link>}
         </div>
       ) : (
-        <div className="card-grid wide">
-          {list.map((a) =>
-            a.novel?.chapters?.length ? (
-              <NovelCard key={a.id} article={a} />
-            ) : (
-              <ArticleCard key={a.id} article={a} />
-            )
+        <>
+          <div className="card-grid wide">
+            {visible.map((a) =>
+              a.novel?.chapters?.length ? (
+                <NovelCard key={a.id} article={a} />
+              ) : (
+                <ArticleCard key={a.id} article={a} />
+              )
+            )}
+          </div>
+          {hasMore ? (
+            <div ref={sentinelRef} className="list-loading">滚动加载更多…</div>
+          ) : (
+            <p className="list-end">已加载全部 {total} 篇</p>
           )}
-        </div>
+        </>
       )}
     </div>
   );

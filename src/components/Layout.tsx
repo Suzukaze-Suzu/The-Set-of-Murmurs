@@ -52,7 +52,7 @@ export default function Layout() {
           <p className="footer-slogan">{footer.slogan}</p>
           {footer.caption && <p className="footer-caption">{footer.caption}</p>}
           <p className="footer-links">
-            <a href="#/about">关于</a> · <a href="#/guestbook">留言板</a> · <a href="#/friends">友链</a>{isAdmin && <> · <a href="#/write">写作</a></>}
+            <a href="#/about">关于</a> · <a href="#/guestbook">留言板</a> · <a href="#/friends">友链</a> · <a href="/rss.xml" target="_blank" rel="noopener">RSS</a>{isAdmin && <> · <a href="#/write">写作</a></>}
           </p>
           <p className="footer-copy">{footer.copyright.replace('{year}', String(new Date().getFullYear()))}</p>
         </div>

@@ -4,8 +4,10 @@ import CommentSection from '../components/CommentSection';
 import BugFeedback from '../components/BugFeedback';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 export default function Guestbook() {
+  usePageTitle('留言板');
   const { guestbook, addGuestbook, deleteComment } = useComments();
   const { user } = useAuth();
   const { profile } = useProfile();

@@ -1,8 +1,10 @@
 import { useState, FormEvent, useRef, DragEvent } from 'react';
 import { useGallery } from '../context/GalleryContext';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 export default function Gallery() {
+  usePageTitle('图集');
   const { images, addImage, removeImage } = useGallery();
   const { isAdmin } = useAuth();
   const [file, setFile] = useState<File | null>(null);

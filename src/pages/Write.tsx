@@ -8,6 +8,7 @@ import NovelComposer from '../components/NovelComposer';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase, SUPABASE_URL } from '../lib/supabase';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 export default function Write() {
   const { isAdmin } = useAuth();
@@ -16,6 +17,8 @@ export default function Write() {
   const { getById, addArticle, updateArticle } = useArticles();
 
   const editing = id ? getById(id) : undefined;
+
+  usePageTitle(editing ? '编辑文章' : '写作');
 
   const [title, setTitle] = useState(editing?.title || '');
   const [content, setContent] = useState(editing?.content || '');

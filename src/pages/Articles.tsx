@@ -3,12 +3,17 @@ import { useArticles } from '../context/ArticleContext';
 import { CATEGORIES, CATEGORY_META } from '../types';
 import ArticleCard from '../components/ArticleCard';
 import NovelCard from '../components/NovelCard';
+import { usePageTitle } from '../hooks/usePageTitle';
+import { useInfiniteList } from '../hooks/useInfiniteList';
 
 interface Props {
   query: string;
 }
 
+const PAGE_SIZE = 12;
+
 export default function Articles({ query }: Props) {
+  usePageTitle('全部文章');
   const { articles } = useArticles();
   const [catFilter, setCatFilter] = useState<string>('all');
 
@@ -22,10 +27,16 @@ export default function Articles({ query }: Props) {
     });
   }, [articles, catFilter, query]);
 
-  const sorted = [...filtered].sort((a, b) => {
-    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-    return b.date.localeCompare(a.date);
-  });
+  const sorted = useMemo(
+    () =>
+      [...filtered].sort((a, b) => {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        return b.date.localeCompare(a.date);
+      }),
+    [filtered]
+  );
+
+  const { visible, hasMore, total, sentinelRef } = useInfiniteList(sorted, PAGE_SIZE);
 
   return (
     <div className="page">
@@ -49,7 +60,7 @@ export default function Articles({ query }: Props) {
 
       {query && (
         <p className="result-count">
-          搜索 “<strong>{query}</strong>”，共 {sorted.length} 篇
+          搜索 “<strong>{query}</strong>”，共 {total} 篇
         </p>
       )}
 
@@ -59,15 +70,22 @@ export default function Articles({ query }: Props) {
           <p>没有找到匹配的文章</p>
         </div>
       ) : (
-        <div className="card-grid wide">
-          {sorted.map((a) =>
-            a.novel?.chapters?.length ? (
-              <NovelCard key={a.id} article={a} />
-            ) : (
-              <ArticleCard key={a.id} article={a} />
-            )
+        <>
+          <div className="card-grid wide">
+            {visible.map((a) =>
+              a.novel?.chapters?.length ? (
+                <NovelCard key={a.id} article={a} />
+              ) : (
+                <ArticleCard key={a.id} article={a} />
+              )
+            )}
+          </div>
+          {hasMore ? (
+            <div ref={sentinelRef} className="list-loading">滚动加载更多…</div>
+          ) : (
+            <p className="list-end">已加载全部 {total} 篇</p>
           )}
-        </div>
+        </>
       )}
     </div>
   );

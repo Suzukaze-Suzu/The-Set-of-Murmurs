@@ -1,4 +1,4 @@
-﻿import { useState, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import { Comment } from '../types';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
@@ -71,7 +71,7 @@ function FoldedReplies({ root, currentUserId, isAdmin, onDelete, onStartReply, n
               <div className="comment-reply-row" key={n.c.id}>
                 <div className="comment-head">
                   <Link to={n.c.userId ? '/profile?userId=' + n.c.userId : '/'} className="comment-avatar" title="查看个人主页">
-                    {n.c.avatar ? <img src={n.c.avatar} alt="头像" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (n.c.name.trim().charAt(0) || '访')}
+                    {n.c.avatar ? <img src={n.c.avatar} alt="头像" loading="lazy" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (n.c.name.trim().charAt(0) || '访')}
                   </Link>
                   <span className="comment-name-label">{n.c.parentName ? <em>{n.c.parentName}</em> : null} {n.c.name}</span>
                   <span className="comment-date">{new Date(n.c.date).toLocaleString()}</span>
@@ -110,7 +110,7 @@ function CommentRow({ node, depth, currentUserId, isAdmin, onDelete, onStartRepl
     <div className={rowCls}>
       <div className="comment-head">
         <Link to={c.userId ? '/profile?userId=' + c.userId : '/'} className="comment-avatar" title="查看个人主页">
-          {c.avatar ? <img src={c.avatar} alt="头像" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (c.name.trim().charAt(0) || '访')}
+          {c.avatar ? <img src={c.avatar} alt="头像" loading="lazy" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (c.name.trim().charAt(0) || '访')}
         </Link>
         <span className="comment-name-label">{c.parentName ? <em>{c.parentName}</em> : null} {c.name}</span>
         <span className="comment-date">{new Date(c.date).toLocaleString()}</span>

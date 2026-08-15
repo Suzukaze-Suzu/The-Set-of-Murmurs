@@ -6,12 +6,14 @@ import { useFooter, FooterText } from '../context/SiteTextContext';
 import ProfileCard from '../components/ProfileCard';
 import AvatarCropModal from '../components/AvatarCropModal';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 function fmt(iso: string) {
   try { return new Date(iso).toLocaleString(); } catch { return iso; }
 }
 
 export default function About() {
+  usePageTitle('关于');
   const { profile, setProfile } = useProfile();
   const { isAdmin } = useAuth();
   const { current, versions, loading, saving, save, loadVersion, rollback, reset } = useAbout();

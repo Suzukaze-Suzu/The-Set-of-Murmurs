@@ -937,3 +937,37 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 @media (max-width:640px){
   .friends-grid{grid-template-columns:1fr}
 }
+
+/* ===== 路由懒加载 fallback ===== */
+.route-loading{display:flex;align-items:center;justify-content:center;min-height:42vh;color:var(--text-secondary);font-size:.95rem;letter-spacing:2px}
+
+/* ===== 列表无限滚动 ===== */
+.list-loading{text-align:center;color:var(--text-secondary);font-size:.88rem;padding:26px 0 8px;letter-spacing:1px}
+.list-end{text-align:center;color:var(--text-secondary);font-size:.85rem;padding:22px 0 6px;opacity:.7}
+
+/* ===== 导航栏 v2：视觉升级 + 移动端汉堡菜单 ===== */
+.navbar-scrolled{box-shadow:0 8px 24px rgba(30,41,59,.14);background:color-mix(in srgb,var(--bg-card) 94%,transparent)}
+
+.nav-burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:40px;height:40px;padding:8px;border:none;background:transparent;cursor:pointer;border-radius:10px;flex-shrink:0}
+.nav-burger span{display:block;height:2px;border-radius:2px;background:var(--text-secondary);transition:transform .28s cubic-bezier(.22,1,.36,1),opacity .2s}
+.nav-burger:hover{background:var(--bg-soft)}
+.nav-burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.nav-burger.open span:nth-child(2){opacity:0}
+.nav-burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+.nav-mobile-menu{display:block;max-height:0;overflow:hidden;transition:max-height .32s cubic-bezier(.22,1,.36,1);background:color-mix(in srgb,var(--bg-card) 96%,transparent);backdrop-filter:blur(14px)}
+.nav-mobile-menu.open{max-height:560px;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent)}
+.nav-mobile-links,.nav-mobile-cats{display:flex;flex-direction:column;padding:8px 20px 12px}
+.nav-mobile-links a,.nav-mobile-cats a{padding:12px 14px;border-radius:var(--radius-sm);color:var(--text-secondary);font-size:.95rem;font-weight:500;transition:all .2s;display:flex;align-items:center;gap:8px}
+.nav-mobile-links a:hover,.nav-mobile-cats a:hover{color:var(--sky-blue-dark);background:var(--bg-soft)}
+.nav-mobile-links a.active,.nav-mobile-cats a.active{color:#fff;background:var(--grad-main)}
+.nav-mobile-cats{border-top:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent);padding-top:10px}
+.nav-mobile-auth{padding:4px 20px 16px}
+.nav-mobile-auth .btn{width:100%}
+
+@media (max-width:860px){
+  .nav-burger{display:flex}
+  .nav-links{display:none}
+  .nav-cats{display:none}
+  .nav-inner{flex-wrap:nowrap;gap:10px}
+}
