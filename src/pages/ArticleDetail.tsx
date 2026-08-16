@@ -1,10 +1,10 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { useComments } from '../context/CommentContext';
 import { useAuth } from '../context/AuthContext';
 import { CATEGORY_META } from '../types';
-import MarkdownRenderer from '../components/MarkdownRenderer';
+import MarkdownRenderer, { Heading } from '../components/MarkdownRenderer';
 import CommentSection from '../components/CommentSection';
 import NovelReader from '../components/NovelReader';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -19,6 +19,10 @@ export default function ArticleDetail() {
   const article = getById(id || '');
 
   usePageTitle(article?.title);
+
+  // 文章目录：MarkdownRenderer 渲染后回调标题列表
+  const [headings, setHeadings] = useState<Heading[]>([]);
+  const handleHeadings = useCallback((hs: Heading[]) => setHeadings(hs), []);
   const comments = articleComments.filter((c) => c.articleId === id || (id ? c.articleId.startsWith(id + '::') : false));
 
   useEffect(() => {
@@ -97,9 +101,31 @@ export default function ArticleDetail() {
           currentUserId={user?.id}
         />
       ) : (
-        <article className="detail-body card">
-          <MarkdownRenderer content={article.content} />
-        </article>
+        <>
+          {headings.length > 1 && (
+            <details className="toc card">
+              <summary className="toc-toggle">📑 目录</summary>
+              <nav className="toc-list">
+                {headings.map((h) => (
+                  <a
+                    key={h.id}
+                    href={`#${h.id}`}
+                    className={`toc-link toc-lv${h.level}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById(h.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                  >
+                    {h.text}
+                  </a>
+                ))}
+              </nav>
+            </details>
+          )}
+          <article className="detail-body card">
+            <MarkdownRenderer content={article.content} onHeadings={handleHeadings} />
+          </article>
+        </>
       )}
 
       {article.attachments && article.attachments.length > 0 && (

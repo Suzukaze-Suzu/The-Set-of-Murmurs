@@ -3,22 +3,7 @@ import { Article, Category } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { ArticleContext, uid } from './ArticleContext';
-
-function rowToArticle(row: any): Article {
-  return {
-    id: row.id,
-    title: row.title,
-    content: row.content || '',
-    category: row.category || 'essay',
-    tags: row.tags || [],
-    date: row.date,
-    favorite: !!row.favorite,
-    pinned: !!row.pinned,
-    summary: row.summary || '',
-    attachments: Array.isArray(row.attachments) ? row.attachments : (typeof row.attachments === 'string' ? JSON.parse(row.attachments) : []),
-    novel: row.novel ? (typeof row.novel === 'string' ? JSON.parse(row.novel) : row.novel) : undefined,
-  };
-}
+import { rowToArticle } from '../lib/articleRow';
 
 export function ArticleProvider({ children }: { children: ReactNode }) {
   const { isAdmin } = useAuth();

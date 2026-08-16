@@ -979,3 +979,27 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .nav-auth{margin-left:auto}
   .nav-brand{font-size:1.2rem}
 }
+
+/* ===== 回到顶部按钮 ===== */
+.back-to-top{position:fixed;right:22px;bottom:26px;z-index:55;width:44px;height:44px;border:none;border-radius:50%;background:var(--grad-main);color:#fff;font-size:1.25rem;cursor:pointer;box-shadow:0 8px 20px rgba(91,168,216,.4);opacity:0;visibility:hidden;transform:translateY(12px);transition:all .28s cubic-bezier(.22,1,.36,1)}
+.back-to-top.show{opacity:1;visibility:visible;transform:translateY(0)}
+.back-to-top:hover{transform:translateY(-3px) scale(1.05)}
+
+/* ===== 错误边界 ===== */
+.error-page{display:flex;flex-direction:column;align-items:center;gap:14px;padding:80px 20px;text-align:center}
+.error-page-desc{color:var(--text-secondary)}
+
+/* ===== 文章目录 TOC ===== */
+.toc{position:relative;margin-bottom:22px;padding:0;overflow:hidden}
+.toc-toggle{cursor:pointer;padding:13px 18px;font-weight:700;color:var(--sky-blue-dark);user-select:none;list-style:none;display:flex;align-items:center;gap:8px}
+.toc-toggle::-webkit-details-marker{display:none}
+.toc-toggle:hover{background:var(--bg-soft)}
+.toc[open] .toc-toggle{border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent)}
+.toc-list{display:flex;flex-direction:column;padding:10px 14px 14px}
+.toc-link{padding:7px 12px;border-radius:8px;color:var(--text-secondary);font-size:.92rem;text-decoration:none;transition:all .18s;line-height:1.5}
+.toc-link:hover{color:var(--sky-blue-dark);background:var(--bg-soft)}
+.toc-lv2{padding-left:26px;font-size:.88rem}
+.toc-lv3{padding-left:40px;font-size:.84rem}
+
+/* 标题锚点滚动偏移（sticky 导航会遮住标题） */
+.markdown-body h1,.markdown-body h2,.markdown-body h3{scroll-margin-top:92px}

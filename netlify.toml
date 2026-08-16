@@ -1,7 +1,11 @@
-﻿# Netlify 部署配置
+# Netlify 部署配置
 [build]
   command = "npm run build"
   publish = "dist"
+
+# Netlify Functions（服务端函数，如评论邮件通知）
+[functions]
+  directory = "netlify/functions"
 
 [[redirects]]
   from = "/*"

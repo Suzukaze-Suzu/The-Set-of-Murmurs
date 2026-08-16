@@ -1,4 +1,4 @@
-﻿import ReactMarkdown from 'react-markdown';
+import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -11,7 +11,15 @@ interface CodeProps {
   className?: string;
   children?: React.ReactNode;
 }
-export default function MarkdownRenderer({ content }: { content: string }) {
+
+// 目录条目：标题 id、文字、级别（1=h1 2=h2 3=h3）
+export interface Heading {
+  id: string;
+  text: string;
+  level: number;
+}
+
+export default function MarkdownRenderer({ content, onHeadings }: { content: string; onHeadings?: (headings: Heading[]) => void }) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   // 检测超宽 LaTeX 块级公式，仅对其添加 math-overflow 类以显示滑动提示箭头
@@ -31,6 +39,25 @@ export default function MarkdownRenderer({ content }: { content: string }) {
       window.removeEventListener('resize', check);
     };
   }, [content]);
+
+  // 提取 h1/h2/h3 生成目录（给标题加锚点 id，回调给父组件）
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || !onHeadings) return;
+    const seen = new Map<string, number>();
+    const hs: Heading[] = [];
+    root.querySelectorAll<HTMLElement>('h1, h2, h3').forEach((el, i) => {
+      const text = (el.textContent || '').trim();
+      let slug = text.replace(/\s+/g, '-').replace(/[^\p{L}\p{N}-]+/gu, '').toLowerCase();
+      if (!slug) slug = 'h-' + i;
+      const n = seen.get(slug) || 0;
+      seen.set(slug, n + 1);
+      const id = n ? `${slug}-${n}` : slug;
+      el.id = id;
+      hs.push({ id, text, level: Number(el.tagName.charAt(1)) });
+    });
+    onHeadings(hs);
+  }, [content, onHeadings]);
   return (
     <div className="markdown-body" ref={rootRef}>
           <ReactMarkdown

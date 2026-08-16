@@ -10,6 +10,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { GalleryProvider } from './context/GalleryContext';
 import { FriendLinkProvider } from './context/FriendLinkContext';
 import Layout from './components/Layout';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // 路由级代码分割：重页面（Markdown/KaTeX/编辑器/阅读器等）按需加载，减小首屏体积
 const Home = lazy(() => import('./pages/Home'));
@@ -55,26 +56,28 @@ export default function App() {
                   <CommentProvider>
                     <FriendLinkProvider>
                       <HashRouter>
-                        <Suspense fallback={<div className="route-loading">加载中…</div>}>
-                          <Routes>
-                            <Route path="/login" element={<LoginPage />} />
-                            <Route element={<LayoutRoute />}>
-                              <Route path="/" element={<HomeRoute />} />
-                              <Route path="/articles" element={<ArticlesRoute />} />
-                              <Route path="/gallery" element={<Gallery />} />
-                              <Route path="/novels" element={<Novels />} />
-                              <Route path="/category/:category" element={<SectionPage />} />
-                              <Route path="/article/:id" element={<ArticleDetail />} />
-                              <Route path="/write" element={<Write />} />
-                              <Route path="/write/:id" element={<Write />} />
-                              <Route path="/about" element={<About />} />
-                              <Route path="/profile" element={<ProfilePage />} />
-                              <Route path="/guestbook" element={<Guestbook />} />
-                              <Route path="/friends" element={<Friends />} />
-                              <Route path="*" element={<HomeRoute />} />
-                            </Route>
-                          </Routes>
-                        </Suspense>
+                        <ErrorBoundary>
+                          <Suspense fallback={<div className="route-loading">加载中…</div>}>
+                            <Routes>
+                              <Route path="/login" element={<LoginPage />} />
+                              <Route element={<LayoutRoute />}>
+                                <Route path="/" element={<HomeRoute />} />
+                                <Route path="/articles" element={<ArticlesRoute />} />
+                                <Route path="/gallery" element={<Gallery />} />
+                                <Route path="/novels" element={<Novels />} />
+                                <Route path="/category/:category" element={<SectionPage />} />
+                                <Route path="/article/:id" element={<ArticleDetail />} />
+                                <Route path="/write" element={<Write />} />
+                                <Route path="/write/:id" element={<Write />} />
+                                <Route path="/about" element={<About />} />
+                                <Route path="/profile" element={<ProfilePage />} />
+                                <Route path="/guestbook" element={<Guestbook />} />
+                                <Route path="/friends" element={<Friends />} />
+                                <Route path="*" element={<HomeRoute />} />
+                              </Route>
+                            </Routes>
+                          </Suspense>
+                        </ErrorBoundary>
                       </HashRouter>
                     </FriendLinkProvider>
                   </CommentProvider>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
+import BackToTop from './BackToTop';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useFooter } from '../context/SiteTextContext';
@@ -57,6 +58,7 @@ export default function Layout() {
           <p className="footer-copy">{footer.copyright.replace('{year}', String(new Date().getFullYear()))}</p>
         </div>
       </footer>
+      <BackToTop />
     </div>
   );
 }

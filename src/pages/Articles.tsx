@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { CATEGORIES, CATEGORY_META } from '../types';
+import type { Article } from '../types';
 import ArticleCard from '../components/ArticleCard';
 import NovelCard from '../components/NovelCard';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useInfiniteList } from '../hooks/useInfiniteList';
+import { searchArticles } from '../lib/search';
 
 interface Props {
   query: string;
@@ -17,15 +19,39 @@ export default function Articles({ query }: Props) {
   const { articles } = useArticles();
   const [catFilter, setCatFilter] = useState<string>('all');
 
+  // 数据库全文搜索：300ms 防抖，结果单独存放，不污染全量列表
+  const [searchResults, setSearchResults] = useState<Article[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setSearchResults(null);
+      setSearching(false);
+      return;
+    }
+    let cancelled = false;
+    setSearching(true);
+    const timer = setTimeout(() => {
+      searchArticles(q).then((res) => {
+        if (!cancelled) {
+          setSearchResults(res);
+          setSearching(false);
+        }
+      });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query]);
+
+  // 有搜索词时用数据库结果，否则用全量文章
+  const base = searchResults !== null ? searchResults : articles;
+
   const filtered = useMemo(() => {
-    return articles.filter((a) => {
-      const matchCat = catFilter === 'all' || a.category === catFilter;
-      if (!matchCat) return false;
-      if (!query) return true;
-      const haystack = (a.title + ' ' + a.content + ' ' + (a.summary || '') + ' ' + a.tags.join(' ')).toLowerCase();
-      return haystack.includes(query.toLowerCase());
-    });
-  }, [articles, catFilter, query]);
+    return base.filter((a) => catFilter === 'all' || a.category === catFilter);
+  }, [base, catFilter]);
 
   const sorted = useMemo(
     () =>
@@ -60,14 +86,14 @@ export default function Articles({ query }: Props) {
 
       {query && (
         <p className="result-count">
-          搜索 “<strong>{query}</strong>”，共 {total} 篇
+          搜索 “<strong>{query}</strong>”，{searching ? '搜索中…' : <>共 {total} 篇</>}
         </p>
       )}
 
       {sorted.length === 0 ? (
         <div className="empty-state">
           <span className="empty-icon empty-icon-magnifier" />
-          <p>没有找到匹配的文章</p>
+          <p>{searching ? '搜索中…' : '没有找到匹配的文章'}</p>
         </div>
       ) : (
         <>

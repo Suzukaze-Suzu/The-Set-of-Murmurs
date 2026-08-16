@@ -29,6 +29,21 @@ async function resolveAuthor(input: NewCommentInput): Promise<{ name: string; av
   return { name: (input.name || '').trim() || '匿名路人' };
 }
 
+// 评论/留言被回复时，通知服务端发邮件给被回复者（失败不影响评论本身）
+function notifyReply(input: NewCommentInput, replyName: string, targetType: 'comment' | 'guestbook') {
+  if (!input.parentId || !replyName) return;
+  fetch('/api/comment-notify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      parentId: input.parentId,
+      replyName,
+      replyContent: input.content,
+      targetType,
+    }),
+  }).catch(() => {});
+}
+
 interface Ctx {
   articleComments: Comment[];
   guestbook: Comment[];
@@ -98,7 +113,10 @@ export function CommentProvider({ children }: { children: ReactNode }) {
       supabase
         .from('comments')
         .insert(row)
-        .then(() => setArticleComments((prev) => [newComment, ...prev]));
+        .then(() => {
+          setArticleComments((prev) => [newComment, ...prev]);
+          notifyReply(input, author.name, 'comment');
+        });
     });
   };
 
@@ -117,7 +135,10 @@ export function CommentProvider({ children }: { children: ReactNode }) {
       supabase
         .from('guestbook')
         .insert(row)
-        .then(() => setGuestbook((prev) => [newComment, ...prev]));
+        .then(() => {
+          setGuestbook((prev) => [newComment, ...prev]);
+          notifyReply(input, author.name, 'guestbook');
+        });
     });
   };
 
