@@ -1,11 +1,8 @@
-# Netlify 部署配置
+# 部署配置参考（当前实际部署平台为 Vercel，见 vercel.json）
+# 本文件仅在迁移回 Netlify 时启用；Vercel 会忽略本文件。
 [build]
   command = "npm run build"
   publish = "dist"
-
-# Netlify Functions（服务端函数，如评论邮件通知）
-[functions]
-  directory = "netlify/functions"
 
 [[redirects]]
   from = "/*"
