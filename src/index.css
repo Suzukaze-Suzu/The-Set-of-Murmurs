@@ -38,6 +38,10 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nav-brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1.35rem;color:var(--text-main)}
 .brand-dot{width:16px;height:16px;border-radius:50%;background:var(--grad-warm);box-shadow:0 0 0 4px color-mix(in srgb,var(--coral-pink) 20%,transparent)}
 .brand-logo{width:34px;height:34px;flex-shrink:0;display:block;object-fit:contain}
+/* 亮色主题用原版（天空蓝外环），暗色主题用换色版（珊瑚粉外环） */
+.brand-logo-dark{display:none}
+[data-theme='dark'] .brand-logo-light{display:none}
+[data-theme='dark'] .brand-logo-dark{display:block}
 .nav-links{display:flex;gap:8px;flex:1}
 .nav-links a,.nav-cats a{padding:8px 16px;color:var(--text-secondary);border-radius:var(--radius-pill);font-size:.93rem;font-weight:500;transition:all .22s cubic-bezier(.22,1,.36,1)}
 .nav-links a:hover,.nav-cats a:hover{color:var(--sky-blue-dark);background:var(--bg-soft);transform:translateY(-1px)}

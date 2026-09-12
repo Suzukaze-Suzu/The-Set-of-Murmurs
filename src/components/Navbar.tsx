@@ -72,7 +72,8 @@ export default function Navbar() {
             <span />
           </button>
           <Link to="/" className="nav-brand">
-            <img src="/logo.svg" alt="" className="brand-logo" />
+            <img src="/logo.svg" alt="" className="brand-logo brand-logo-light" />
+            <img src="/logo-dark.svg" alt="" className="brand-logo brand-logo-dark" />
             呓语集
           </Link>
 
