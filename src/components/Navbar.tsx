@@ -72,7 +72,7 @@ export default function Navbar() {
             <span />
           </button>
           <Link to="/" className="nav-brand">
-            <span className="brand-dot" />
+            <img src="/logo.svg" alt="" className="brand-logo" />
             呓语集
           </Link>
 

@@ -37,6 +37,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nav-inner{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;flex-wrap:wrap;gap:18px}
 .nav-brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1.35rem;color:var(--text-main)}
 .brand-dot{width:16px;height:16px;border-radius:50%;background:var(--grad-warm);box-shadow:0 0 0 4px color-mix(in srgb,var(--coral-pink) 20%,transparent)}
+.brand-logo{width:34px;height:34px;flex-shrink:0;display:block;object-fit:contain}
 .nav-links{display:flex;gap:8px;flex:1}
 .nav-links a,.nav-cats a{padding:8px 16px;color:var(--text-secondary);border-radius:var(--radius-pill);font-size:.93rem;font-weight:500;transition:all .22s cubic-bezier(.22,1,.36,1)}
 .nav-links a:hover,.nav-cats a:hover{color:var(--sky-blue-dark);background:var(--bg-soft);transform:translateY(-1px)}
@@ -337,6 +338,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .nav-cats{gap:4px}
   .nav-cats a{padding:7px 10px;font-size:.85rem}
   .nav-brand{font-size:1.25rem}
+  .brand-logo{width:32px;height:32px}
 }
 /* 涓瓑灞忓箷锛氬搧鐗?瀵艰埅涓€琛岋紝鍒嗙被鑻ユ斁涓嬪垯鎹㈣淇濇寔鍙 */
 @media (min-width:940px) and (max-width:1179px){
@@ -985,6 +987,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .nav-inner{flex-wrap:nowrap;gap:8px}
   .nav-auth{margin-left:auto}
   .nav-brand{font-size:1.2rem}
+  .brand-logo{width:30px;height:30px}
 }
 
 /* ===== 回到顶部按钮 ===== */
