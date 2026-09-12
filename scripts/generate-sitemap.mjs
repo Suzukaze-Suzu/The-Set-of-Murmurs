@@ -34,7 +34,7 @@ function day(date) {
 // HashRouter 下页面地址是 /#/xxx；BrowserRouter 下就是 /xxx
 function detectPrefix() {
   const app = join(ROOT, 'src', 'App.tsx');
-  const hash = existsSync(app) && readFileSync(app, 'utf-8').includes('HashRouter');
+  const hash = existsSync(app) && /<HashRouter[\s>]/.test(readFileSync(app, 'utf-8'));
   return hash ? '/#' : '';
 }
 

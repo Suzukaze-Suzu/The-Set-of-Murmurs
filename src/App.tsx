@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route, Outlet, useOutletContext } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet, useOutletContext } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ArticleProvider } from './context/ArticleProvider';
@@ -55,7 +55,7 @@ export default function App() {
                 <ArticleProvider>
                   <CommentProvider>
                     <FriendLinkProvider>
-                      <HashRouter>
+                      <BrowserRouter>
                         <ErrorBoundary>
                           <Suspense fallback={<div className="route-loading">加载中…</div>}>
                             <Routes>
@@ -78,7 +78,7 @@ export default function App() {
                             </Routes>
                           </Suspense>
                         </ErrorBoundary>
-                      </HashRouter>
+                      </BrowserRouter>
                     </FriendLinkProvider>
                   </CommentProvider>
                 </ArticleProvider>

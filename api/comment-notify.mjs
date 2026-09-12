@@ -65,7 +65,7 @@ export default async function handler(req, res) {
         <div style="font-size:13px;color:#3d6b8f;margin-bottom:6px"><strong>${replyName}</strong> 回复了你：</div>
         <div style="color:#333">${short(replyContent)}</div>
       </div>
-      <a href="${siteUrl}/#/" style="display:inline-block;background:#5BA8D8;color:#fff;padding:10px 22px;border-radius:22px;text-decoration:none;font-size:14px">去呓语集看看</a>
+      <a href="${siteUrl}/" style="display:inline-block;background:#5BA8D8;color:#fff;padding:10px 22px;border-radius:22px;text-decoration:none;font-size:14px">去呓语集看看</a>
     </div>`;
 
   const mailRes = await fetch('https://api.resend.com/emails', {

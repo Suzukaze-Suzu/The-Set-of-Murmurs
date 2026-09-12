@@ -2,13 +2,13 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>呓语集</title>
-    <link>https://www.the-set-of-murmurs.me/#/</link>
+    <link>https://www.the-set-of-murmurs.me/</link>
     <description>记录动漫、随想、读后感与数学学习的个人博客</description>
     <atom:link href="https://www.the-set-of-murmurs.me/rss.xml" rel="self" type="application/rss+xml"/>
     <language>zh-CN</language>
     <item>
       <title>吻</title>
-      <link>https://www.the-set-of-murmurs.me/#/article/mtrgi27n3rh75l</link>
+      <link>https://www.the-set-of-murmurs.me/article/mtrgi27n3rh75l</link>
       <guid isPermaLink="false">mtrgi27n3rh75l</guid>
       <pubDate>Mon, 07 Sep 2026 00:00:00 GMT</pubDate>
       <category>读后感</category>
@@ -16,7 +16,7 @@
     </item>
     <item>
       <title>一些思考</title>
-      <link>https://www.the-set-of-murmurs.me/#/article/mt18pv39e2kd51</link>
+      <link>https://www.the-set-of-murmurs.me/article/mt18pv39e2kd51</link>
       <guid isPermaLink="false">mt18pv39e2kd51</guid>
       <pubDate>Thu, 20 Aug 2026 00:00:00 GMT</pubDate>
       <category>随笔</category>
@@ -24,7 +24,7 @@
     </item>
     <item>
       <title>一些对于介值定理的有趣应用</title>
-      <link>https://www.the-set-of-murmurs.me/#/article/mspo6wn3re1b6r</link>
+      <link>https://www.the-set-of-murmurs.me/article/mspo6wn3re1b6r</link>
       <guid isPermaLink="false">mspo6wn3re1b6r</guid>
       <pubDate>Wed, 12 Aug 2026 00:00:00 GMT</pubDate>
       <category>数学笔记</category>
@@ -32,7 +32,7 @@
     </item>
     <item>
       <title>未至</title>
-      <link>https://www.the-set-of-murmurs.me/#/article/msn1siirheyd70</link>
+      <link>https://www.the-set-of-murmurs.me/article/msn1siirheyd70</link>
       <guid isPermaLink="false">msn1siirheyd70</guid>
       <pubDate>Mon, 10 Aug 2026 00:00:00 GMT</pubDate>
       <category>小说</category>
@@ -40,7 +40,7 @@
     </item>
     <item>
       <title>下一滴眼泪</title>
-      <link>https://www.the-set-of-murmurs.me/#/article/mskpb9lma8yabj</link>
+      <link>https://www.the-set-of-murmurs.me/article/mskpb9lma8yabj</link>
       <guid isPermaLink="false">mskpb9lma8yabj</guid>
       <pubDate>Sat, 08 Aug 2026 00:00:00 GMT</pubDate>
       <category>随笔</category>
@@ -48,7 +48,7 @@
     </item>
     <item>
       <title>AI算尽了我的眼泪</title>
-      <link>https://www.the-set-of-murmurs.me/#/article/mskp6qjmphsym9</link>
+      <link>https://www.the-set-of-murmurs.me/article/mskp6qjmphsym9</link>
       <guid isPermaLink="false">mskp6qjmphsym9</guid>
       <pubDate>Sat, 08 Aug 2026 00:00:00 GMT</pubDate>
       <category>随笔</category>
@@ -56,7 +56,7 @@
     </item>
     <item>
       <title>最后的汉语母语使用者</title>
-      <link>https://www.the-set-of-murmurs.me/#/article/msjqshhdky0omf</link>
+      <link>https://www.the-set-of-murmurs.me/article/msjqshhdky0omf</link>
       <guid isPermaLink="false">msjqshhdky0omf</guid>
       <pubDate>Sat, 08 Aug 2026 00:00:00 GMT</pubDate>
       <category>随笔</category>
@@ -64,7 +64,7 @@
     </item>
     <item>
       <title>Bernoulli不等式的一种证明</title>
-      <link>https://www.the-set-of-murmurs.me/#/article/mshlz4ys7xmucy</link>
+      <link>https://www.the-set-of-murmurs.me/article/mshlz4ys7xmucy</link>
       <guid isPermaLink="false">mshlz4ys7xmucy</guid>
       <pubDate>Thu, 06 Aug 2026 00:00:00 GMT</pubDate>
       <category>数学笔记</category>
@@ -72,7 +72,7 @@
     </item>
     <item>
       <title>安达与岛村 观后感</title>
-      <link>https://www.the-set-of-murmurs.me/#/article/msg9edtnfjutdf</link>
+      <link>https://www.the-set-of-murmurs.me/article/msg9edtnfjutdf</link>
       <guid isPermaLink="false">msg9edtnfjutdf</guid>
       <pubDate>Wed, 05 Aug 2026 00:00:00 GMT</pubDate>
       <category>读后感</category>
@@ -80,7 +80,7 @@
     </item>
     <item>
       <title>写在前面</title>
-      <link>https://www.the-set-of-murmurs.me/#/article/msfw8qtwvcp8lo</link>
+      <link>https://www.the-set-of-murmurs.me/article/msfw8qtwvcp8lo</link>
       <guid isPermaLink="false">msfw8qtwvcp8lo</guid>
       <pubDate>Wed, 05 Aug 2026 00:00:00 GMT</pubDate>
       <category>随笔</category>

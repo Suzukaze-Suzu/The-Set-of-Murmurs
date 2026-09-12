@@ -2,9 +2,23 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/svg+xml" href="/favicon-dark.svg" media="(prefers-color-scheme: dark)" />
+    <!-- 标签栏图标：只留一条，由 src/lib/favicon.ts 按浏览器/系统深浅色改 href。
+         原先第二条 link 用 media="(prefers-color-scheme: dark)"，但 Chromium/WebKit 都不生效，已移除 -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" data-theme-icon />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // 旧版 HashRouter 链接兼容：/#/article/xxx?y=1 → /article/xxx?y=1
+      // 必须在应用脚本之前执行，所以放在 head 里（模块脚本是 defer 的，会晚于本段）
+      (function () {
+        var h = location.hash;
+        if (h.indexOf('#/') !== 0) return;
+        var rest = h.slice(1);
+        var qi = rest.indexOf('?');
+        var path = qi < 0 ? rest : rest.slice(0, qi);
+        var search = qi < 0 ? location.search : rest.slice(qi);
+        try { history.replaceState(null, '', path + search); } catch (e) { /* 老浏览器忽略 */ }
+      })();
+    </script>
     <meta name="description" content="呓语集 - 记录动漫、随想、读后感与数学学习的个人博客" />
     <title>呓语集</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />

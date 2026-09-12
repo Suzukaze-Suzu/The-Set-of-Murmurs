@@ -1,4 +1,4 @@
-﻿# 呓语集 🎈
+# 呓语集 🎈
 
 一个以「凉风凉」为主题的活泼个人博客，用于记录 **动漫**、**随笔**、**读后感**、**数学笔记** 与 **学习分享**。
 
@@ -30,10 +30,10 @@ npm run dev
 npm run build
 ```
 
-构建产物在 `dist/` 文件夹。由于使用 HashRouter，可直接部署到：
-- GitHub Pages
+构建产物在 `dist/` 文件夹。使用 BrowserRouter，页面地址是真实的 `/article/xxx` 这类路径，因此**必须**给服务器配一条 SPA 兜底 rewrite（把非静态资源请求都指向 `index.html`）：Vercel 见 `vercel.json`，Netlify 见 `netlify.toml`。可部署到：
 - Vercel
 - Netlify
+- 任意支持 SPA 兜底的静态托管（GitHub Pages 需自行处理 404.html 兜底）
 
 ## 🔒 数据存储
 

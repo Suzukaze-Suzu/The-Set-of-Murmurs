@@ -2,7 +2,8 @@
 // 说明：
 //   - 阅读权限依赖 articles 表的 RLS（匿名可读，与前端一致）
 //   - 站点域名：默认使用 https://www.the-set-of-murmurs.me/，可用环境变量 SITE_URL 覆盖
-import { writeFileSync, mkdirSync } from 'node:fs';
+//   - 路由形态自动识别：src/App.tsx 用 <HashRouter> 时链接带 /#，换成 BrowserRouter 后自动变成真实路径
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -12,6 +13,10 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://ghzcvuemtoqejycii
 const ANON_KEY =
   process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_9M23ej9D_HWgfmtM5wfCng_T9N9WVGY';
 const SITE_URL = process.env.SITE_URL || 'https://www.the-set-of-murmurs.me';
+
+const APP_TSX = join(__dirname, '..', 'src', 'App.tsx');
+const ROUTE_PREFIX =
+  existsSync(APP_TSX) && /<HashRouter[\s>]/.test(readFileSync(APP_TSX, 'utf-8')) ? '/#' : '';
 
 const CATEGORY_LABEL = { anime: '读后感', essay: '随笔', reading: '小说', math: '数学笔记', study: '学习分享' };
 
@@ -39,7 +44,7 @@ async function main() {
       const desc = String(r.summary || '').replace(/\]\]>/g, ']]&gt;');
       return `    <item>
       <title>${esc(r.title)}</title>
-      <link>${SITE_URL}/#/article/${esc(r.id)}</link>
+      <link>${SITE_URL}${ROUTE_PREFIX}/article/${esc(r.id)}</link>
       <guid isPermaLink="false">${esc(r.id)}</guid>
       <pubDate>${rfc822(r.date)}</pubDate>
       <category>${esc(CATEGORY_LABEL[r.category] || r.category || '')}</category>
@@ -52,7 +57,7 @@ async function main() {
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>呓语集</title>
-    <link>${SITE_URL}/#/</link>
+    <link>${SITE_URL}${ROUTE_PREFIX}/</link>
     <description>记录动漫、随想、读后感与数学学习的个人博客</description>
     <atom:link href="${SITE_URL}/rss.xml" rel="self" type="application/rss+xml"/>
     <language>zh-CN</language>
@@ -73,7 +78,7 @@ main().catch((err) => {
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(
     out,
-    `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>呓语集</title><link>${SITE_URL}/#/</link></channel></rss>\n`,
+    `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>呓语集</title><link>${SITE_URL}${ROUTE_PREFIX}/</link></channel></rss>\n`,
     'utf-8'
   );
 });

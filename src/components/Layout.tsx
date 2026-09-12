@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ReactNode } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 import Navbar from './Navbar';
 import BackToTop from './BackToTop';
 import { useTheme } from '../context/ThemeContext';
@@ -53,7 +53,7 @@ export default function Layout() {
           <p className="footer-slogan">{footer.slogan}</p>
           {footer.caption && <p className="footer-caption">{footer.caption}</p>}
           <p className="footer-links">
-            <a href="#/about">关于</a> · <a href="#/guestbook">留言板</a> · <a href="#/friends">友链</a> · <a href="/rss.xml" target="_blank" rel="noopener">RSS</a>{isAdmin && <> · <a href="#/write">写作</a></>}
+            <Link to="/about">关于</Link> · <Link to="/guestbook">留言板</Link> · <Link to="/friends">友链</Link> · <a href="/rss.xml" target="_blank" rel="noopener">RSS</a>{isAdmin && <> · <Link to="/write">写作</Link></>}
           </p>
           <p className="footer-copy">{footer.copyright.replace('{year}', String(new Date().getFullYear()))}</p>
         </div>
