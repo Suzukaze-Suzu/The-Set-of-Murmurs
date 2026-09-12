@@ -1,0 +1,21 @@
+# 呓语集 / The Set of Murmurs
+# https://www.the-set-of-murmurs.me
+#
+# 本站是 React 单页应用。注意：前端目前使用 HashRouter，
+# 页面真实地址形如 /#/articles，而 robots.txt 只能匹配 URL 中 # 之前的部分，
+# 因此下面针对前端路由的 Disallow 规则当前不会命中，
+# 保留它们是为了将来切换到 BrowserRouter 后立刻生效。
+
+User-agent: *
+Allow: /
+
+# 后端接口（Vercel Serverless Functions），对搜索引擎没有价值
+Disallow: /api/
+
+# 写作页 / 登录页 / 个人设置页
+Disallow: /write
+Disallow: /login
+Disallow: /profile
+
+# 站点地图
+Sitemap: https://www.the-set-of-murmurs.me/sitemap.xml
