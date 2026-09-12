@@ -16,6 +16,7 @@ Thumbs.db
 .vercel
 .netlify
 
-# Vercel 配置文件（会导致 "Invalid vercel.json" 报错，已弃用）
-vercel.json
+# 注：vercel.json 曾因 source 写成 "/((?!api/).*)" 这种负向断言被 Vercel 判为
+# "Invalid vercel.json"，当时靠把它加进 .gitignore 绕过去了——但那样 Vercel 侧
+# 等于没有任何 rewrite 配置，深路径全部 404。现已改回合法写法 "/(.*)" 并重新纳入版本控制。
 
