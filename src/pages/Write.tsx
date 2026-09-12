@@ -1,4 +1,4 @@
-import { useState, useRef, ChangeEvent } from 'react';
+import { useState, useRef, useEffect, ChangeEvent } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { CATEGORIES, CATEGORY_META, Article, ArticleAttachment, Category, NovelChapter, NovelStatus } from '../types';
 import { NOVEL_STATUS_META } from '../types';
@@ -10,6 +10,43 @@ import { useAuth } from '../context/AuthContext';
 import { supabase, SUPABASE_URL } from '../lib/supabase';
 import { usePageTitle } from '../hooks/usePageTitle';
 
+// ── 草稿自动保存 ──────────────────────────────────────────────
+// 写新文章 / 新小说时，把标题、正文、分类、标签、章节等实时存到 localStorage，
+// 刷新页面、误关标签页或跳去别的页面后回来仍能接着写，不必重新写一遍。
+// 仅对「新建」生效；编辑已有文章时以数据库内容为准，不写草稿。
+const DRAFT_KEY = 'yiyuji_write_draft';
+
+interface WriteDraft {
+  title: string;
+  content: string;
+  category: Category;
+  tags: string;
+  favorite: boolean;
+  composer: 'article' | 'novel';
+  author: string;
+  cover: string;
+  nstatus: NovelStatus;
+  synopsis: string;
+  chapters: NovelChapter[];
+  attachments: ArticleAttachment[];
+  savedAt: string;
+}
+
+function loadDraft(): WriteDraft | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw) as WriteDraft;
+    return d && typeof d === 'object' ? d : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearDraftStorage() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+}
+
 export default function Write() {
   const { isAdmin } = useAuth();
   const { id } = useParams();
@@ -20,29 +57,33 @@ export default function Write() {
 
   usePageTitle(editing ? '编辑文章' : '写作');
 
-  const [title, setTitle] = useState(editing?.title || '');
-  const [content, setContent] = useState(editing?.content || '');
-  const [category, setCategory] = useState<Category>(editing?.category || 'essay');
-  const [tags, setTags] = useState(editing?.tags.join(', ') || '');
-  const [favorite, setFavorite] = useState(editing?.favorite || false);
-  const [composer, setComposer] = useState<'article' | 'novel'>(editing?.novel ? 'novel' : 'article');
+  // 新建时读取本地草稿（编辑已有文章不读，以数据库内容为准）；只取一次
+  const [savedDraft] = useState<WriteDraft | null>(() => (id ? null : loadDraft()));
+
+  const [title, setTitle] = useState(savedDraft?.title ?? editing?.title ?? '');
+  const [content, setContent] = useState(savedDraft?.content ?? editing?.content ?? '');
+  const [category, setCategory] = useState<Category>(savedDraft?.category ?? editing?.category ?? 'essay');
+  const [tags, setTags] = useState(savedDraft?.tags ?? editing?.tags.join(', ') ?? '');
+  const [favorite, setFavorite] = useState(savedDraft?.favorite ?? editing?.favorite ?? false);
+  const [composer, setComposer] = useState<'article' | 'novel'>(savedDraft?.composer ?? (editing?.novel ? 'novel' : 'article'));
   const [previewing, setPreviewing] = useState(false);
   // 小说（chapter）编辑状态（仅 category=reading 使用）
-  const [author, setAuthor] = useState(editing?.novel?.author || '');
-  const [cover, setCover] = useState(editing?.novel?.cover || '');
-  const [nstatus, setNstatus] = useState<NovelStatus>(editing?.novel?.status || 'serializing');
-  const [synopsis, setSynopsis] = useState(editing?.novel?.synopsis || '');
-  const [chapters, setChapters] = useState<NovelChapter[]>(editing?.novel?.chapters?.slice() || []);
+  const [author, setAuthor] = useState(savedDraft?.author ?? editing?.novel?.author ?? '');
+  const [cover, setCover] = useState(savedDraft?.cover ?? editing?.novel?.cover ?? '');
+  const [nstatus, setNstatus] = useState<NovelStatus>(savedDraft?.nstatus ?? editing?.novel?.status ?? 'serializing');
+  const [synopsis, setSynopsis] = useState(savedDraft?.synopsis ?? editing?.novel?.synopsis ?? '');
+  const [chapters, setChapters] = useState<NovelChapter[]>(savedDraft?.chapters ?? editing?.novel?.chapters?.slice() ?? []);
   const fileInput = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const [panel, setPanel] = useState<'image' | 'music' | 'attachment' | null>(null);
   const [imgUploading, setImgUploading] = useState(false);
     const [musicInfo, setMusicInfo] = useState('');
   const [imgDragging, setImgDragging] = useState(false);
-  const [attachments, setAttachments] = useState<ArticleAttachment[]>(editing?.attachments || []);
+  const [attachments, setAttachments] = useState<ArticleAttachment[]>(savedDraft?.attachments ?? editing?.attachments ?? []);
   const attachInput = useRef<HTMLInputElement>(null);
   const [attachUploading, setAttachUploading] = useState(false);
   const [attachProg, setAttachProg] = useState<Record<string, number>>({});
+  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(savedDraft?.savedAt ? new Date(savedDraft.savedAt) : null);
   // 小说章节编辑（编辑已有书）
   const [editChId, setEditChId] = useState('');
   const [chDraftTitle, setChDraftTitle] = useState('');
@@ -51,6 +92,46 @@ export default function Write() {
   const [chDraftPart, setChDraftPart] = useState('');
   const coverInput = useRef<HTMLInputElement>(null);
   const chapterFileInput = useRef<HTMLInputElement>(null);
+
+  // 自动保存草稿：内容变化后 600ms 写入 localStorage（仅新建文章/小说）
+  useEffect(() => {
+    if (id) return; // 编辑已有文章时不写草稿，避免覆盖数据库内容
+    const hasSomething =
+      title.trim() ||
+      content.trim() ||
+      synopsis.trim() ||
+      chapters.some((c) => c.title.trim() || c.content.trim());
+    if (!hasSomething) return;
+    const timer = setTimeout(() => {
+      const draft: WriteDraft = {
+        title, content, category, tags, favorite, composer,
+        author, cover, nstatus, synopsis, chapters, attachments,
+        savedAt: new Date().toISOString(),
+      };
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+        setDraftSavedAt(new Date());
+      } catch { /* 存储配额不足等情况忽略，不影响写作 */ }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [id, title, content, category, tags, favorite, composer, author, cover, nstatus, synopsis, chapters, attachments]);
+
+  // 清除草稿：清空本地存储与当前编辑内容
+  const clearDraft = () => {
+    if (!window.confirm('确定清除草稿吗？\n\n当前未发布的内容会被清空，且无法恢复。')) return;
+    clearDraftStorage();
+    setTitle('');
+    setContent('');
+    setTags('');
+    setFavorite(false);
+    setComposer('article');
+    setAuthor('');
+    setCover('');
+    setSynopsis('');
+    setChapters([]);
+    setAttachments([]);
+    setDraftSavedAt(null);
+  };
 
   const loadFile = (file: File) => {
     const reader = new FileReader();
@@ -319,6 +400,8 @@ export default function Write() {
     } else {
       addArticle(article);
     }
+    // 已发布，草稿使命完成，清掉本地草稿
+    clearDraftStorage();
     navigate(`/article/${article.id}`);
   };
 
@@ -335,6 +418,7 @@ export default function Write() {
 
   const clearAll = () => {
     localStorage.removeItem(storageKey);
+    clearDraftStorage();
     window.location.reload();
   };
 
@@ -634,6 +718,20 @@ export default function Write() {
           <div className="novel-publish-hint">
             你当前在 <strong>小说模式</strong>：发布时会保存 书名、作者、封面、章节、简介，并在「小说书架」以封面形式展示。
             发布前若没有章节，会提示你补充。
+          </div>
+        )}
+        {!editing && (
+          <div className="write-draft-status">
+            {draftSavedAt ? (
+              <span className="draft-saved" title={'草稿保存时间：' + draftSavedAt.toLocaleString('zh-CN')}>
+                ✓ 草稿已自动保存 · {draftSavedAt.toLocaleTimeString('zh-CN', { hour12: false })}
+              </span>
+            ) : (
+              <span className="draft-hint">写作内容会自动保存为草稿，刷新或离开后回来仍能接着写</span>
+            )}
+            {draftSavedAt && (
+              <button className="draft-clear" onClick={clearDraft} title="清除本地草稿">清除草稿</button>
+            )}
           </div>
         )}
         <button className="btn btn-primary" onClick={save}>
