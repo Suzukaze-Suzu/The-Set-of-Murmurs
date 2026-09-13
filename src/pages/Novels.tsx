@@ -20,7 +20,8 @@ export default function Novels() {
 
   return (
     <div className="page">
-      <div className="cat-header" style={{ '--cat-tint': '#2F6B4F', '--cat-accent': '#2F6B4F' } as CSSProperties}>
+      {/* 配色跟随 CATEGORY_META.reading（蜜金）：原来的墨绿 #2F6B4F 不在凉风凉四色里，已弃用 */}
+      <div className="cat-header" style={{ '--cat-tint': '#E8C9A0', '--cat-accent': '#8F6220' } as CSSProperties}>
         <h1 className="page-title light">小说书架</h1>
         <p className="cat-count">共 {novels.length} 本 · {totalChapters} 章</p>
       </div>

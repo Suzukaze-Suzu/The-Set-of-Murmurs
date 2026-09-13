@@ -121,14 +121,12 @@ export default function About() {
 
           {msg && <p className="about-msg">{msg}</p>}
 
-          {/* 配色装饰（固定） */}
+          {/* 配色装饰（固定）：只列「主题灵感」里凉风凉身上的那四色，别的色相不进站 */}
           <div className="color-palette">
-            <span style={{ background: '#5BA8D8' }} title="天空蓝" />
-            <span style={{ background: '#E8C9A0' }} title="蜜金" />
-            <span style={{ background: '#E89B8A' }} title="珊瑚粉" />
-            <span style={{ background: '#4A9BB8' }} title="青蓝" />
-            <span style={{ background: '#8A8F9A' }} title="灰蓝" />
-            <span style={{ background: '#2F6B4F' }} title="森林绿" />
+            <span style={{ background: '#5BA8D8' }} title="天空蓝 · 开衫" />
+            <span style={{ background: '#E8C9A0' }} title="蜜金 · 长发" />
+            <span style={{ background: '#E89B8A' }} title="珊瑚粉 · 长发" />
+            <span style={{ background: '#4A9BB8' }} title="青蓝 · 眼睛" />
           </div>
         </div>
       </div>

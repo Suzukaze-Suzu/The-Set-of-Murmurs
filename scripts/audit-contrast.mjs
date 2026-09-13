@@ -86,11 +86,22 @@ A('#ffffff', '#35769B', '白字 on 主渐变起点');
 A('#ffffff', '#2A6386', '白字 on 主渐变终点');
 A('var(--text-main)', '#E8C9A0', '墨字 on 蜜金(btn-warm 起点)');
 A('var(--text-main)', '#E89B8A', '墨字 on 珊瑚(btn-warm 终点)');
-A('var(--text-main)', '#e9f4fc', '墨字 on hero 浅底左上');
-A('var(--text-main)', '#fdf4e9', '墨字 on hero 浅底右下');
-A('var(--sky-ink)', '#e9f4fc', 'hero 副标题 on hero 浅底');
-A('#ffffff', '#2F6B4F', '白字 on 森林绿(小说封面)');
-A('#ffffff', '#2A6577', '白字 on 青蓝深色(小说封面)');
+A('var(--text-main)', '#e9f4fc', '墨字 on hero 浅底左上', 4.5);
+A('var(--text-main)', '#fdf4e9', '墨字 on hero 浅底右下', 4.5);
+A('var(--sky-ink)', '#e9f4fc', 'hero 副标题 on hero 浅底', 4.5);
+// ↓ 2026-09-13 第2步：Hero 改成流动渐变了，下面按「渐变的四个色标」实算
+//   （色标值 = 色卡色 × 百分比 + 白/深底，与 index.css 里 --hero-flow 的 color-mix 一一对应）
+A('var(--text-main)', '#DEEEF7', '墨字 on hero 天空蓝20%色标', 4.5);
+A('var(--text-main)', '#F9F1E6', '墨字 on hero 蜜金26%色标', 4.5);
+A('var(--text-main)', '#FBEFEC', '墨字 on hero 珊瑚粉16%色标', 4.5);
+A('var(--text-main)', '#DEEDF2', '墨字 on hero 青蓝18%色标', 4.5);
+A('var(--sky-ink)', '#DEEEF7', 'hero 副标题 on hero 天空蓝色标', 4.5);
+A('var(--sky-ink)', '#DEEDF2', 'hero 副标题 on hero 青蓝色标', 4.5);
+A('var(--text-secondary)', '#DEEEF7', 'hero 简介 on hero 天空蓝色标', 4.5);
+A('#ffffff', '#4A9BB8', '白字 on 青蓝(小说封面浅端，大字)', 3);
+A('#ffffff', '#2A6577', '白字 on 青蓝深色(小说封面深端)');
+A('var(--aqua-ink)', 'var(--bg-card)', '青蓝墨色 on 卡片(原森林绿岗位)');
+A('var(--aqua-ink)', mix(light['--aqua-blue'], '#ffffff', 0.12), '青蓝墨色 on 青蓝12%底');
 
 console.log('\n【暗色主题】');
 const D = (f, b, l, m) => audit('dark', dark, f, b, l, m);
@@ -99,6 +110,12 @@ D('var(--text-secondary)', 'var(--bg-card)', '次要文字 on 卡片');
 D('var(--text-secondary)', 'var(--bg-page)', '次要文字 on 页面底');
 D('var(--sky-ink)', 'var(--bg-card)', '天空蓝墨色 on 卡片');
 D('var(--coral-ink)', 'var(--bg-card)', '珊瑚墨色 on 卡片');
+D('var(--aqua-ink)', 'var(--bg-card)', '青蓝墨色 on 卡片');
+// ↓ 暗色 Hero 重做后的实算：#223746 = 天空蓝 #6ec3ef 16% 混进 #141b26 得到的最亮色标
+D('var(--text-main)', '#223746', '暗色 hero 标题 on 最亮色标');
+D('var(--sky-blue)', '#223746', '暗色 hero 副标题(天空蓝) on 最亮色标');
+D('var(--text-secondary)', '#223746', '暗色 hero 简介 on 最亮色标');
+D('#0e1c26', 'var(--sky-blue)', '暗色 hero 主按钮上的深字 on 天空蓝');
 
 console.log(`\n结果：FAIL ${fail} 项，偏低 ${warn} 项`);
 process.exit(fail > 0 ? 1 : 0);

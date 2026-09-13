@@ -1,16 +1,22 @@
 :root {
-  /* 品牌色（凉风凉色卡）：只作装饰、浅底、点缀——不再直接承载白字 */
-  --sky-blue: #5BA8D8; --sky-blue-soft: #a8d4ec;
-  --honey-gold: #E8C9A0; --honey-gold-soft: #f3e2c6;
-  --coral-pink: #E89B8A; --coral-pink-soft: #f6c6bc;
-  --aqua-blue: #4A9BB8; --slate-blue: #8A8F9A; --forest-green: #2F6B4F;
+  /* 凉风凉色卡 —— 出处＝关于页「主题灵感」：天空蓝的开衫、蜜金渐变珊瑚粉的长发、清透青蓝的眼睛。
+     全站的颜色只能从下面这几个里取，不再引入第五个色相。 */
+  --sky-blue: #5BA8D8; --sky-blue-soft: #a8d4ec;      /* 天空蓝 · 开衫：全站唯一强调色 */
+  --honey-gold: #E8C9A0; --honey-gold-soft: #f3e2c6;  /* 蜜金 · 长发渐变起点 */
+  --coral-pink: #E89B8A; --coral-pink-soft: #f6c6bc;  /* 珊瑚粉 · 长发渐变终点 */
+  --aqua-blue: #4A9BB8;                               /* 青蓝 · 眼睛 */
+  --slate-blue: #8A8F9A;                              /* 灰蓝：中性色，只当灰用，不当识别色 */
+  /* 2026-09-13 第2步：--forest-green #2F6B4F（墨绿）已弃用。
+     它不在「主题灵感」的四色里，亮色下那块墨绿跟天空蓝/青蓝打架，全站已换成青蓝墨色。 */
   /* ↓↓↓ 2026-09-13 视觉重构·第 1 步：墨色层。亮底上的文字/图标一律用它；白字只能压在 *-fill 上 ↓↓↓ */
   --sky-ink: #2E6E92;      /* 白底 5.58:1 / 自身12%浅底 4.67:1 */
   --coral-ink: #A8482F;    /* 白底 5.78:1 / 自身15%浅底 4.67:1 */
   --honey-ink: #8F6220;    /* 白底 5.34:1 / 页面底 5.08:1 */
+  --aqua-ink: #2A6577;     /* 白底 6.51:1（原「森林绿」的岗位，由青蓝派生） */
   --slate-ink: #5C6469;    /* 白底 6.03:1 */
   --sky-fill: #2E6E92;     /* 承载白字的实底色：5.58:1 */
   --coral-fill: #A8482F;   /* 承载白字的实底色：5.78:1 */
+  --aqua-fill: #2A6577;    /* 承载白字的实底色：6.51:1 */
   --sky-blue-dark: #2E6E92;/* 链接/标题/激活态文字：原 #3a86b8 仅 3.98:1 */
   --text-main: #2d3436; --text-secondary: #5C6469; /* 原 #7b8085 仅 3.80~3.99:1 */
   --bg-page: #f6fafd; --bg-card: #ffffff; --bg-soft: #eef5fb;
@@ -20,21 +26,40 @@
   --radius: 18px; --radius-sm: 12px; --radius-pill: 999px;
   --grad-main: linear-gradient(135deg,#35769B,#2A6386); /* 白字 4.98~6.51:1 */
   --grad-warm: linear-gradient(135deg,#E8C9A0,#E89B8A);
-  --grad-hero: linear-gradient(135deg,#5BA8D8 0%,#7fc3e6 45%,#f3d4a8 100%);
+  /* 首页 Hero（中心主色块）：全部由色卡 mix 出来的浅色渐变，配 background-size 后可缓慢流动 */
+  --hero-flow: linear-gradient(115deg,
+    color-mix(in srgb,var(--sky-blue) 20%,#fff) 0%,
+    #ffffff 20%,
+    color-mix(in srgb,var(--honey-gold) 26%,#fff) 44%,
+    color-mix(in srgb,var(--coral-pink) 16%,#fff) 62%,
+    color-mix(in srgb,var(--aqua-blue) 18%,#fff) 82%,
+    color-mix(in srgb,var(--sky-blue) 20%,#fff) 100%);
+  --hero-glow-a: color-mix(in srgb,var(--coral-pink) 40%,transparent);
+  --hero-glow-b: color-mix(in srgb,var(--sky-blue) 45%,transparent);
   --font-sans: 'PingFang SC','Microsoft YaHei','Hiragino Sans GB','HarmonyOS Sans SC',sans-serif;
+  /* 中文衬线（明朝体）：只给大标题用，一眼的「文学感」；不想要就把它改成 var(--font-sans) */
+  --font-display: 'Source Han Serif SC','Noto Serif SC','Songti SC','STSong','SimSun',serif;
 }
 [data-theme='dark'] {
   --text-main:#eef3f7; --text-secondary:#a9b4be; --bg-page:#141b26;
   --bg-card:#1e2937; --bg-soft:#253345; --sky-blue:#6ec3ef; --sky-blue-dark:#4ba7d6;
   --coral-pink:#f0a395; --honey-gold:#e8cfa8;
-  /* 本次只修亮色主题：新 token 在暗色下全部映射回原来的值，保证暗色观感零变化 */
-  --sky-ink:#6ec3ef; --coral-ink:#f0a395; --honey-ink:#e8cfa8; --slate-ink:#a9b4be;
-  --sky-fill:#6ec3ef; --coral-fill:#f0a395;
+  /* 第1步只修亮色时，新 token 在暗色下全部映射回原值；第2步起暗色 Hero 单独重做了（见文件末尾） */
+  --sky-ink:#6ec3ef; --coral-ink:#f0a395; --honey-ink:#e8cfa8; --aqua-ink:#7fc4d8; --slate-ink:#a9b4be;
+  --sky-fill:#6ec3ef; --coral-fill:#f0a395; --aqua-fill:#4A9BB8;
   --grad-main:linear-gradient(135deg,#5BA8D8,#4A9BB8);
+  /* 暗色 Hero：深色底 + 极淡的色卡辉光（不再是原来那块亮蓝→亮金的彩色横幅） */
+  --hero-flow: linear-gradient(115deg,
+    color-mix(in srgb,var(--sky-blue) 16%,#141b26) 0%,
+    #141b26 24%,
+    color-mix(in srgb,var(--aqua-blue) 26%,#141b26) 46%,
+    color-mix(in srgb,var(--coral-pink) 14%,#141b26) 64%,
+    color-mix(in srgb,var(--sky-blue) 16%,#141b26) 84%,
+    color-mix(in srgb,var(--sky-blue) 16%,#141b26) 100%);
   --shadow-sm:0 2px 8px rgba(0,0,0,0.3); --shadow:0 8px 28px rgba(0,0,0,0.35); --shadow-lg:0 16px 48px rgba(0,0,0,0.45);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-main);line-height:1.7;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+html,body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-main);line-height:1.78;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
 a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{color:var(--coral-ink)}
 ::selection{background:color-mix(in srgb,var(--coral-pink) 26%,transparent)}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:transparent}
@@ -43,7 +68,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .layout{min-height:100vh;display:flex;flex-direction:column}
 .main{flex:1;width:100%;max-width:1080px;margin:0 auto;padding:28px 20px 64px}
 .page{max-width:920px;margin:0 auto;animation:fadeUp .4s ease}
-.page-title{font-size:1.9rem;margin-bottom:24px;font-weight:800;letter-spacing:.5px}
+.page-title{font-family:var(--font-display);font-size:1.9rem;margin-bottom:28px;font-weight:600;letter-spacing:.06em;line-height:1.4}
 .page-title.light{color:var(--text-main)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .navbar{background:color-mix(in srgb,var(--bg-card) 82%,transparent);backdrop-filter:blur(14px);box-shadow:var(--shadow-sm);position:sticky;top:0;z-index:100;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
@@ -86,17 +111,25 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .btn-danger{color:#fff;background:linear-gradient(135deg,#A8482F,#8F3A24);box-shadow:0 8px 20px rgba(168,72,47,.3)}
 .btn-danger:hover{box-shadow:0 12px 28px rgba(168,72,47,.42)}
 .btn-sm{padding:7px 16px;font-size:.85rem}
-/* ===== Hero ===== */
-.hero{border-radius:26px;padding:56px 44px;margin-bottom:36px;color:var(--text-main);text-align:center;background:linear-gradient(135deg,#e9f4fc 0%,#f7fbfe 52%,#fdf4e9 100%);position:relative;overflow:hidden;box-shadow:var(--shadow)}
-.hero::before{content:'';position:absolute;inset:0;background:transparent;pointer-events:none}
-.hero::after{content:'';position:absolute;width:260px;height:260px;right:-60px;top:-60px;border-radius:50%;background:color-mix(in srgb,var(--sky-blue) 22%,transparent);filter:blur(40px);pointer-events:none}
+/* ===== Hero（首页中心主色块）：浅底留白 + 由凉风凉色卡 mix 出来的缓慢流动渐变 ===== */
+.hero{position:relative;overflow:hidden;border-radius:28px;padding:68px 44px 62px;margin-bottom:40px;text-align:center;color:var(--text-main);background:var(--hero-flow);background-size:260% 260%;animation:heroFlow 26s ease-in-out infinite;box-shadow:var(--shadow);border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
+.hero::before{content:'';position:absolute;width:420px;height:420px;left:-130px;top:-150px;border-radius:50%;background:radial-gradient(circle,var(--hero-glow-a),transparent 70%);filter:blur(50px);opacity:.7;pointer-events:none;animation:heroDriftA 32s ease-in-out infinite}
+.hero::after{content:'';position:absolute;width:400px;height:400px;right:-120px;bottom:-170px;border-radius:50%;background:radial-gradient(circle,var(--hero-glow-b),transparent 70%);filter:blur(50px);opacity:.75;pointer-events:none;animation:heroDriftB 40s ease-in-out infinite}
+@keyframes heroFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes heroDriftA{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(70px,50px,0) scale(1.14)}}
+@keyframes heroDriftB{0%,100%{transform:translate3d(0,0,0) scale(1.06)}50%{transform:translate3d(-80px,-50px,0) scale(1)}}
 .hero-inner{position:relative;z-index:2}
-.hero-title{font-size:3.2rem;font-weight:900;color:var(--text-main);letter-spacing:2px}
-.hero-sub{font-size:1.3rem;margin:14px 0 8px;color:var(--sky-ink);font-weight:600}
-.hero-desc{max-width:620px;margin:0 auto 28px;color:var(--text-secondary);line-height:1.9}
+.hero-title{font-family:var(--font-display);font-size:3.3rem;font-weight:600;color:var(--text-main);letter-spacing:.18em;text-indent:.18em;line-height:1.25}
+.hero-sub{font-size:.95rem;margin:22px 0 0;color:var(--sky-ink);font-weight:500;letter-spacing:.22em;text-indent:.22em}
+.hero-desc{max-width:540px;margin:18px auto 32px;color:var(--text-secondary);line-height:2.05;font-size:.97rem}
 .hero-cta{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+/* 尊重系统的「减少动态效果」 */
+@media (prefers-reduced-motion:reduce){
+  .hero,.hero::before,.hero::after{animation:none}
+  .hero{background-position:50% 50%}
+}
 /* ===== 鍒嗗尯鏍囬 ===== */
-.section-title{font-size:1.45rem;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.section-title{font-family:var(--font-display);font-size:1.4rem;font-weight:600;letter-spacing:.04em;margin-bottom:20px;display:flex;align-items:center;gap:10px;line-height:1.45}
 .cat-section{margin-bottom:40px}
 .cat-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .more-link{font-size:.9rem;font-weight:600;color:var(--sky-blue-dark);display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--radius-pill);transition:all .2s;background:color-mix(in srgb,var(--sky-blue) 8%,transparent)}
@@ -113,7 +146,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .fav-btn{border:none;background:color-mix(in srgb,var(--bg-soft) 70%,transparent);width:34px;height:34px;border-radius:50%;font-size:1.1rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
 .fav-btn:hover{transform:scale(1.15) rotate(-8deg);box-shadow:var(--shadow-sm)}
 .card-pin{color:var(--honey-ink);font-size:1rem}
-.card-title{font-size:1.22rem;font-weight:700;color:var(--text-main);line-height:1.45;transition:color .2s}
+.card-title{font-size:1.2rem;font-weight:600;color:var(--text-main);line-height:1.5;letter-spacing:.01em;transition:color .2s}
 .card-title:hover{color:var(--sky-blue-dark)}
 .card-summary{color:var(--text-secondary);font-size:.88rem;flex:1;line-height:1.65;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .card-tags{display:flex;flex-wrap:wrap;gap:6px}
@@ -202,7 +235,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .detail-actions{margin:22px 0;text-align:right}
 /* ===== Markdown 姝ｆ枃 ===== */
 .markdown-body{font-size:1rem;line-height:1.9;color:var(--text-main)}
-.markdown-body h1,.markdown-body h2,.markdown-body h3,.markdown-body h4{margin:1.4em 0 .5em;font-weight:800;color:var(--sky-blue-dark);line-height:1.4}
+.markdown-body h1,.markdown-body h2,.markdown-body h3,.markdown-body h4{font-family:var(--font-display);margin:1.5em 0 .5em;font-weight:600;letter-spacing:.02em;color:var(--sky-blue-dark);line-height:1.45}
 .markdown-body h1{font-size:1.8rem}.markdown-body h2{font-size:1.5rem}.markdown-body h3{font-size:1.25rem}
 .markdown-body p{margin:.9em 0}.markdown-body ul,.markdown-body ol{padding-left:1.7em;margin:.7em 0}.markdown-body li{margin:.3em 0}
 .markdown-body blockquote{border-left:4px solid var(--coral-pink);padding:12px 18px;margin:1.1em 0;background:var(--bg-soft);border-radius:0 var(--radius-sm) var(--radius-sm) 0;color:var(--text-secondary)}
@@ -233,7 +266,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .comment-content{padding:11px 14px;border:1px solid color-mix(in srgb,var(--slate-blue) 35%,transparent);border-radius:var(--radius-sm);background:var(--bg-page);color:var(--text-main);resize:vertical;font-family:inherit;transition:all .2s}
 .comment-content:focus{outline:none;border-color:var(--sky-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--sky-blue) 18%,transparent)}
 .comment-form .btn-primary{align-self:flex-end}
-.submit-ok{color:var(--forest-green);align-self:flex-end;font-size:.9rem}
+.submit-ok{color:var(--aqua-ink);align-self:flex-end;font-size:.9rem}
 .comment-list{display:flex;flex-direction:column;gap:12px}
 .comment-item{background:var(--bg-card);border-radius:var(--radius-sm);box-shadow:var(--shadow-sm);padding:16px;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent)}
 .comment-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -248,8 +281,9 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .about-grid{grid-template-columns:1fr}
   .nav-cats{display:none}
   .card-grid{grid-template-columns:1fr}
-  .hero{padding:32px 20px}
-  .hero-title{font-size:2rem}
+  .hero{padding:44px 22px 40px}
+  .hero-title{font-size:2.1rem;letter-spacing:.14em;text-indent:.14em}
+  .hero-sub{letter-spacing:.16em;text-indent:.16em;font-size:.9rem}
   .write-meta{flex-direction:column;align-items:stretch}
   .comment-name{width:100%}
 }
@@ -327,7 +361,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 @media (max-width:600px){.cat-section-head{flex-wrap:wrap}}
 /* ===== 鍒嗗尯鏍囬寮鸿皟鏉?===== */
 .section-title{position:relative;padding-left:14px}
-.section-title::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:5px;height:22px;border-radius:3px;background:var(--grad-main)}
+.section-title::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:20px;border-radius:2px;background:linear-gradient(180deg,var(--sky-blue),var(--aqua-blue))}
 .cat-section .section-title::before{background:currentColor;opacity:.6}
 /* ===== 淇涓€琛屽彉涓よ锛氭寜閽笉鎹㈣ ===== */
 .btn{white-space:nowrap}
@@ -381,7 +415,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .captcha-row{display:flex;align-items:center;gap:10px}
 .captcha-question{background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px dashed color-mix(in srgb,var(--sky-blue) 40%,transparent);border-radius:8px;padding:9px 14px;font-weight:600;color:var(--sky-ink);font-size:.95rem;white-space:nowrap;flex-shrink:0}
 .captcha-input{flex:1;min-width:0}
-.captcha-info{color:var(--forest-green);font-size:.88rem;line-height:1.6;background:color-mix(in srgb,var(--forest-green) 8%,transparent);padding:10px 12px;border-radius:8px;margin-bottom:4px}
+.captcha-info{color:var(--aqua-ink);font-size:.88rem;line-height:1.6;background:color-mix(in srgb,var(--aqua-ink) 8%,transparent);padding:10px 12px;border-radius:8px;margin-bottom:4px}
 /* ===== 登录/注册独立页面（美化版） ===== */
 .login-page{
   min-height:100vh;position:relative;overflow:hidden;
@@ -433,7 +467,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .captcha-row{display:flex;align-items:center;gap:10px}
 .captcha-question{background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px dashed color-mix(in srgb,var(--sky-blue) 40%,transparent);border-radius:8px;padding:9px 14px;font-weight:600;color:var(--sky-ink);font-size:.95rem;white-space:nowrap;flex-shrink:0}
 .captcha-input{flex:1;min-width:0}
-.captcha-info{color:var(--forest-green);font-size:.88rem;line-height:1.6;background:color-mix(in srgb,var(--forest-green) 8%,transparent);padding:10px 12px;border-radius:8px;margin-bottom:12px}
+.captcha-info{color:var(--aqua-ink);font-size:.88rem;line-height:1.6;background:color-mix(in srgb,var(--aqua-ink) 8%,transparent);padding:10px 12px;border-radius:8px;margin-bottom:12px}
 
 /* ===== 圆形头像裁剪弹窗 ===== */
 .avatar-crop-modal{
@@ -619,7 +653,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .about-editor{min-height:240px}
 .about-actions{display:flex;gap:10px;margin-top:12px}
 .about-controls-row{margin-top:10px;display:flex;gap:8px}
-.about-msg{color:var(--forest-green);font-size:.88rem;margin:8px 0 0;background:color-mix(in srgb,var(--forest-green) 8%,transparent);padding:8px 12px;border-radius:8px}
+.about-msg{color:var(--aqua-ink);font-size:.88rem;margin:8px 0 0;background:color-mix(in srgb,var(--aqua-ink) 8%,transparent);padding:8px 12px;border-radius:8px}
 .about-history-overlay .modal{max-width:560px;width:100%}
 .about-history-modal .modal-title{margin:0 0 4px}
 .history-hint{color:var(--text-secondary);font-size:.85rem;margin:0 0 12px}
@@ -711,7 +745,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;margin-top:24px}
 .novel-card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;border:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent);transition:transform .25s,box-shadow .25s}
 .novel-card:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(0,0,0,.15)}
-.novel-cover{width:100%;aspect-ratio:3/4;object-fit:cover;background:linear-gradient(135deg,#2F6B4F,#2A6577);display:block}
+.novel-cover{width:100%;aspect-ratio:3/4;object-fit:cover;background:linear-gradient(140deg,#4A9BB8,#2A6577);display:block}
 .novel-cover-placeholder{display:flex;align-items:center;justify-content:center}
 .novel-cover-char{font-size:72px;color:#fff;font-weight:800}
 .novel-card-body{padding:16px;display:flex;flex-direction:column;gap:8px;flex:1}
@@ -732,7 +766,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-shelf{display:flex;flex-direction:column;gap:22px;padding:8px 0 18px}
 .nreader-cover-hero{display:flex;gap:26px;align-items:flex-start}
 .nreader-hero-cover{width:170px;aspect-ratio:3/4;object-fit:cover;border-radius:var(--radius);box-shadow:var(--shadow);display:block;flex-shrink:0}
-.nreader-hero-cover-ph{display:flex;align-items:center;justify-content:center;font-size:64px;color:#fff;font-weight:800;background:linear-gradient(135deg,#2F6B4F,#2A6577)}
+.nreader-hero-cover-ph{display:flex;align-items:center;justify-content:center;font-size:64px;color:#fff;font-weight:800;background:linear-gradient(140deg,#4A9BB8,#2A6577)}
 .nreader-hero-info{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
 .nreader-cat{align-self:flex-start;padding:3px 12px;border-radius:20px;background:color-mix(in srgb,var(--sky-blue) 16%,transparent);color:var(--sky-ink);font-size:.82rem;text-decoration:none}
 .nreader-book-title{font-size:2rem;font-weight:800;line-height:1.25;color:var(--text-main);margin:0}
@@ -838,7 +872,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 草稿自动保存状态 ===== */
 .write-actions{flex-wrap:wrap}
 .write-draft-status{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:0 auto 12px;font-size:.85rem;line-height:1.6;text-align:center;color:var(--text-secondary)}
-.write-draft-status .draft-saved{color:var(--forest-green,#2f6b4f);font-weight:600}
+.write-draft-status .draft-saved{color:var(--aqua-ink,#2a6577);font-weight:600}
 .write-draft-status .draft-hint{opacity:.75}
 .write-draft-status .draft-clear{padding:3px 12px;border-radius:14px;border:1px solid color-mix(in srgb,var(--slate-blue) 30%,transparent);background:transparent;color:var(--text-secondary);font-size:.78rem;cursor:pointer;transition:all .2s}
 .write-draft-status .draft-clear:hover{border-color:var(--coral,#e89b8a);color:var(--coral,#e89b8a)}
@@ -944,7 +978,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .friends-form h3{margin:0 0 4px}
 .friends-form label{font-weight:600;font-size:.88rem;color:var(--text-secondary)}
 .friends-form .form-actions{margin-top:4px}
-.friends-msg{color:var(--forest-green);font-size:.9rem;margin:0 0 16px;padding:10px 14px;background:color-mix(in srgb,var(--forest-green) 10%,transparent);border-radius:8px}
+.friends-msg{color:var(--aqua-ink);font-size:.9rem;margin:0 0 16px;padding:10px 14px;background:color-mix(in srgb,var(--aqua-ink) 10%,transparent);border-radius:8px}
 .friends-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
 .friends-card{position:relative;padding:0;overflow:hidden;transition:all .25s cubic-bezier(.22,1,.36,1)}
 .friends-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:color-mix(in srgb,var(--sky-blue) 30%,transparent)}
@@ -1033,20 +1067,32 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 
 
 /* ============================================================
-   暗色主题还原块 —— 2026-09-13「视觉重构第 1 步」专用
-   第 1 步按用户范围只修亮色主题。Hero / 分类页头 / 搜索提示条 /
-   按钮族这几处的新样式是亮色专用常量，若不还原，暗色下会变成
+   暗色主题还原块 —— 2026-09-13「视觉重构第 1 步」遗留
+   第 1 步按用户范围只修亮色主题。分类页头 / 搜索提示条 / 按钮族
+   这几处的新样式是亮色专用常量，若不还原，暗色下会变成
    「浅底板 + 浅色字」（分类页头会直接看不见字）。
    所以这里把它们在暗色下的表现逐条还原成改动前的样子。
    ——将来要一起修暗色时，删掉这一整块即可。
+   注：Hero 已在第 2 步单独重做，不再走这块还原（见下面那一段）。
    ============================================================ */
-[data-theme='dark'] .hero{background:linear-gradient(135deg,var(--sky-blue),var(--honey-gold));color:#fff}
-[data-theme='dark'] .hero::after{background:rgba(255,255,255,.08)}
-[data-theme='dark'] .hero-title{color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.18)}
-[data-theme='dark'] .hero-sub{color:#fff;opacity:.96}
-[data-theme='dark'] .hero-desc{color:#fff;opacity:.92}
-[data-theme='dark'] .hero .btn-primary{color:#fff;background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.9);backdrop-filter:blur(4px);box-shadow:none}
-[data-theme='dark'] .hero .btn-light-outline{color:#fff;background:transparent;border:2px solid rgba(255,255,255,.9)}
+/* ============================================================
+   暗色主题「中心大块」重做 —— 2026-09-13 视觉重构第 2 步
+   原来暗色 Hero 是一整块亮蓝→亮金的彩色横幅（白字压亮底，廉价且晃眼），
+   现在跟亮色统一成「同一套色卡渐变 + 缓慢流动」，只是底子换成深色：
+   深蓝灰底 + 极淡的青蓝/珊瑚辉光漂移，标题回到主文字色、副标题用天空蓝。
+   其余几条（分类页头/按钮族/浅色搜索条）保持第 1 步的还原，等第 3 步再一起收。
+   ============================================================ */
+/* 注意：这里必须用 background-image 长写，不能用 background 简写——简写会把基础规则里的
+   background-size:260% 260% 重置回 auto，暗色的流动动画就废了（实测踩过）。 */
+[data-theme='dark'] .hero{background-image:var(--hero-flow);border-color:color-mix(in srgb,var(--sky-blue) 20%,transparent);box-shadow:0 18px 46px rgba(0,0,0,.42)}
+[data-theme='dark'] .hero::before{opacity:.5}
+[data-theme='dark'] .hero::after{opacity:.55}
+[data-theme='dark'] .hero-title{color:var(--text-main);text-shadow:none}
+[data-theme='dark'] .hero-sub{color:var(--sky-blue);opacity:1}
+[data-theme='dark'] .hero-desc{color:var(--text-secondary);opacity:1}
+[data-theme='dark'] .hero .btn-primary{color:#0e1c26;background:var(--sky-blue);border:none;backdrop-filter:none;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+[data-theme='dark'] .hero .btn-light-outline{color:var(--sky-blue);background:transparent;border:1px solid color-mix(in srgb,var(--sky-blue) 45%,transparent)}
+[data-theme='dark'] .hero .btn-light-outline:hover{background:color-mix(in srgb,var(--sky-blue) 14%,transparent)}
 [data-theme='dark'] .search-banner{background:var(--grad-warm);color:#fff;border-left-color:transparent}
 [data-theme='dark'] .cat-header{background:linear-gradient(135deg,var(--cat-tint),color-mix(in srgb,var(--cat-tint) 60%,transparent));color:#fff;border-color:transparent;box-shadow:var(--shadow)}
 [data-theme='dark'] .cat-header .page-title.light{color:#fff}
@@ -1061,4 +1107,4 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 [data-theme='dark'] .btn-danger:hover{box-shadow:0 12px 28px rgba(232,155,138,.45)}
 [data-theme='dark'] .page-title.light{color:#fff}
 [data-theme='dark'] .novel-cover,
-[data-theme='dark'] .nreader-hero-cover-ph{background:linear-gradient(135deg,#2F6B4F,#4A9BB8)}
+[data-theme='dark'] .nreader-hero-cover-ph{background:linear-gradient(140deg,#2A6577,#4A9BB8)}
