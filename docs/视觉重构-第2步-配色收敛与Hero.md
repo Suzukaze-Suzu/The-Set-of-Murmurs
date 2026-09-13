@@ -51,9 +51,8 @@
 
 ### 2.2 字体 × 配色关系（要求 2）
 
-- 新增 `--font-display`：中文衬线（`Source Han Serif SC / Noto Serif SC / Songti SC / STSong / SimSun`），只给大标题用。
-  应用处：Hero 主标题、`.page-title`、`.section-title`、正文 markdown 的 h1~h4。**不想要衬线，把 `--font-display` 改成 `var(--font-sans)` 一行即可。**
-- 字重降档：大标题 `800/900 → 600`（中文超粗体是廉价感的主要来源之一）。
+- ~~新增 `--font-display` 中文衬线~~ **已于同日撤回**：用户看到线上效果后原话「不要用宋体，太诡异了」——衬线栈在 Windows 上会落到 SimSun（宋体），大标题下又虚又怪。现 `--font-display: var(--font-sans)`，即全站回到无衬线；变量保留只为将来换字体时一行切换。
+- 字重：大标题 `800/900 → 700`（原超粗体是廉价感来源之一）；卡片标题 `700 → 600`。
 - 字距拉开：Hero 标题 `.18em`、副标题 `.22em`（都配 `text-indent` 等值抵消居中偏移）、页面标题 `.06em`、分区标题 `.04em`；正文行高 `1.7 → 1.78`，Hero 简介 `2.05`、测宽收到 `540px`。
 - Hero 垂直留白 `56px → 68px`，主色块圆角 `26px → 28px`；分区标题强调竖条 `5×22px 深青渐变 → 4×20px 天空蓝→青蓝`。
 
@@ -82,7 +81,7 @@
 2. `node scripts/audit-contrast.mjs` —— **42 项全部 PASS，FAIL 0 / 偏低 0**。
    新增条目涵盖 Hero 渐变的四个色标（`#DEEEF7 / #F9F1E6 / #FBEFEC / #DEEDF2`）与暗色 Hero 最亮色标 `#223746`。
 3. headless Chrome 实测计算样式（light + dark 各跑一遍，静态 `data-theme`）：
-   - 亮色：`background-size: 260% 260%`、`animation: heroFlow 26s`、标题 `52.8px w600 serif`、副标题 `#2E6E92`；
+   - 亮色：`background-size: 260% 260%`、`animation: heroFlow 26s`、标题 `52.8px w700`、副标题 `#2E6E92`；
    - 暗色：`background-size: 260% 260%`（修复后）、渐变解析为深蓝灰 + 色卡淡彩、副标题 `#6ec3ef`、主按钮 `#6ec3ef` 底 + `#0e1c26` 字。
    - 两套 `--hero-flow` 的 `color-mix` 均被浏览器解析成实际 rgb，无变量失配。
 

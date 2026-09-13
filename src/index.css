@@ -37,8 +37,9 @@
   --hero-glow-a: color-mix(in srgb,var(--coral-pink) 40%,transparent);
   --hero-glow-b: color-mix(in srgb,var(--sky-blue) 45%,transparent);
   --font-sans: 'PingFang SC','Microsoft YaHei','Hiragino Sans GB','HarmonyOS Sans SC',sans-serif;
-  /* 中文衬线（明朝体）：只给大标题用，一眼的「文学感」；不想要就把它改成 var(--font-sans) */
-  --font-display: 'Source Han Serif SC','Noto Serif SC','Songti SC','STSong','SimSun',serif;
+  /* 2026-09-13 用户否掉衬线：原话「不要用宋体，太诡异了」——中文衬线（宋体系）整体撤掉，
+     变量保留只为将来换字体时一行切换，现在等价于 --font-sans。 */
+  --font-display: var(--font-sans);
 }
 [data-theme='dark'] {
   --text-main:#eef3f7; --text-secondary:#a9b4be; --bg-page:#141b26;
@@ -68,7 +69,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .layout{min-height:100vh;display:flex;flex-direction:column}
 .main{flex:1;width:100%;max-width:1080px;margin:0 auto;padding:28px 20px 64px}
 .page{max-width:920px;margin:0 auto;animation:fadeUp .4s ease}
-.page-title{font-family:var(--font-display);font-size:1.9rem;margin-bottom:28px;font-weight:600;letter-spacing:.06em;line-height:1.4}
+.page-title{font-family:var(--font-display);font-size:1.9rem;margin-bottom:28px;font-weight:700;letter-spacing:.06em;line-height:1.4}
 .page-title.light{color:var(--text-main)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .navbar{background:color-mix(in srgb,var(--bg-card) 82%,transparent);backdrop-filter:blur(14px);box-shadow:var(--shadow-sm);position:sticky;top:0;z-index:100;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
@@ -119,7 +120,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 @keyframes heroDriftA{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(70px,50px,0) scale(1.14)}}
 @keyframes heroDriftB{0%,100%{transform:translate3d(0,0,0) scale(1.06)}50%{transform:translate3d(-80px,-50px,0) scale(1)}}
 .hero-inner{position:relative;z-index:2}
-.hero-title{font-family:var(--font-display);font-size:3.3rem;font-weight:600;color:var(--text-main);letter-spacing:.18em;text-indent:.18em;line-height:1.25}
+.hero-title{font-family:var(--font-display);font-size:3.3rem;font-weight:700;color:var(--text-main);letter-spacing:.18em;text-indent:.18em;line-height:1.25}
 .hero-sub{font-size:.95rem;margin:22px 0 0;color:var(--sky-ink);font-weight:500;letter-spacing:.22em;text-indent:.22em}
 .hero-desc{max-width:540px;margin:18px auto 32px;color:var(--text-secondary);line-height:2.05;font-size:.97rem}
 .hero-cta{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
@@ -129,7 +130,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .hero{background-position:50% 50%}
 }
 /* ===== 鍒嗗尯鏍囬 ===== */
-.section-title{font-family:var(--font-display);font-size:1.4rem;font-weight:600;letter-spacing:.04em;margin-bottom:20px;display:flex;align-items:center;gap:10px;line-height:1.45}
+.section-title{font-family:var(--font-display);font-size:1.4rem;font-weight:700;letter-spacing:.04em;margin-bottom:20px;display:flex;align-items:center;gap:10px;line-height:1.45}
 .cat-section{margin-bottom:40px}
 .cat-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .more-link{font-size:.9rem;font-weight:600;color:var(--sky-blue-dark);display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--radius-pill);transition:all .2s;background:color-mix(in srgb,var(--sky-blue) 8%,transparent)}
@@ -235,7 +236,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .detail-actions{margin:22px 0;text-align:right}
 /* ===== Markdown 姝ｆ枃 ===== */
 .markdown-body{font-size:1rem;line-height:1.9;color:var(--text-main)}
-.markdown-body h1,.markdown-body h2,.markdown-body h3,.markdown-body h4{font-family:var(--font-display);margin:1.5em 0 .5em;font-weight:600;letter-spacing:.02em;color:var(--sky-blue-dark);line-height:1.45}
+.markdown-body h1,.markdown-body h2,.markdown-body h3,.markdown-body h4{font-family:var(--font-display);margin:1.5em 0 .5em;font-weight:700;letter-spacing:.02em;color:var(--sky-blue-dark);line-height:1.45}
 .markdown-body h1{font-size:1.8rem}.markdown-body h2{font-size:1.5rem}.markdown-body h3{font-size:1.25rem}
 .markdown-body p{margin:.9em 0}.markdown-body ul,.markdown-body ol{padding-left:1.7em;margin:.7em 0}.markdown-body li{margin:.3em 0}
 .markdown-body blockquote{border-left:4px solid var(--coral-pink);padding:12px 18px;margin:1.1em 0;background:var(--bg-soft);border-radius:0 var(--radius-sm) var(--radius-sm) 0;color:var(--text-secondary)}
