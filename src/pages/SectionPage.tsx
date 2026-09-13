@@ -32,7 +32,7 @@ export default function SectionPage() {
 
   return (
     <div className="page">
-      <div className="cat-header" style={{ background: `linear-gradient(135deg, ${meta.color}, ${meta.color}99)` }}>
+      <div className="cat-header" style={{ background: `linear-gradient(135deg, ${meta.color}1f, #ffffff 72%)`, borderLeft: `4px solid ${meta.ink}` }}>
         <Link to="/articles" className="back-link">‹ 全部文章</Link>
         <h1 className="page-title light">
           {meta.label}

@@ -147,7 +147,7 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
               <h1 className="nreader-book-title">{article.title}</h1>
               {novel?.author && <div className="nreader-book-author">作者 {novel.author}</div>}
               {statusMeta && (
-                <span className="nreader-status-badge" style={{ background: statusMeta.color + '22', color: statusMeta.color }}>
+                <span className="nreader-status-badge" style={{ background: statusMeta.color + '22', color: statusMeta.ink }}>
                   {statusMeta.label}
                 </span>
               )}

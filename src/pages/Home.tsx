@@ -19,14 +19,14 @@ export default function Home({ query }: Props) {
 
   return (
     <div className="page home">
-      {/* 头部横幅 */}
-      <section className="hero" style={{ background: 'linear-gradient(135deg, var(--sky-blue), var(--honey-gold))' }}>
+      {/* 头部横幅：浅底深字（亮色主题下对比度达标） */}
+      <section className="hero">
         <div className="hero-inner">
           <h1 className="hero-title">呓语集</h1>
           <p className="hero-sub">{profile.signature}</p>
           <p className="hero-desc">{profile.intro}</p>
           <div className="hero-cta">
-            {isAdmin && <Link to="/write" className="btn btn-light">开始写作</Link>}
+            {isAdmin && <Link to="/write" className="btn btn-primary">开始写作</Link>}
             <Link to="/articles" className="btn btn-light-outline">浏览全部</Link>
           </div>
         </div>
@@ -68,10 +68,10 @@ export default function Home({ query }: Props) {
           return (
             <section key={c} className="cat-section">
               <div className="cat-section-head">
-                <h2 className="section-title" style={{ color: meta.color }}>
+                <h2 className="section-title" style={{ color: meta.ink }}>
                   {meta.label}
                 </h2>
-                <Link to={`/category/${c}`} className="more-link" style={{ color: meta.color }}>
+                <Link to={`/category/${c}`} className="more-link" style={{ color: meta.ink }}>
                   更多<span className="more-arrow">›</span>
                 </Link>
               </div>

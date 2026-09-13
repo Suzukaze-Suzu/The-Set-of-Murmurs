@@ -16,7 +16,7 @@ export default function ArticleCard({ article, onToggleFavorite }: Props) {
       style={{ borderTop: `4px solid ${meta.color}` }}
     >
       <div className="card-top">
-        <span className="card-cat" style={{ background: meta.color + '22', color: meta.color }}>
+        <span className="card-cat" style={{ background: meta.color + '22', color: meta.ink }}>
           {meta.label}
         </span>
         <div className="card-actions">

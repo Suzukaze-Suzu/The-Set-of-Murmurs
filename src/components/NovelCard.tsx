@@ -29,7 +29,7 @@ export default function NovelCard({ article }: Props) {
         {novel?.author && <div className="novel-author">作者：{novel.author}</div>}
 
         {statusMeta && (
-          <span className="novel-status-badge" style={{ background: statusMeta.color + '22', color: statusMeta.color }}>
+          <span className="novel-status-badge" style={{ background: statusMeta.color + '22', color: statusMeta.ink }}>
             {statusMeta.label}
           </span>
         )}

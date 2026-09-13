@@ -50,12 +50,13 @@ export interface SiteSettings {
   theme: 'light' | 'dark';
 }
 
-export const CATEGORY_META: Record<Category, { label: string; icon: string; color: string }> = {
-  anime:   { label: '读后感',      icon: '', color: '#5BA8D8' },
-  essay:   { label: '随笔',      icon: '', color: '#E89B8A' },
-  reading: { label: '小说',    icon: '', color: '#2F6B4F' },
-  math:    { label: '数学笔记',  icon: '', color: '#4A9BB8' },
-  study:   { label: '学习分享',  icon: '', color: '#8A8F9A' },
+// color=装饰色（浅底/圆点用）；ink=同色系的深色，供文字与承载白字的底色使用（亮底上 ≥4.5:1）
+export const CATEGORY_META: Record<Category, { label: string; icon: string; color: string; ink: string }> = {
+  anime:   { label: '读后感',      icon: '', color: '#5BA8D8', ink: '#2E6E92' },
+  essay:   { label: '随笔',      icon: '', color: '#E89B8A', ink: '#A8482F' },
+  reading: { label: '小说',    icon: '', color: '#2F6B4F', ink: '#2F6B4F' },
+  math:    { label: '数学笔记',  icon: '', color: '#4A9BB8', ink: '#2A6577' },
+  study:   { label: '学习分享',  icon: '', color: '#8A8F9A', ink: '#5C6469' },
 };
 
 
@@ -100,10 +101,10 @@ export interface NovelMeta {
   wordCount?: number;                    // 总字数
 }
 
-export const NOVEL_STATUS_META: Record<NovelStatus, { label: string; color: string }> = {
-  serializing: { label: '连载中', color: '#4A9BB8' },
-  completed:   { label: '已完结', color: '#2F6B4F' },
-  paused:      { label: '暂停更新', color: '#8A8F9A' },
+export const NOVEL_STATUS_META: Record<NovelStatus, { label: string; color: string; ink: string }> = {
+  serializing: { label: '连载中', color: '#4A9BB8', ink: '#2A6577' },
+  completed:   { label: '已完结', color: '#2F6B4F', ink: '#2F6B4F' },
+  paused:      { label: '暂停更新', color: '#8A8F9A', ink: '#5C6469' },
 };
 
 

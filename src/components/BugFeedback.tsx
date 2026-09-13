@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { BugReport, BUG_CATEGORIES } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -120,7 +120,7 @@ export default function BugFeedback() {
             return (
               <div key={rep.id} className="bug-item">
                 <div className="bug-item-head">
-                  <span className="bug-cat-tag" style={{ background: cat ? '#E89B8A' : '#8A8F9A' }}>{cat ? cat.label : rep.category}</span>
+                  <span className="bug-cat-tag" style={{ background: cat ? '#A8482F' : '#5C6469' }}>{cat ? cat.label : rep.category}</span>
                   <span className={stCls}>{rep.status}</span>
                   <span className="comment-date">{new Date(rep.date).toLocaleString()}</span>
                   {canEdit(rep) && (

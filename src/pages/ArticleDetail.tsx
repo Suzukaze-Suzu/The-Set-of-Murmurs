@@ -68,7 +68,7 @@ export default function ArticleDetail() {
     <div className="page article-detail">
       <div className="detail-head">
         <div className="detail-cats">
-          <Link to={`/category/${article.category}`} className="detail-cat" style={{ background: meta.color + '22', color: meta.color }}>
+          <Link to={`/category/${article.category}`} className="detail-cat" style={{ background: meta.color + '22', color: meta.ink }}>
             {meta.label}
           </Link>
           {article.tags.map((t) => (
