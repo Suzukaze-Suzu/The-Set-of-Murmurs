@@ -134,7 +134,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .empty-icon{font-size:3rem;display:flex;width:84px;height:84px;margin:0 auto 20px;align-items:center;justify-content:center;background:var(--bg-soft);border-radius:50%;box-shadow:var(--shadow-sm)}
 .empty-state .btn{margin-top:18px}
 /* ===== 鍒嗙被椤靛ご閮?===== */
-.cat-header{border-radius:var(--radius);padding:36px;margin-bottom:28px;color:var(--text-main);position:relative;overflow:hidden;box-shadow:var(--shadow-sm);border:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent)}
+.cat-header{--cat-tint:var(--sky-blue);--cat-accent:var(--sky-ink);border-radius:var(--radius);padding:36px;margin-bottom:28px;color:var(--text-main);position:relative;overflow:hidden;box-shadow:var(--shadow-sm);background:linear-gradient(135deg,color-mix(in srgb,var(--cat-tint) 12%,transparent),var(--bg-card) 72%);border:1px solid color-mix(in srgb,var(--cat-tint) 14%,transparent);border-left:4px solid var(--cat-accent)}
 .cat-header::after{content:'';position:absolute;width:200px;height:200px;right:-40px;bottom:-60px;border-radius:50%;background:color-mix(in srgb,var(--sky-blue) 18%,transparent);filter:blur(20px)}
 .back-link{color:var(--sky-ink);opacity:1;font-size:.88rem;display:inline-flex;align-items:center;gap:5px;background:color-mix(in srgb,var(--sky-blue) 12%,transparent);padding:6px 14px;border-radius:var(--radius-pill);margin-bottom:14px;transition:all .2s}
 .back-link:hover{opacity:1;background:color-mix(in srgb,var(--sky-blue) 20%,transparent);transform:translateX(-3px)}
@@ -1030,3 +1030,35 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 
 /* 标题锚点滚动偏移（sticky 导航会遮住标题） */
 .markdown-body h1,.markdown-body h2,.markdown-body h3{scroll-margin-top:92px}
+
+
+/* ============================================================
+   暗色主题还原块 —— 2026-09-13「视觉重构第 1 步」专用
+   第 1 步按用户范围只修亮色主题。Hero / 分类页头 / 搜索提示条 /
+   按钮族这几处的新样式是亮色专用常量，若不还原，暗色下会变成
+   「浅底板 + 浅色字」（分类页头会直接看不见字）。
+   所以这里把它们在暗色下的表现逐条还原成改动前的样子。
+   ——将来要一起修暗色时，删掉这一整块即可。
+   ============================================================ */
+[data-theme='dark'] .hero{background:linear-gradient(135deg,var(--sky-blue),var(--honey-gold));color:#fff}
+[data-theme='dark'] .hero::after{background:rgba(255,255,255,.08)}
+[data-theme='dark'] .hero-title{color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.18)}
+[data-theme='dark'] .hero-sub{color:#fff;opacity:.96}
+[data-theme='dark'] .hero-desc{color:#fff;opacity:.92}
+[data-theme='dark'] .hero .btn-primary{color:#fff;background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.9);backdrop-filter:blur(4px);box-shadow:none}
+[data-theme='dark'] .hero .btn-light-outline{color:#fff;background:transparent;border:2px solid rgba(255,255,255,.9)}
+[data-theme='dark'] .search-banner{background:var(--grad-warm);color:#fff;border-left-color:transparent}
+[data-theme='dark'] .cat-header{background:linear-gradient(135deg,var(--cat-tint),color-mix(in srgb,var(--cat-tint) 60%,transparent));color:#fff;border-color:transparent;box-shadow:var(--shadow)}
+[data-theme='dark'] .cat-header .page-title.light{color:#fff}
+[data-theme='dark'] .cat-header .cat-count{color:#fff;opacity:.92}
+[data-theme='dark'] .cat-header .back-link{color:#fff;background:rgba(255,255,255,.18)}
+[data-theme='dark'] .cat-header .back-link:hover{background:rgba(255,255,255,.28)}
+[data-theme='dark'] .btn-light{color:#fff;background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.9);backdrop-filter:blur(4px)}
+[data-theme='dark'] .btn-light-outline{color:#fff;background:transparent;border:2px solid rgba(255,255,255,.9)}
+[data-theme='dark'] .btn-light-outline:hover{background:rgba(255,255,255,.15)}
+[data-theme='dark'] .btn-warm{color:#fff}
+[data-theme='dark'] .btn-danger{background:linear-gradient(135deg,#E89B8A,#e07a63);box-shadow:0 8px 20px rgba(232,155,138,.35)}
+[data-theme='dark'] .btn-danger:hover{box-shadow:0 12px 28px rgba(232,155,138,.45)}
+[data-theme='dark'] .page-title.light{color:#fff}
+[data-theme='dark'] .novel-cover,
+[data-theme='dark'] .nreader-hero-cover-ph{background:linear-gradient(135deg,#2F6B4F,#4A9BB8)}

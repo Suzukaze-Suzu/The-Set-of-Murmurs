@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { CSSProperties } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import NovelCard from '../components/NovelCard';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -19,7 +20,7 @@ export default function Novels() {
 
   return (
     <div className="page">
-      <div className="cat-header" style={{ background: 'linear-gradient(135deg, #2F6B4F1f, #ffffff 72%)', borderLeft: '4px solid #2F6B4F' }}>
+      <div className="cat-header" style={{ '--cat-tint': '#2F6B4F', '--cat-accent': '#2F6B4F' } as CSSProperties}>
         <h1 className="page-title light">小说书架</h1>
         <p className="cat-count">共 {novels.length} 本 · {totalChapters} 章</p>
       </div>

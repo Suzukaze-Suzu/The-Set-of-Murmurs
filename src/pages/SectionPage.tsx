@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useMemo, useEffect } from 'react';
+import type { CSSProperties } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { CATEGORY_META, Category } from '../types';
 import ArticleCard from '../components/ArticleCard';
@@ -32,7 +33,7 @@ export default function SectionPage() {
 
   return (
     <div className="page">
-      <div className="cat-header" style={{ background: `linear-gradient(135deg, ${meta.color}1f, #ffffff 72%)`, borderLeft: `4px solid ${meta.ink}` }}>
+      <div className="cat-header" style={{ '--cat-tint': meta.color, '--cat-accent': meta.ink } as CSSProperties}>
         <Link to="/articles" className="back-link">‹ 全部文章</Link>
         <h1 className="page-title light">
           {meta.label}
