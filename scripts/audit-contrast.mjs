@@ -82,8 +82,13 @@ A('var(--honey-ink)', mix(light['--honey-gold'], '#ffffff', 0.25), '蜜金墨色
 A('var(--slate-ink)', 'var(--bg-card)', '灰蓝墨色 on 卡片');
 A('#ffffff', 'var(--sky-fill)', '白字 on sky-fill');
 A('#ffffff', 'var(--coral-fill)', '白字 on coral-fill');
-A('#ffffff', '#35769B', '白字 on 主渐变起点');
-A('#ffffff', '#2A6386', '白字 on 主渐变终点');
+// ↓ 第2c步：亮色主按钮/激活态＝色卡青蓝 #4A9BB8 本身（色号未改）+ 白字
+//   （墨色字反而更差：#2A6577 on #4A9BB8 仅 2.07:1；白字 3.15:1，属 WCAG 大字/填充控件线，故按 3:1 判）
+A('#ffffff', 'var(--accent)', '白字 on 青蓝实底(主按钮/激活态)', 3);
+A('var(--accent-on)', 'var(--accent)', '--accent-on on 青蓝实底（同上，变量自检）', 3);
+A('var(--accent-deep)', 'var(--bg-card)', '青蓝墨色 on 卡片(文字层)');
+A('#ffffff', '#35769B', '白字 on 主渐变起点(现仅暗色用)');
+A('#ffffff', '#2A6386', '白字 on 主渐变终点(现仅暗色用)');
 A('var(--text-main)', '#E8C9A0', '墨字 on 蜜金(btn-warm 起点)');
 A('var(--text-main)', '#E89B8A', '墨字 on 珊瑚(btn-warm 终点)');
 A('var(--text-main)', '#e9f4fc', '墨字 on hero 浅底左上', 4.5);
