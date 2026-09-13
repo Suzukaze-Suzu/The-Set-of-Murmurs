@@ -1,7 +1,18 @@
 :root {
   /* 凉风凉色卡 —— 出处＝关于页「主题灵感」：天空蓝的开衫、蜜金渐变珊瑚粉的长发、清透青蓝的眼睛。
      全站的颜色只能从下面这几个里取，不再引入第五个色相。 */
-  --sky-blue: #5BA8D8; --sky-blue-soft: #a8d4ec;      /* 天空蓝 · 开衫：全站唯一强调色 */
+  --sky-blue: #5BA8D8; --sky-blue-soft: #a8d4ec;      /* 天空蓝 · 开衫；--sky-blue 保留给“开衫蓝”本身，--sky-blue-soft 只是它的浅档 */
+  /* ↓ 亮色主题的强调色改用「青蓝 · 眼睛」（2026-09-13 第2c步，用户要求：
+     「在亮色主题下换成青蓝色，暗色主题下保留天蓝色」）。
+     只换强调色一族（描边/淡底/光晕/主按钮渐变的亮端），暗色主题在 [data-theme=dark] 里全部指回天空蓝。 */
+  --accent: #4A9BB8; --accent-deep: #2A6577;  /* 青蓝 · 眼睛 及同色相深档 */
+  --accent-halo: #7cbcd3;                     /* 青蓝浅档，用于插画式占位图 */
+  --accent-shadow-soft: rgba(74,155,184,.32);  /* 光晕阴影：青蓝版 */
+  --accent-shadow: rgba(74,155,184,.38);
+  --accent-shadow-strong: rgba(74,155,184,.44);
+  --accent-veil: rgba(74,155,184,0.12);        /* 极淡描边/阴影 */
+  /* 浅档：由强调色派生（亮色=青蓝浅、暗色自动跟着变回天空蓝浅），滚动条与插画式占位图用它 */
+  --sky-blue-soft: color-mix(in srgb,var(--accent) 55%,#fff);
   --honey-gold: #E8C9A0; --honey-gold-soft: #f3e2c6;  /* 蜜金 · 长发渐变起点 */
   --coral-pink: #E89B8A; --coral-pink-soft: #f6c6bc;  /* 珊瑚粉 · 长发渐变终点 */
   --aqua-blue: #4A9BB8;                               /* 青蓝 · 眼睛 */
@@ -20,26 +31,32 @@
   --sky-blue-dark: #2E6E92;/* 链接/标题/激活态文字：原 #3a86b8 仅 3.98:1 */
   --text-main: #2d3436; --text-secondary: #5C6469; /* 原 #7b8085 仅 3.80~3.99:1 */
   --bg-page: #f6fafd; --bg-card: #ffffff; --bg-soft: #eef5fb;
-  --shadow-sm: 0 2px 8px rgba(58,134,184,0.08);
-  --shadow: 0 8px 28px rgba(58,134,184,0.12);
+  --shadow-sm: 0 2px 8px var(--accent-veil);
+  --shadow: 0 8px 28px var(--accent-veil);
   --shadow-lg: 0 16px 48px rgba(232,155,138,0.18);
   --radius: 18px; --radius-sm: 12px; --radius-pill: 999px;
   --grad-main: linear-gradient(135deg,#35769B,#2A6386); /* 白字 4.98~6.51:1 */
   --grad-warm: linear-gradient(135deg,#E8C9A0,#E89B8A);
-  /* 首页 Hero（中心主色块）：全部由色卡 mix 出来的浅色渐变，配 background-size 后可缓慢流动 */
+  /* 首页 Hero（中心主色块）：全部由色卡 mix 出来的浅色渐变，配 background-size 后可缓慢流动。
+     首尾那两档用 --accent，所以亮色主题跟着强调色一起变成青蓝味，暗色主题自动保持天空蓝。 */
   --hero-flow: linear-gradient(115deg,
-    color-mix(in srgb,var(--sky-blue) 20%,#fff) 0%,
+    color-mix(in srgb,var(--accent) 20%,#fff) 0%,
     #ffffff 20%,
     color-mix(in srgb,var(--honey-gold) 26%,#fff) 44%,
     color-mix(in srgb,var(--coral-pink) 16%,#fff) 62%,
     color-mix(in srgb,var(--aqua-blue) 18%,#fff) 82%,
-    color-mix(in srgb,var(--sky-blue) 20%,#fff) 100%);
+    color-mix(in srgb,var(--accent) 20%,#fff) 100%);
   --hero-glow-a: color-mix(in srgb,var(--coral-pink) 40%,transparent);
-  --hero-glow-b: color-mix(in srgb,var(--sky-blue) 45%,transparent);
+  --hero-glow-b: color-mix(in srgb,var(--accent) 45%,transparent);
   --font-sans: 'PingFang SC','Microsoft YaHei','Hiragino Sans GB','HarmonyOS Sans SC',sans-serif;
-  /* 2026-09-13 用户否掉衬线：原话「不要用宋体，太诡异了」——中文衬线（宋体系）整体撤掉，
-     变量保留只为将来换字体时一行切换，现在等价于 --font-sans。 */
-  --font-display: var(--font-sans);
+  /* 2026-09-13 第2c步：用户要求「全部换成衬线体」。
+     中文衬线栈里**故意不放 SimSun（中易宋体）**——用户上一轮就否过它（原话「不要用宋体，太诡异了」，
+     Windows 上 SimSun 大字号发虚、字重只有一档），也不放 generic serif 之外的旧宋体。
+     顺序＝思源宋体/Noto Serif SC（本机实测已安装，字重 200~900 齐全，Windows 上真正好看的宋体）
+     → macOS 宋体-简 → 华文宋体 → 通用 serif。末尾必须落在 serif 上，保证任何平台最后兜底都是衬线。 */
+  --font-serif: 'Noto Serif SC','Source Han Serif SC','Noto Serif CJK SC','Songti SC','STSong','Noto Serif',serif;
+  /* --font-sans 只留给输入框/代码这类要“等宽或清晰”的场合；--font-display 与大标题仍走衬线 */
+  --font-display: var(--font-serif);
 }
 [data-theme='dark'] {
   --text-main:#eef3f7; --text-secondary:#a9b4be; --bg-page:#141b26;
@@ -48,6 +65,11 @@
   /* 第1步只修亮色时，新 token 在暗色下全部映射回原值；第2步起暗色 Hero 单独重做了（见文件末尾） */
   --sky-ink:#6ec3ef; --coral-ink:#f0a395; --honey-ink:#e8cfa8; --aqua-ink:#7fc4d8; --slate-ink:#a9b4be;
   --sky-fill:#6ec3ef; --coral-fill:#f0a395; --aqua-fill:#4A9BB8;
+  /* 第2c步：强调色在暗色下**原样保留天空蓝**（用户要求「暗色主题下保留天蓝色」），
+     以及它对应的光晕，全部指回原值，等于暗色主题这一层完全没变 */
+  --accent:#5BA8D8; --accent-deep:#4A9BB8; --accent-halo:#6ec3ef;
+  --accent-shadow-soft:rgba(91,168,216,.35); --accent-shadow:rgba(91,168,216,.4);
+  --accent-shadow-strong:rgba(91,168,216,.45); --accent-veil:rgba(91,168,216,0.15);
   --grad-main:linear-gradient(135deg,#5BA8D8,#4A9BB8);
   /* 暗色 Hero：深色底 + 极淡的色卡辉光（不再是原来那块亮蓝→亮金的彩色横幅） */
   --hero-flow: linear-gradient(115deg,
@@ -60,7 +82,7 @@
   --shadow-sm:0 2px 8px rgba(0,0,0,0.3); --shadow:0 8px 28px rgba(0,0,0,0.35); --shadow-lg:0 16px 48px rgba(0,0,0,0.45);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{font-family:var(--font-sans);background:var(--bg-page);color:var(--text-main);line-height:1.78;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+html,body{font-family:var(--font-serif);font-synthesis-weight:none;background:var(--bg-page);color:var(--text-main);line-height:1.78;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
 a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{color:var(--coral-ink)}
 ::selection{background:color-mix(in srgb,var(--coral-pink) 26%,transparent)}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:transparent}
@@ -84,7 +106,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nav-links{display:flex;gap:8px;flex:1}
 .nav-links a,.nav-cats a{padding:8px 16px;color:var(--text-secondary);border-radius:var(--radius-pill);font-size:.93rem;font-weight:500;transition:all .22s cubic-bezier(.22,1,.36,1)}
 .nav-links a:hover,.nav-cats a:hover{color:var(--sky-blue-dark);background:var(--bg-soft);transform:translateY(-1px)}
-.nav-links a.active,.nav-cats a.active{color:#fff;background:var(--grad-main);box-shadow:0 6px 18px rgba(91,168,216,.35)}
+.nav-links a.active,.nav-cats a.active{color:#fff;background:var(--grad-main);box-shadow:0 6px 18px var(--accent-shadow-soft)}
 .nav-cats{display:flex;gap:6px;flex-wrap:wrap}.cat-text{font-size:.82rem}
 .topbar{background:color-mix(in srgb,var(--bg-page) 70%,transparent);border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent)}
 .topbar-inner{max-width:1080px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:12px}
@@ -161,7 +183,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .filter-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}
 .filter-chip{border:none;cursor:pointer;padding:8px 18px;border-radius:var(--radius-pill);background:var(--bg-card);color:var(--text-main);box-shadow:var(--shadow-sm);font-size:.88rem;font-weight:500;border:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent);transition:all .2s}
 .filter-chip:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
-.filter-chip.active{color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(91,168,216,.35);background:var(--sky-fill)}
+.filter-chip.active{color:#fff;border-color:transparent;box-shadow:0 6px 16px var(--accent-shadow-soft);background:var(--sky-fill)}
 .result-count{color:var(--text-secondary);margin-bottom:16px;font-size:.95rem}
 /* ===== 绌虹姸鎬?===== */
 .empty-state{text-align:center;padding:70px 20px;color:var(--text-secondary)}
@@ -176,7 +198,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 涓汉璧勬枡鍗＄墖 & 鍏充簬 ===== */
 .profile-card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:28px 22px;text-align:center;align-self:start;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent);position:relative;overflow:hidden}
 .profile-card::before{content:'';position:absolute;top:0;left:0;right:0;height:80px;background:var(--grad-main);opacity:.12}
-.profile-avatar{width:92px;height:92px;border-radius:50%;overflow:hidden;margin:12px auto 14px;background:var(--grad-main);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(91,168,216,.3);border:4px solid #fff;position:relative}
+.profile-avatar{width:92px;height:92px;border-radius:50%;overflow:hidden;margin:12px auto 14px;background:var(--grad-main);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px var(--accent-shadow-soft);border:4px solid #fff;position:relative}
 .profile-avatar img{width:100%;height:100%;object-fit:cover}
 .avatar-placeholder{font-size:2.6rem}
 .profile-name{font-size:1.25rem;font-weight:800;margin-bottom:4px}
@@ -264,7 +286,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .comment-form{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:14px;margin-bottom:22px;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent)}
 .comment-name{padding:11px 14px;border:1px solid color-mix(in srgb,var(--slate-blue) 35%,transparent);border-radius:var(--radius-sm);background:var(--bg-page);color:var(--text-main);width:50%;transition:all .2s}
 .comment-name:focus{outline:none;border-color:var(--sky-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--sky-blue) 18%,transparent)}
-.comment-content{padding:11px 14px;border:1px solid color-mix(in srgb,var(--slate-blue) 35%,transparent);border-radius:var(--radius-sm);background:var(--bg-page);color:var(--text-main);resize:vertical;font-family:inherit;transition:all .2s}
+.comment-content{padding:11px 14px;border:1px solid color-mix(in srgb,var(--slate-blue) 35%,transparent);border-radius:var(--radius-sm);background:var(--bg-page);color:var(--text-main);resize:vertical;font-family:var(--font-sans);transition:all .2s}
 .comment-content:focus{outline:none;border-color:var(--sky-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--sky-blue) 18%,transparent)}
 .comment-form .btn-primary{align-self:flex-end}
 .submit-ok{color:var(--aqua-ink);align-self:flex-end;font-size:.9rem}
@@ -293,7 +315,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nav-cats a{display:inline-flex;align-items:center;white-space:nowrap}
 /* ===== 瀵艰埅锛氬ご鍍忔寜閽?===== */
 .nav-avatar{width:38px;height:38px;border-radius:50%;border:2px solid #fff;box-shadow:var(--shadow-sm);cursor:pointer;overflow:hidden;padding:0;flex-shrink:0;background:var(--grad-main);display:flex;align-items:center;justify-content:center;transition:all .25s}
-.nav-avatar:hover{transform:scale(1.08);box-shadow:0 6px 18px rgba(91,168,216,.4)}
+.nav-avatar:hover{transform:scale(1.08);box-shadow:0 6px 18px var(--accent-shadow)}
 .nav-avatar img{width:100%;height:100%;object-fit:cover}
 .nav-avatar-placeholder{width:100%;height:100%;background:var(--grad-main);position:relative}
 /* ===== 寮圭獥锛堜粙缁?& 缂╂斁锛?==== */
@@ -301,7 +323,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .intro-modal,.zoom-modal{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-lg);position:relative;max-width:420px;width:100%;padding:36px 30px 30px;text-align:center;border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
 .modal-close{position:absolute;top:12px;right:14px;border:none;background:color-mix(in srgb,var(--bg-soft) 70%,transparent);width:30px;height:30px;border-radius:50%;cursor:pointer;color:var(--text-secondary);font-size:1.2rem;line-height:1;transition:all .2s}
 .modal-close:hover{background:var(--coral-fill);color:#fff;transform:rotate(90deg)}
-.intro-avatar{width:96px;height:96px;border-radius:50%;overflow:hidden;margin:0 auto 16px;background:var(--grad-main);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(91,168,216,.35);border:4px solid #fff}
+.intro-avatar{width:96px;height:96px;border-radius:50%;overflow:hidden;margin:0 auto 16px;background:var(--grad-main);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px var(--accent-shadow-soft);border:4px solid #fff}
 .intro-avatar img{width:100%;height:100%;object-fit:cover}
 .intro-avatar .avatar-placeholder{font-size:2.6rem;color:#fff}
 .intro-name{font-size:1.5rem;font-weight:800;margin-bottom:6px}
@@ -602,7 +624,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   font-size:.9rem;font-weight:600;transition:all .2s;
 }
 .guestbook-tab:hover{color:var(--sky-ink)}
-.guestbook-tab.active{background:var(--sky-fill);color:#fff;box-shadow:0 4px 12px rgba(91,168,216,.3)}
+.guestbook-tab.active{background:var(--sky-fill);color:#fff;box-shadow:0 4px 12px var(--accent-shadow-soft)}
 
 
 .bug-toggle{
@@ -727,7 +749,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .attach-progress-item{display:flex;align-items:center;gap:10px;font-size:.8rem}
 .attach-progress-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-main)}
 .attach-progress-bar{flex:2;height:8px;background:color-mix(in srgb,var(--text-secondary) 18%,transparent);border-radius:6px;overflow:hidden}
-.attach-progress-fill{height:100%;background:linear-gradient(90deg,#5BA8D8,#4A9BB8);border-radius:6px;transition:width .2s ease}
+.attach-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-deep));border-radius:6px;transition:width .2s ease}
 .attach-progress-pct{width:40px;text-align:right;color:var(--text-secondary)}
 
 /* 媒体/附件面板内的次要按钮(关闭等)在浅色卡片上清晰可见 */
@@ -746,7 +768,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;margin-top:24px}
 .novel-card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;border:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent);transition:transform .25s,box-shadow .25s}
 .novel-card:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(0,0,0,.15)}
-.novel-cover{width:100%;aspect-ratio:3/4;object-fit:cover;background:linear-gradient(140deg,#4A9BB8,#2A6577);display:block}
+.novel-cover{width:100%;aspect-ratio:3/4;object-fit:cover;background:linear-gradient(140deg,var(--accent),var(--accent-deep));display:block}
 .novel-cover-placeholder{display:flex;align-items:center;justify-content:center}
 .novel-cover-char{font-size:72px;color:#fff;font-weight:800}
 .novel-card-body{padding:16px;display:flex;flex-direction:column;gap:8px;flex:1}
@@ -767,7 +789,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-shelf{display:flex;flex-direction:column;gap:22px;padding:8px 0 18px}
 .nreader-cover-hero{display:flex;gap:26px;align-items:flex-start}
 .nreader-hero-cover{width:170px;aspect-ratio:3/4;object-fit:cover;border-radius:var(--radius);box-shadow:var(--shadow);display:block;flex-shrink:0}
-.nreader-hero-cover-ph{display:flex;align-items:center;justify-content:center;font-size:64px;color:#fff;font-weight:800;background:linear-gradient(140deg,#4A9BB8,#2A6577)}
+.nreader-hero-cover-ph{display:flex;align-items:center;justify-content:center;font-size:64px;color:#fff;font-weight:800;background:linear-gradient(140deg,var(--accent),var(--accent-deep))}
 .nreader-hero-info{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
 .nreader-cat{align-self:flex-start;padding:3px 12px;border-radius:20px;background:color-mix(in srgb,var(--sky-blue) 16%,transparent);color:var(--sky-ink);font-size:.82rem;text-decoration:none}
 .nreader-book-title{font-size:2rem;font-weight:800;line-height:1.25;color:var(--text-main);margin:0}
@@ -776,8 +798,8 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-book-meta{display:flex;gap:12px;color:var(--text-secondary);font-size:.88rem;flex-wrap:wrap}
 .nreader-synopsis{color:var(--text-secondary);line-height:1.9;font-size:.98rem;padding:16px 18px;background:var(--bg-soft);border-radius:var(--radius-sm);border-left:4px solid var(--sky-blue);margin:0}
 .nreader-shelf-actions{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
-.nreader-start-btn{display:inline-flex;align-items:center;gap:10px;background:var(--grad-main);color:#fff;border:none;font-size:1.05rem;font-weight:700;padding:14px 30px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:0 10px 26px rgba(91,168,216,.35);transition:all .25s}
-.nreader-start-btn:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(91,168,216,.45)}
+.nreader-start-btn{display:inline-flex;align-items:center;gap:10px;background:var(--grad-main);color:#fff;border:none;font-size:1.05rem;font-weight:700;padding:14px 30px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:0 10px 26px var(--accent-shadow-soft);transition:all .25s}
+.nreader-start-btn:hover{transform:translateY(-2px);box-shadow:0 14px 32px var(--accent-shadow-strong)}
 .nreader-start-ico{font-size:.85rem}
 .nreader-toc-btn{padding:14px 26px;border-radius:var(--radius-pill);font-size:1rem;font-weight:600;cursor:pointer;background:var(--bg-card);color:var(--text-main);border:1px solid color-mix(in srgb,var(--sky-blue) 25%,transparent);transition:all .25s}
 .nreader-toc-btn:hover{background:var(--bg-soft)}
@@ -855,7 +877,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px}
 .novel-field-full{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
 .novel-field-full label{font-size:.82rem;color:var(--text-secondary)}
-.novel-field-full textarea{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-family:inherit;resize:vertical}
+.novel-field-full textarea{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-family:var(--font-sans);resize:vertical}
 .novel-ch-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .novel-ch-tools h4{margin:0;margin-right:auto;font-size:.9rem;color:var(--text-secondary)}
 .file-btn{cursor:pointer;margin:0}
@@ -865,7 +887,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-ch-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 .novel-ch-title-input{flex:1;min-width:160px;padding:8px 10px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-size:.95rem;font-weight:600}
 .novel-ch-wc{color:var(--text-secondary);font-size:.78rem;white-space:nowrap}
-.novel-ch-content{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 26%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-family:inherit;resize:vertical;line-height:1.7}
+.novel-ch-content{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 26%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-family:var(--font-sans);resize:vertical;line-height:1.7}
 .novel-ch-content:focus,.novel-ch-title-input:focus,.novel-field-full textarea:focus{outline:none;border-color:var(--sky-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--sky-blue) 18%,transparent)}
 /* ===== 小说发布提示 ===== */
 .novel-publish-hint{max-width:680px;margin:0 auto 14px;padding:12px 16px;border-radius:10px;background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px solid color-mix(in srgb,var(--sky-blue) 30%,transparent);color:var(--text-secondary);font-size:.88rem;line-height:1.7;text-align:center}
@@ -1043,7 +1065,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 }
 
 /* ===== 回到顶部按钮 ===== */
-.back-to-top{position:fixed;right:22px;bottom:26px;z-index:55;width:44px;height:44px;border:none;border-radius:50%;background:var(--grad-main);color:#fff;font-size:1.25rem;cursor:pointer;box-shadow:0 8px 20px rgba(91,168,216,.4);opacity:0;visibility:hidden;transform:translateY(12px);transition:all .28s cubic-bezier(.22,1,.36,1)}
+.back-to-top{position:fixed;right:22px;bottom:26px;z-index:55;width:44px;height:44px;border:none;border-radius:50%;background:var(--grad-main);color:#fff;font-size:1.25rem;cursor:pointer;box-shadow:0 8px 20px var(--accent-shadow);opacity:0;visibility:hidden;transform:translateY(12px);transition:all .28s cubic-bezier(.22,1,.36,1)}
 .back-to-top.show{opacity:1;visibility:visible;transform:translateY(0)}
 .back-to-top:hover{transform:translateY(-3px) scale(1.05)}
 

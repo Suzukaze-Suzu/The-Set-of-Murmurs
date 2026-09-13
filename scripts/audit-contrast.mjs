@@ -91,17 +91,22 @@ A('var(--text-main)', '#fdf4e9', '墨字 on hero 浅底右下', 4.5);
 A('var(--sky-ink)', '#e9f4fc', 'hero 副标题 on hero 浅底', 4.5);
 // ↓ 2026-09-13 第2步：Hero 改成流动渐变了，下面按「渐变的四个色标」实算
 //   （色标值 = 色卡色 × 百分比 + 白/深底，与 index.css 里 --hero-flow 的 color-mix 一一对应）
-A('var(--text-main)', '#DEEEF7', '墨字 on hero 天空蓝20%色标', 4.5);
+//   ↓ 第2c步：首尾两档由「天空蓝20%」改成「强调色20%」＝亮色下的青蓝，色标随之变为 #DBEBF1
+A('var(--text-main)', '#DBEBF1', '墨字 on hero 强调色20%色标', 4.5);
 A('var(--text-main)', '#F9F1E6', '墨字 on hero 蜜金26%色标', 4.5);
 A('var(--text-main)', '#FBEFEC', '墨字 on hero 珊瑚粉16%色标', 4.5);
 A('var(--text-main)', '#DEEDF2', '墨字 on hero 青蓝18%色标', 4.5);
-A('var(--sky-ink)', '#DEEEF7', 'hero 副标题 on hero 天空蓝色标', 4.5);
+A('var(--sky-ink)', '#DBEBF1', 'hero 副标题 on hero 强调色色标', 4.5);
 A('var(--sky-ink)', '#DEEDF2', 'hero 副标题 on hero 青蓝色标', 4.5);
-A('var(--text-secondary)', '#DEEEF7', 'hero 简介 on hero 天空蓝色标', 4.5);
+A('var(--text-secondary)', '#DBEBF1', 'hero 简介 on hero 强调色色标', 4.5);
 A('#ffffff', '#4A9BB8', '白字 on 青蓝(小说封面浅端，大字)', 3);
 A('#ffffff', '#2A6577', '白字 on 青蓝深色(小说封面深端)');
 A('var(--aqua-ink)', 'var(--bg-card)', '青蓝墨色 on 卡片(原森林绿岗位)');
 A('var(--aqua-ink)', mix(light['--aqua-blue'], '#ffffff', 0.12), '青蓝墨色 on 青蓝12%底');
+// ↓ 第2c步新增：亮色主题的强调色换成了青蓝，要确认它自己以及承载白字时都够看
+A('var(--accent)', 'var(--bg-card)', '强调色(青蓝) on 卡片', 3);
+A('var(--accent-deep)', 'var(--bg-card)', '强调色深档 on 卡片', 3);
+A('#ffffff', 'var(--accent-deep)', '白字 on 强调色深档(封面深端)');
 
 console.log('\n【暗色主题】');
 const D = (f, b, l, m) => audit('dark', dark, f, b, l, m);
