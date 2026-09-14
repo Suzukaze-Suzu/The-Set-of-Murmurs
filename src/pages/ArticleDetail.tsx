@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useCallback, useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { useComments } from '../context/CommentContext';
 import { useAuth } from '../context/AuthContext';
@@ -68,7 +69,8 @@ export default function ArticleDetail() {
     <div className="page article-detail">
       <div className="detail-head">
         <div className="detail-cats">
-          <Link to={`/category/${article.category}`} className="detail-cat" style={{ background: meta.color + '22', color: meta.ink }}>
+          {/* 第2g步：分类小签＝该分类色卡色实底（亮色），字色由 --cat-on 给；暗色见 index.css 还原块 */}
+          <Link to={`/category/${article.category}`} className="detail-cat" style={{ '--cat-color': meta.color, '--cat-ink': meta.ink, '--cat-on': meta.onFill } as CSSProperties}>
             {meta.label}
           </Link>
           {article.tags.map((t) => (

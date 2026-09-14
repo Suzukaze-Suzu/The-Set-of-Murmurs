@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import type { CSSProperties } from 'react';
 import { Article, CATEGORY_META } from '../types';
 import { useAuth } from '../context/AuthContext';
 
@@ -16,7 +17,9 @@ export default function ArticleCard({ article, onToggleFavorite }: Props) {
       style={{ borderTop: `4px solid ${meta.color}` }}
     >
       <div className="card-top">
-        <span className="card-cat" style={{ background: meta.color + '22', color: meta.ink }}>
+        {/* 第2g步：分类小签的底色＝该分类的色卡色实底（亮色），字色由 --cat-on 给；
+            暗色由 index.css 的还原块改回「13% 淡底 + 同色系墨色字」。 */}
+        <span className="card-cat" style={{ '--cat-color': meta.color, '--cat-ink': meta.ink, '--cat-on': meta.onFill } as CSSProperties}>
           {meta.label}
         </span>
         <div className="card-actions">

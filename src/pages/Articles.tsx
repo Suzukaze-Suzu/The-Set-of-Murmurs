@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import type { CSSProperties } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { CATEGORIES, CATEGORY_META } from '../types';
 import type { Article } from '../types';
@@ -77,8 +78,8 @@ export default function Articles({ query }: Props) {
             key={c}
             className={`filter-chip ${catFilter === c ? 'active' : ''}`}
             onClick={() => setCatFilter(c)}
-            /* 第2f步：激活态不再用墨色当底色（颜色只用色卡色），改成该分类的色卡色浅底 + 墨字 */
-            style={catFilter === c ? { background: CATEGORY_META[c].color + '55', color: 'var(--text-main)' } : {}}
+            /* 第2g步：激活态＝该分类色卡色实底（亮色），字色走 --cat-on；暗色见 index.css 还原块 */
+            style={catFilter === c ? ({ '--cat-color': CATEGORY_META[c].color, '--cat-ink': CATEGORY_META[c].ink, '--cat-on': CATEGORY_META[c].onFill } as CSSProperties) : {}}
           >
             {CATEGORY_META[c].label}
           </button>

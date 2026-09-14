@@ -50,20 +50,20 @@ export interface SiteSettings {
   theme: 'light' | 'dark';
 }
 
-// color=颜色（浅底/圆点/描边/实底用，只从色卡取）；ink=文字色（墨色，亮底上 ≥4.5:1）
-// 铁律（用户 2026-09-14）：**字全部用墨色，颜色全部不用墨色** ——
-//   ① 任何文字（含标签文字、按钮文字）都用墨色，不用色卡彩色当字色；
-//   ② 任何「颜色」（底色/描边/圆点/图标/实底）都用色卡色本身，不用派生的墨色档。
-// 所以 color 只出现在 background / border 里，ink 只出现在 color 里。
+// color=颜色（分类的色卡色：浅底/描边/实底都用它本身）；ink=该分类的**同色系墨色**（只给文字用）
+// onFill=压在「分类色实底」上的字色（分类小签在亮色下改成实底了）：
+//   天空蓝/珊瑚粉/蜜金实底压墨字（4.85 / 5.73 / 8.03:1 ✓）；
+//   青蓝/灰蓝实底压墨字只有 2.07 / 3.88:1，所以这两类用白字（3.15 / 3.06:1，按 WCAG 大字·图形线记「偏低」）。
+// 铁律（用户 2026-09-14）：「字全部用墨色，颜色全部不用墨色」——
+//   ink 只出现在 color: 里；color 只出现在 background / border 里；
+//   随笔这类粉色族的字用**珊瑚墨色** var(--coral-ink)（只给字用，不当底色，见 index.css 注释）。
 // 2026-09-13 第2步：小说分类原来是墨绿 #2F6B4F，已换成蜜金——墨绿不在「主题灵感」的四色里。
-// 2026-09-14 第2f步：随笔的墨色（原来自造的 #A8482F 砖橙，第2d步已弃用）改用中性墨色，
-//   因为珊瑚粉是浅色、当不了字色；随笔的粉只当「颜色」（浅底 + 色卡边框）。
-export const CATEGORY_META: Record<Category, { label: string; icon: string; color: string; ink: string }> = {
-  anime:   { label: '读后感',      icon: '', color: '#5BA8D8', ink: '#2E6E92' },
-  essay:   { label: '随笔',      icon: '', color: '#E89B8A', ink: 'var(--text-main)' },
-  reading: { label: '小说',    icon: '', color: '#E8C9A0', ink: '#8F6220' },
-  math:    { label: '数学笔记',  icon: '', color: '#4A9BB8', ink: '#2A6577' },
-  study:   { label: '学习分享',  icon: '', color: '#8A8F9A', ink: '#5C6469' },
+export const CATEGORY_META: Record<Category, { label: string; icon: string; color: string; ink: string; onFill: string }> = {
+  anime:   { label: '读后感',      icon: '', color: '#5BA8D8', ink: '#2E6E92', onFill: 'var(--text-main)' },
+  essay:   { label: '随笔',      icon: '', color: '#E89B8A', ink: 'var(--coral-ink)', onFill: 'var(--text-main)' },
+  reading: { label: '小说',    icon: '', color: '#E8C9A0', ink: '#8F6220', onFill: 'var(--text-main)' },
+  math:    { label: '数学笔记',  icon: '', color: '#4A9BB8', ink: '#2A6577', onFill: '#fff' },
+  study:   { label: '学习分享',  icon: '', color: '#8A8F9A', ink: '#5C6469', onFill: '#fff' },
 };
 
 

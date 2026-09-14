@@ -81,11 +81,18 @@ A('var(--text-secondary)', 'var(--bg-soft)', '次要文字 on bg-soft');
 A('var(--sky-blue-dark)', 'var(--bg-card)', '链接色 on 卡片');
 A('var(--sky-ink)', 'var(--bg-card)', '天空蓝墨色 on 卡片');
 A('var(--sky-ink)', mix(light['--sky-blue'], '#ffffff', 0.12), '天空蓝墨色 on 天空蓝12%底');
-// ↓ 2026-09-14 第2f步：用户定了配色分工——**字全部用墨色、颜色全部不用墨色**。
-//   珊瑚粉在亮色下只当「颜色」（描边/圆点/浅底），不再当字色；文字一律墨色。
-A('var(--coral-pink)', 'var(--bg-card)', '珊瑚粉 on 卡片（描边/浅底，非文字）', 3, '色卡珊瑚粉本身 2.21:1；只做装饰、不当字色，非文字不受 WCAG 文字线约束');
-A('var(--text-main)', mix(light['--coral-pink'], '#ffffff', 0.15), '墨字 on 珊瑚15%底（随笔标签/小控件）');
-A('var(--coral-on)', 'var(--coral-pink)', '粉底上的字（--coral-on＝墨字）');
+// ↓ 2026-09-14 第2f/2g步：用户定了配色分工——**字全部用墨色、颜色全部不用墨色**。
+//   第2g步补充：墨字＝**同色系墨色**（不是黑字），珊瑚粉族的字用 --coral-ink 深珊瑚 #A8482F；
+//   分类小签在亮色下改成「该分类色卡色实底 + 能看清的字色」。
+A('var(--coral-ink)', 'var(--bg-card)', '珊瑚墨色（字）on 卡片');
+A('var(--coral-ink)', mix(light['--coral-pink'], '#ffffff', 0.15), '珊瑚墨色（字）on 珊瑚15%底');
+A('var(--coral-pink)', 'var(--bg-card)', '珊瑚粉 on 卡片（描边/浅底，非文字）', 3, '色卡珊瑚粉本身 2.21:1；只做颜色不当字，非文字不受 WCAG 文字线约束');
+A('var(--text-main)', '#5BA8D8', '墨字 on 天空蓝实底（读后感小签）');
+A('var(--text-main)', '#E89B8A', '墨字 on 珊瑚粉实底（随笔小签）');
+A('var(--text-main)', '#E8C9A0', '墨字 on 蜜金实底（小说小签）');
+A('#ffffff', '#4A9BB8', '白字 on 青蓝实底（数学小签；墨字只有 2.07:1 故用白字）', 3);
+A('#ffffff', '#8A8F9A', '白字 on 灰蓝实底（学习分享小签；墨字只有 3.88:1 故用白字）', 3);
+A('var(--coral-on)', 'var(--coral-pink)', '粉底上的字（--coral-on＝黑墨字）');
 A('#ffffff', 'var(--coral-pink)', '白字 on 珊瑚粉实底（收藏星星★）', 4.5, '2.21:1；用户点名要星星保持白色');
 A('#ffffff', 'var(--coral-pink)', '白字 on 珊瑚粉实底（暗色还原那批按钮）', 4.5, '2.21:1，暗色主题今天就是这样');
 A('var(--honey-ink)', 'var(--bg-card)', '蜜金墨色 on 卡片');
