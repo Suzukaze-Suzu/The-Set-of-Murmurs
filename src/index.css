@@ -62,12 +62,13 @@
   --hero-glow-a: color-mix(in srgb,var(--coral-pink) 40%,transparent);
   --hero-glow-b: color-mix(in srgb,var(--accent) 45%,transparent);
   --font-sans: 'PingFang SC','Microsoft YaHei','Hiragino Sans GB','HarmonyOS Sans SC',sans-serif;
-  /* 2026-09-13 第2c步：用户要求「全部换成衬线体」。
+  /* 2026-09-13 第2d步：用户对比页挑定「思源宋 TC」（原话「改成思源宋吧」＋选定自托管）。
+     所以衬线栈首位＝Noto Serif TC（＝Source Han Serif TC，繁体/台湾字形，字集含简体），
+     并由 public/fonts/noto-serif-tc/ 自托管 woff2 分片（index.html 引入），访客不必装字体。
+     后面的成员只是「分片没加载出来时」的兜底：本机思源宋 SC → macOS 宋体-简 → 华文宋体 → generic serif。
      中文衬线栈里**故意不放 SimSun（中易宋体）**——用户上一轮就否过它（原话「不要用宋体，太诡异了」，
-     Windows 上 SimSun 大字号发虚、字重只有一档），也不放 generic serif 之外的旧宋体。
-     顺序＝思源宋体/Noto Serif SC（本机实测已安装，字重 200~900 齐全，Windows 上真正好看的宋体）
-     → macOS 宋体-简 → 华文宋体 → 通用 serif。末尾必须落在 serif 上，保证任何平台最后兜底都是衬线。 */
-  --font-serif: 'Noto Serif SC','Source Han Serif SC','Noto Serif CJK SC','Songti SC','STSong','Noto Serif',serif;
+     Windows 上 SimSun 大字号发虚、字重只有一档）。末尾必须落在 serif 上，保证任何平台最后兜底都是衬线。 */
+  --font-serif: 'Noto Serif TC','Source Han Serif TC','Noto Serif CJK TC','Noto Serif SC','Source Han Serif SC','Songti SC','STSong','Noto Serif',serif;
   /* --font-sans 只留给输入框/代码这类要“等宽或清晰”的场合；--font-display 与大标题仍走衬线 */
   --font-display: var(--font-serif);
 }
