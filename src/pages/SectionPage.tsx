@@ -33,7 +33,8 @@ export default function SectionPage() {
 
   return (
     <div className="page">
-      <div className="cat-header" style={{ '--cat-tint': meta.color, '--cat-accent': meta.ink } as CSSProperties}>
+      {/* 第2f步：左竖条是「颜色」，改用色卡色本身（原来用 ink 墨色） */}
+      <div className="cat-header" style={{ '--cat-tint': meta.color, '--cat-accent': meta.color } as CSSProperties}>
         <Link to="/articles" className="back-link">‹ 全部文章</Link>
         <h1 className="page-title light">
           {meta.label}

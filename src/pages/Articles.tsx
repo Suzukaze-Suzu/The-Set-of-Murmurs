@@ -77,7 +77,8 @@ export default function Articles({ query }: Props) {
             key={c}
             className={`filter-chip ${catFilter === c ? 'active' : ''}`}
             onClick={() => setCatFilter(c)}
-            style={catFilter === c ? { background: CATEGORY_META[c].ink, color: CATEGORY_META[c].inkOn } : {}}
+            /* 第2f步：激活态不再用墨色当底色（颜色只用色卡色），改成该分类的色卡色浅底 + 墨字 */
+            style={catFilter === c ? { background: CATEGORY_META[c].color + '55', color: 'var(--text-main)' } : {}}
           >
             {CATEGORY_META[c].label}
           </button>

@@ -50,19 +50,20 @@ export interface SiteSettings {
   theme: 'light' | 'dark';
 }
 
-// color=装饰色（浅底/圆点用）；ink=同色系的深色，供文字与承载白字的底色使用（亮底上 ≥4.5:1）
-// inkOn=压在 ink 实底上的字色（只有珊瑚粉这种浅色需要反过来用墨字，其余类别压白字）
-// 铁律：这里的 color/ink 只能从凉风凉色卡里取（天空蓝 #5BA8D8 / 蜜金 #E8C9A0 / 珊瑚粉 #E89B8A / 青蓝 #4A9BB8 / 中性灰蓝 #8A8F9A）
+// color=颜色（浅底/圆点/描边/实底用，只从色卡取）；ink=文字色（墨色，亮底上 ≥4.5:1）
+// 铁律（用户 2026-09-14）：**字全部用墨色，颜色全部不用墨色** ——
+//   ① 任何文字（含标签文字、按钮文字）都用墨色，不用色卡彩色当字色；
+//   ② 任何「颜色」（底色/描边/圆点/图标/实底）都用色卡色本身，不用派生的墨色档。
+// 所以 color 只出现在 background / border 里，ink 只出现在 color 里。
 // 2026-09-13 第2步：小说分类原来是墨绿 #2F6B4F，已换成蜜金——墨绿不在「主题灵感」的四色里。
-// 2026-09-14 第2d步：随笔原来是自造的珊瑚墨色 #A8482F（砖橙），按要求改回色卡珊瑚粉。
-//   因为珊瑚粉是浅色、当不了字色，这里用 var(--coral-solid)：亮色＝#E89B8A 本身、暗色＝改动前的原值，
-//   所以暗色主题一个字没变；粉底上压墨字（var(--coral-on)，5.73:1）。
-export const CATEGORY_META: Record<Category, { label: string; icon: string; color: string; ink: string; inkOn: string }> = {
-  anime:   { label: '读后感',      icon: '', color: '#5BA8D8', ink: '#2E6E92', inkOn: '#fff' },
-  essay:   { label: '随笔',      icon: '', color: '#E89B8A', ink: 'var(--coral-solid)', inkOn: 'var(--coral-on)' },
-  reading: { label: '小说',    icon: '', color: '#E8C9A0', ink: '#8F6220', inkOn: '#fff' },
-  math:    { label: '数学笔记',  icon: '', color: '#4A9BB8', ink: '#2A6577', inkOn: '#fff' },
-  study:   { label: '学习分享',  icon: '', color: '#8A8F9A', ink: '#5C6469', inkOn: '#fff' },
+// 2026-09-14 第2f步：随笔的墨色（原来自造的 #A8482F 砖橙，第2d步已弃用）改用中性墨色，
+//   因为珊瑚粉是浅色、当不了字色；随笔的粉只当「颜色」（浅底 + 色卡边框）。
+export const CATEGORY_META: Record<Category, { label: string; icon: string; color: string; ink: string }> = {
+  anime:   { label: '读后感',      icon: '', color: '#5BA8D8', ink: '#2E6E92' },
+  essay:   { label: '随笔',      icon: '', color: '#E89B8A', ink: 'var(--text-main)' },
+  reading: { label: '小说',    icon: '', color: '#E8C9A0', ink: '#8F6220' },
+  math:    { label: '数学笔记',  icon: '', color: '#4A9BB8', ink: '#2A6577' },
+  study:   { label: '学习分享',  icon: '', color: '#8A8F9A', ink: '#5C6469' },
 };
 
 

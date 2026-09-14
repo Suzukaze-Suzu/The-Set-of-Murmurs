@@ -120,9 +120,9 @@ export default function BugFeedback() {
             return (
               <div key={rep.id} className="bug-item">
                 <div className="bug-item-head">
-                  {/* 2026-09-14 第2d步：原来写死的珊瑚墨色 #A8482F（砖橙）改成 var(--coral-solid)
-                      ——亮色＝色卡珊瑚粉本身 + 墨字；暗色由该变量还原成改动前的深珊瑚 + 白字。 */}
-                  <span className="bug-cat-tag" style={{ background: cat ? 'var(--coral-solid)' : '#5C6469', color: cat ? 'var(--coral-on)' : '#fff' }}>{cat ? cat.label : rep.category}</span>
+                  {/* 2026-09-14 第2f步：分类标签的底是「颜色」，只用色卡色（珊瑚粉 / 灰蓝浅底），
+                      字一律墨色，不再用 #A8482F 这类墨色当底色。 */}
+                  <span className="bug-cat-tag" style={{ background: cat ? 'var(--coral-solid)' : 'color-mix(in srgb,var(--slate-blue) 33%,transparent)', color: cat ? 'var(--coral-on)' : 'var(--text-main)' }}>{cat ? cat.label : rep.category}</span>
                   <span className={stCls}>{rep.status}</span>
                   <span className="comment-date">{new Date(rep.date).toLocaleString()}</span>
                   {canEdit(rep) && (
