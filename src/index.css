@@ -216,7 +216,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .filter-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}
 .filter-chip{border:none;cursor:pointer;padding:8px 18px;border-radius:var(--radius-pill);background:var(--bg-card);color:var(--text-main);box-shadow:var(--shadow-sm);font-size:.88rem;font-weight:500;border:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent);transition:all .2s}
 .filter-chip:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
-.filter-chip.active{color:var(--cat-on,var(--text-main));border-color:transparent;box-shadow:0 6px 16px var(--accent-shadow-soft);background:var(--cat-color,var(--sky-blue))}
+.filter-chip.active{color:var(--cat-on,var(--sky-ink));border-color:transparent;box-shadow:0 6px 16px var(--accent-shadow-soft);background:var(--cat-color,var(--sky-blue))}
 .result-count{color:var(--text-secondary);margin-bottom:16px;font-size:.95rem}
 /* ===== 绌虹姸鎬?===== */
 .empty-state{text-align:center;padding:70px 20px;color:var(--text-secondary)}
@@ -599,7 +599,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   background:none;color:var(--sky-ink);font-size:.72rem;padding:2px 8px;border-radius:10px;
   cursor:pointer;transition:.2s;
 }
-.comment-reply:hover{background:var(--sky-blue);color:var(--text-main)}
+.comment-reply:hover{background:var(--sky-blue);color:var(--sky-ink)}
 .comment-name-label em{color:var(--coral-ink);font-style:normal;font-weight:600;margin-right:4px}
 .comment-name-label em::before{content:'@'}
 
@@ -663,14 +663,14 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   font-size:.9rem;font-weight:600;transition:all .2s;
 }
 .guestbook-tab:hover{color:var(--sky-ink)}
-.guestbook-tab.active{background:var(--sky-blue);color:var(--text-main);box-shadow:0 4px 12px var(--accent-shadow-soft)}
+.guestbook-tab.active{background:var(--sky-blue);color:var(--sky-ink);box-shadow:0 4px 12px var(--accent-shadow-soft)}
 
 
 .bug-toggle{
   border:1px solid color-mix(in srgb,var(--sky-blue) 40%,transparent);background:none;color:var(--sky-ink);
   font-size:.72rem;padding:2px 10px;border-radius:12px;cursor:pointer;transition:.2s;
 }
-.bug-toggle:hover{background:var(--sky-blue);color:var(--text-main)}
+.bug-toggle:hover{background:var(--sky-blue);color:var(--sky-ink)}
 
 
 /* ===== 写作页插入图片/音乐 ===== */
@@ -740,7 +740,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 }
 .about-head-actions .btn-light:hover,
 .about-history-modal .btn-light:hover{
-  background:var(--sky-blue);color:var(--text-main);
+  background:var(--sky-blue);color:var(--sky-ink);
 }
 .about-history-modal .btn-ghost{
   margin-top:12px;background:color-mix(in srgb,var(--text-secondary) 8%,transparent);
@@ -893,7 +893,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-toc-item:hover{background:color-mix(in srgb,var(--sky-blue) 8%,transparent)}
 .nreader-toc-item.current{background:color-mix(in srgb,var(--sky-blue) 12%,transparent);color:var(--sky-ink);font-weight:700}
 .nreader-toc-no{width:26px;height:26px;flex-shrink:0;border-radius:50%;background:color-mix(in srgb,var(--slate-blue) 15%,transparent);color:var(--reader-secondary);font-size:.78rem;display:flex;align-items:center;justify-content:center;font-weight:600}
-.nreader-toc-item.current .nreader-toc-no{background:var(--sky-blue);color:var(--text-main)}
+.nreader-toc-item.current .nreader-toc-no{background:var(--sky-blue);color:var(--sky-ink)}
 .nreader-toc-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nreader-toc-wc{color:var(--reader-secondary);font-size:.75rem;white-space:nowrap;flex-shrink:0}
 
@@ -907,7 +907,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-sheet-group{display:flex;align-items:center;gap:10px}
 .nreader-size-val{color:var(--reader-secondary);font-size:.85rem;min-width:40px;text-align:center}
 .nreader-pill{padding:8px 18px;border-radius:var(--radius-pill);border:1px solid color-mix(in srgb,var(--sky-blue) 24%,transparent);background:transparent;color:var(--reader-text);cursor:pointer;font-size:.9rem;transition:all .2s;min-width:70px}
-.nreader-pill.on{background:var(--sky-blue);color:var(--text-main);border-color:transparent}
+.nreader-pill.on{background:var(--sky-blue);color:var(--sky-ink);border-color:transparent}
 .nreader-pill:hover{background:color-mix(in srgb,var(--sky-blue) 14%,transparent)}
 
 /* ===== 小说写作编辑器 ===== */
@@ -1053,7 +1053,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .friends-desc-text{font-size:.84rem;color:var(--text-secondary);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .friends-ops{display:flex;gap:6px;padding:0 18px 14px}
 .friend-op{border:1px solid color-mix(in srgb,var(--sky-blue) 35%,transparent);background:none;color:var(--sky-ink);font-size:.78rem;padding:3px 12px;border-radius:14px;cursor:pointer;transition:.2s}
-.friend-op:hover{background:var(--sky-blue);color:var(--text-main)}
+.friend-op:hover{background:var(--sky-blue);color:var(--sky-ink)}
 .friend-op-del{border-color:color-mix(in srgb,var(--coral-pink) 40%,transparent);color:var(--coral-ink)}
 .friend-op-del:hover{background:var(--coral-pink);color:var(--coral-on)}
 @media (max-width:640px){
@@ -1252,3 +1252,22 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 [data-theme='dark'] .toc-toggle,
 [data-theme='dark'] .nreader-toc-part,
 [data-theme='dark'] .nreader-book-comments summary{color:#fff}
+
+/* ============================================================
+   第2j步：色卡实底上的字一律同色系墨色 —— 2026-09-14
+   用户原话：「你怎么全改成黑色字体了，我让你把字改为同颜色的深色版本」。
+   第2f/2g 步我把一批「实底 + 白字」改成了「天空蓝实底 + --text-main」，
+   分类小签的 onFill 也给了 --text-main —— 那是 #2d3436 **黑字**，不是同色系墨色。
+   本步把这一类字全部换成「同颜色的深色版本」：
+   ① 天空蓝实底上的字 → var(--sky-ink) #2E6E92：.comment-reply:hover、.guestbook-tab.active、
+      .bug-toggle:hover、关于页 .about-head-actions/.about-history-modal .btn-light:hover、
+      .nreader-toc-item.current .nreader-toc-no、.nreader-pill.on、.friend-op:hover；
+      .filter-chip.active 的兜底字色（「全部」那颗）同理。
+   ② 分类小签 onFill（src/types/index.ts）：天空蓝 → var(--sky-ink)、珊瑚粉 → var(--coral-ink)、
+      蜜金 → var(--honey-ink)。数学笔记/学习分享仍是白字（原样）。
+   实测（同色系深色字压在该色实底上）：天空蓝 2.14:1、珊瑚粉 2.61:1、蜜金 3.38:1；
+   黑字那版是 4.85 / 5.73 / 8.03:1。这是「同色系 · 低对比」的取舍，已计入 audit-contrast.mjs 的「已知取舍」。
+   —— 若嫌糊，唯一解法是把实底换成该色卡的浅档（12% 就够：天空蓝 5.04:1、珊瑚粉 5.29:1、蜜金 5.08:1）。
+   暗色主题一个字没动：那批实底的字色仍由「第2f步 / 第2g步暗色还原块」管（= 白字 / --cat-ink）。
+   回滚：把本步的 7+1 处改回 var(--text-main)、onFill 改回 var(--text-main) 即可；快照见 first/ink-on-solid-base/。
+   ============================================================ */

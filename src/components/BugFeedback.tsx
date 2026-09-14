@@ -120,9 +120,9 @@ export default function BugFeedback() {
             return (
               <div key={rep.id} className="bug-item">
                 <div className="bug-item-head">
-                  {/* 2026-09-14 第2f步：分类标签的底是「颜色」，只用色卡色（珊瑚粉 / 灰蓝浅底），
-                      字一律墨色，不再用 #A8482F 这类墨色当底色。 */}
-                  <span className="bug-cat-tag" style={{ background: cat ? 'var(--coral-solid)' : 'color-mix(in srgb,var(--slate-blue) 33%,transparent)', color: cat ? 'var(--coral-on)' : 'var(--text-main)' }}>{cat ? cat.label : rep.category}</span>
+                  {/* 2026-09-14 第2f步：分类标签的底是「颜色」，只用色卡色（珊瑚粉 / 灰蓝浅底）；
+                      第2j步：字改成**同色系墨色**（粉底 → 珊瑚墨色，灰蓝浅底 → 灰墨），不再用黑字。 */}
+                  <span className="bug-cat-tag" style={{ background: cat ? 'var(--coral-solid)' : 'color-mix(in srgb,var(--slate-blue) 33%,transparent)', color: cat ? 'var(--coral-ink)' : 'var(--slate-ink)' }}>{cat ? cat.label : rep.category}</span>
                   <span className={stCls}>{rep.status}</span>
                   <span className="comment-date">{new Date(rep.date).toLocaleString()}</span>
                   {canEdit(rep) && (
