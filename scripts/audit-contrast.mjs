@@ -149,6 +149,11 @@ D('var(--text-main)', '#223746', '暗色 hero 标题 on 最亮色标');
 D('var(--sky-blue)', '#223746', '暗色 hero 副标题(天空蓝) on 最亮色标');
 D('var(--text-secondary)', '#223746', '暗色 hero 简介 on 最亮色标');
 D('#0e1c26', 'var(--sky-blue)', '暗色 hero 主按钮上的深字 on 天空蓝');
+// ↓ 第2h步：暗色下「小标题」一律白色（用户原话「暗色下能不能把小标题全部变成白色，要不然看不清楚」）
+//   覆盖：分区标题 .section-title、正文/关于/写作/阅读器的小节标题（原本是 --sky-blue-dark #4ba7d6 或分类墨色）
+D('#ffffff', 'var(--bg-page)', '暗色小标题白字 on 页面底');
+D('#ffffff', 'var(--bg-card)', '暗色小标题白字 on 卡片');
+D('#ffffff', 'var(--bg-soft)', '暗色小标题白字 on bg-soft');
 
 console.log(`\n结果：FAIL ${fail} 项，偏低 ${warn} 项，已知取舍 ${known} 项`);
 process.exit(fail > 0 ? 1 : 0);

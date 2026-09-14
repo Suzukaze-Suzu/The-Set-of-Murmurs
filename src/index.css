@@ -181,7 +181,11 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .hero{background-position:50% 50%}
 }
 /* ===== 鍒嗗尯鏍囬 ===== */
-.section-title{font-family:var(--font-display);font-size:1.4rem;font-weight:700;letter-spacing:.04em;margin-bottom:20px;display:flex;align-items:center;gap:10px;line-height:1.45}
+/* 2026-09-14 第2h步：分区标题的字色改成「组件只传 --sec-ink 变量、由这份 CSS 决定」
+   —— 首页按分类给色（随笔粉 / 读后感蓝 …），之前是组件写死 inline color，
+   结果是暗色主题想把它改成白色时被 inline style 压住、改不动。
+   现在：亮色＝分类同色系墨色（观感与改动前完全一致），暗色由文件末尾「第2h步暗色块」统一改成白色。 */
+.section-title{font-family:var(--font-display);font-size:1.4rem;font-weight:700;letter-spacing:.04em;margin-bottom:20px;display:flex;align-items:center;gap:10px;line-height:1.45;color:var(--sec-ink,var(--text-main))}
 .cat-section{margin-bottom:40px}
 .cat-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .more-link{font-size:.9rem;font-weight:600;color:var(--sky-blue-dark);display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--radius-pill);transition:all .2s;background:color-mix(in srgb,var(--sky-blue) 8%,transparent)}
@@ -1218,3 +1222,27 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 [data-theme='dark'] .card-cat,
 [data-theme='dark'] .detail-cat{--cat-chip-bg:color-mix(in srgb,var(--cat-color) 13%,transparent);--cat-fg:var(--cat-ink)}
 [data-theme='dark'] .filter-chip.active{background:var(--cat-color,var(--sky-fill));color:var(--cat-ink,#fff)}
+
+/* ============================================================
+   第2h步：暗色下「小标题」一律白色 —— 2026-09-14
+   用户原话：「暗色下能不能把小标题全部变成白色，要不然看不清楚」。
+   暗色主题里这些**要读的小标题**原来都带颜色，压在深底上偏暗、跟正文的白字抢不过对比度：
+   ① 分区标题（首页各分类 / Bug 反馈页）＝该分类的同色系墨色（随笔粉、读后感蓝…）；
+   ② 小节标题（Markdown 正文 h1~h4、关于页 h2、写作页「书籍信息」小节头、
+      阅读器目录折叠头、目录里的分卷名、书评区折叠头）＝--sky-blue-dark #4ba7d6。
+   本步**只改暗色**：上面这一族一律纯白 #fff（页面底 17.29:1 / 卡片 14.71:1 / bg-soft 12.82:1）；
+   亮色主题一个字没动。
+   不动的：大标题（hero / 页面标题 / 卡片标题 / 文章标题）本来就是 --text-main，
+   暗色下已经是白字；「更多」链接、标签、小签、按钮仍属于颜色层/墨色层，不是「标题」。
+   ——将来要撤回这一步：删掉这一段，并把 Home.tsx 里的 --sec-ink 换回 color 即可。
+   ============================================================ */
+[data-theme='dark'] .section-title,
+[data-theme='dark'] .about-content h2,
+[data-theme='dark'] .markdown-body h1,
+[data-theme='dark'] .markdown-body h2,
+[data-theme='dark'] .markdown-body h3,
+[data-theme='dark'] .markdown-body h4,
+[data-theme='dark'] .novel-edit-section-head,
+[data-theme='dark'] .toc-toggle,
+[data-theme='dark'] .nreader-toc-part,
+[data-theme='dark'] .nreader-book-comments summary{color:#fff}

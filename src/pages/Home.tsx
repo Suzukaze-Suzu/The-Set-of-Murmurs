@@ -2,6 +2,7 @@ import { useArticles } from '../context/ArticleContext';
 import { useProfile } from '../context/ProfileContext';
 import { CATEGORIES, CATEGORY_META, Category } from '../types';
 import { Link } from 'react-router-dom';
+import type { CSSProperties } from 'react';
 import ArticleCard from '../components/ArticleCard';
 import NovelCard from '../components/NovelCard';
 import { useAuth } from '../context/AuthContext';
@@ -68,7 +69,10 @@ export default function Home({ query }: Props) {
           return (
             <section key={c} className="cat-section">
               <div className="cat-section-head">
-                <h2 className="section-title" style={{ color: meta.ink }}>
+                {/* 第2h步：分区小标题只把「该分类的墨色」当 CSS 变量传下去，字色由 index.css 定，
+                    暗色主题才能把它统一改成白色（写死 inline color 会压住暗色规则）。
+                    「更多」链接保持分类色，不算标题。 */}
+                <h2 className="section-title" style={{ '--sec-ink': meta.ink } as CSSProperties}>
                   {meta.label}
                 </h2>
                 <Link to={`/category/${c}`} className="more-link" style={{ color: meta.ink }}>
