@@ -77,7 +77,7 @@ export default function Articles({ query }: Props) {
             key={c}
             className={`filter-chip ${catFilter === c ? 'active' : ''}`}
             onClick={() => setCatFilter(c)}
-            style={catFilter === c ? { background: CATEGORY_META[c].ink } : {}}
+            style={catFilter === c ? { background: CATEGORY_META[c].ink, color: CATEGORY_META[c].inkOn } : {}}
           >
             {CATEGORY_META[c].label}
           </button>

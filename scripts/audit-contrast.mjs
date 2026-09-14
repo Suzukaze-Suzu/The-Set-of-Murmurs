@@ -52,21 +52,27 @@ function val(theme, expr, depth = 0) {
 const light = readVars(':root', ':root');
 const dark = readVars("\\[data-theme=['\"]?dark['\"]?\\]", 'data-theme=dark');
 
-let fail = 0, warn = 0;
-function audit(themeName, theme, fgExpr, bgExpr, label, min = 4.5) {
+let fail = 0, warn = 0, known = 0;
+function audit(themeName, theme, fgExpr, bgExpr, label, min = 4.5, note) {
   const fg = val(theme, fgExpr), bg = val(theme, bgExpr);
   if (!fg.startsWith('#') || !bg.startsWith('#')) { console.log(`  SKIP  ${label}（非纯色：${fg} / ${bg}）`); return; }
   const r = CR(fg, bg);
   const ok = r >= min;
-  if (!ok) (r >= 3 ? warn++ : fail++);
-  const tag = ok ? 'PASS' : (r >= 3 ? '偏低' : 'FAIL');
+  if (!ok && note) {
+    // 「已知取舍」：用户明确要求的颜色搭配，数值如实打印、也如实标注，但不阻断构建
+    known++;
+  } else if (!ok) {
+    (r >= 3 ? warn++ : fail++);
+  }
+  const tag = ok ? 'PASS' : (note ? '已知' : (r >= 3 ? '偏低' : 'FAIL'));
   console.log(`  ${tag.padEnd(5)} ${label.padEnd(34)} ${r.toFixed(2)}:1  (${fg} on ${bg})`);
+  if (!ok && note) console.log(`        ↳ 已知取舍：${note}`);
   return r;
 }
 
 console.log(`\n审计产物：dist/assets/${cssFile}\n`);
 console.log('【亮色主题】');
-const A = (f, b, l, m) => audit('light', light, f, b, l, m);
+const A = (f, b, l, m, n) => audit('light', light, f, b, l, m, n);
 A('var(--text-main)', 'var(--bg-card)', '主文字 on 卡片');
 A('var(--text-main)', 'var(--bg-page)', '主文字 on 页面底');
 A('var(--text-secondary)', 'var(--bg-card)', '次要文字 on 卡片');
@@ -75,13 +81,19 @@ A('var(--text-secondary)', 'var(--bg-soft)', '次要文字 on bg-soft');
 A('var(--sky-blue-dark)', 'var(--bg-card)', '链接色 on 卡片');
 A('var(--sky-ink)', 'var(--bg-card)', '天空蓝墨色 on 卡片');
 A('var(--sky-ink)', mix(light['--sky-blue'], '#ffffff', 0.12), '天空蓝墨色 on 天空蓝12%底');
-A('var(--coral-ink)', 'var(--bg-card)', '珊瑚墨色 on 卡片');
-A('var(--coral-ink)', mix(light['--coral-pink'], '#ffffff', 0.15), '珊瑚墨色 on 珊瑚15%底');
+// ↓ 第2d步：亮色珊瑚一族改回色卡珊瑚粉 #E89B8A 本身（自造的 #A8482F「砖橙」已弃用）。
+//   珊瑚粉是浅色，当字色或被白字压都只有 2.21:1 —— 这是用户 2026-09-14 明确要求的
+//   （「把亮色情况下你偷偷改掉的橙色改为凉风凉四色中的粉色」），且与暗色主题今天的做法一致，
+//   所以如实标注为「已知取舍」、不阻断构建；将来若要提上去，办法是把这几处换成墨字（5.73:1）。
+A('var(--coral-pink)', 'var(--bg-card)', '珊瑚粉 on 卡片（字色/装饰）', 4.5, '色卡珊瑚粉本身，2.21:1，用户点名要的粉');
+A('var(--coral-pink)', mix(light['--coral-pink'], '#ffffff', 0.15), '珊瑚粉 on 珊瑚15%底（分类标签字色）', 4.5, '≈1.9:1，同上，属用户点名的粉色');
+A('var(--coral-on)', 'var(--coral-pink)', '粉底上的字（--coral-on＝墨字）');
+A('var(--text-main)', 'var(--coral-pink)', '墨字 on 珊瑚粉实底（分类标签/删除按钮）');
+A('#ffffff', 'var(--coral-pink)', '白字 on 珊瑚粉实底', 4.5, '2.21:1，只在暗色还原时出现（暗色今天就是这样）');
 A('var(--honey-ink)', 'var(--bg-card)', '蜜金墨色 on 卡片');
 A('var(--honey-ink)', mix(light['--honey-gold'], '#ffffff', 0.25), '蜜金墨色 on 蜜金25%底');
 A('var(--slate-ink)', 'var(--bg-card)', '灰蓝墨色 on 卡片');
 A('#ffffff', 'var(--sky-fill)', '白字 on sky-fill');
-A('#ffffff', 'var(--coral-fill)', '白字 on coral-fill');
 // ↓ 第2c步：亮色主按钮/激活态＝色卡青蓝 #4A9BB8 本身（色号未改）+ 白字
 //   （墨色字反而更差：#2A6577 on #4A9BB8 仅 2.07:1；白字 3.15:1，属 WCAG 大字/填充控件线，故按 3:1 判）
 A('#ffffff', 'var(--accent)', '白字 on 青蓝实底(主按钮/激活态)', 3);
@@ -114,12 +126,16 @@ A('var(--accent-deep)', 'var(--bg-card)', '强调色深档 on 卡片', 3);
 A('#ffffff', 'var(--accent-deep)', '白字 on 强调色深档(封面深端)');
 
 console.log('\n【暗色主题】');
-const D = (f, b, l, m) => audit('dark', dark, f, b, l, m);
+const D = (f, b, l, m, n) => audit('dark', dark, f, b, l, m, n);
 D('var(--text-main)', 'var(--bg-page)', '主文字 on 页面底');
 D('var(--text-secondary)', 'var(--bg-card)', '次要文字 on 卡片');
 D('var(--text-secondary)', 'var(--bg-page)', '次要文字 on 页面底');
 D('var(--sky-ink)', 'var(--bg-card)', '天空蓝墨色 on 卡片');
-D('var(--coral-ink)', 'var(--bg-card)', '珊瑚墨色 on 卡片');
+D('var(--coral-pink)', 'var(--bg-card)', '暗色珊瑚粉 on 卡片（字色）');
+D('var(--coral-on)', 'var(--coral-solid)', '暗色深珊瑚底上的字（--coral-on＝白）');
+// 第2d步说明：暗色下随笔分类标签的字色仍是改动前的 #A8482F（= --coral-solid 的暗色值），
+// 它压在深色卡片上本来就偏低（2.56:1）——为了「亮色改动不影响暗色」原样留着，等暗色那一步一起修。
+D('var(--coral-solid)', 'var(--bg-card)', '暗色珊瑚原值(#A8482F) on 卡片', 4.5, '暗色原样保留，改动前就是这样，暗色那一步再一起修');
 D('var(--aqua-ink)', 'var(--bg-card)', '青蓝墨色 on 卡片');
 // ↓ 暗色 Hero 重做后的实算：#223746 = 天空蓝 #6ec3ef 16% 混进 #141b26 得到的最亮色标
 D('var(--text-main)', '#223746', '暗色 hero 标题 on 最亮色标');
@@ -127,5 +143,5 @@ D('var(--sky-blue)', '#223746', '暗色 hero 副标题(天空蓝) on 最亮色�
 D('var(--text-secondary)', '#223746', '暗色 hero 简介 on 最亮色标');
 D('#0e1c26', 'var(--sky-blue)', '暗色 hero 主按钮上的深字 on 天空蓝');
 
-console.log(`\n结果：FAIL ${fail} 项，偏低 ${warn} 项`);
+console.log(`\n结果：FAIL ${fail} 项，偏低 ${warn} 项，已知取舍 ${known} 项`);
 process.exit(fail > 0 ? 1 : 0);
