@@ -89,7 +89,8 @@ A('var(--coral-pink)', 'var(--bg-card)', '珊瑚粉 on 卡片（字色/装饰）
 A('var(--coral-pink)', mix(light['--coral-pink'], '#ffffff', 0.15), '珊瑚粉 on 珊瑚15%底（分类标签字色）', 4.5, '≈1.9:1，同上，属用户点名的粉色');
 A('var(--coral-on)', 'var(--coral-pink)', '粉底上的字（--coral-on＝墨字）');
 A('var(--text-main)', 'var(--coral-pink)', '墨字 on 珊瑚粉实底（分类标签/删除按钮）');
-A('#ffffff', 'var(--coral-pink)', '白字 on 珊瑚粉实底', 4.5, '2.21:1，只在暗色还原时出现（暗色今天就是这样）');
+A('#ffffff', 'var(--coral-pink)', '白字 on 珊瑚粉实底（收藏星星★）', 4.5, '2.21:1；用户明确要求星星仍用白色，且暗色主题今天也是这样');
+A('#ffffff', 'var(--coral-pink)', '白字 on 珊瑚粉实底（暗色还原那批按钮）', 4.5, '2.21:1，暗色主题今天就是这样');
 A('var(--honey-ink)', 'var(--bg-card)', '蜜金墨色 on 卡片');
 A('var(--honey-ink)', mix(light['--honey-gold'], '#ffffff', 0.25), '蜜金墨色 on 蜜金25%底');
 A('var(--slate-ink)', 'var(--bg-card)', '灰蓝墨色 on 卡片');

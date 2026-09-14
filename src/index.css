@@ -245,23 +245,23 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .profile-controls p{color:var(--text-secondary);margin-bottom:14px}
 /* ===== 鍐欎綔椤?===== */
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
-.toolbar .btn{background:var(--bg-card);box-shadow:var(--shadow-sm);border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent);color:var(--text-main)}
+.toolbar .btn{background:var(--bg-card);box-shadow:var(--shadow-sm);border:1px solid color-mix(in srgb,var(--accent) 12%,transparent);color:var(--text-main)}
 .toolbar .btn:hover{box-shadow:var(--shadow)}
 .write-form{padding:28px}
 .write-title{width:100%;font-size:1.6rem;font-weight:700;border:none;outline:none;background:transparent;color:var(--text-main);margin-bottom:18px;border-bottom:2px dashed transparent;transition:border-color .2s}
-.write-title:focus{border-bottom-color:var(--sky-ink)}
+.write-title:focus{border-bottom-color:var(--accent)}
 .write-meta{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px}
 .meta-field{display:flex;flex-direction:column}
 .meta-field label{font-size:.82rem;color:var(--text-secondary);margin-bottom:5px;font-weight:600}
 .meta-field select,.meta-field input{padding:9px 14px;border:1px solid color-mix(in srgb,var(--slate-blue) 35%,transparent);border-radius:var(--radius-sm);background:var(--bg-page);color:var(--text-main);transition:all .2s}
-.meta-field select:focus,.meta-field input:focus{outline:none;border-color:var(--sky-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--sky-blue) 18%,transparent)}
+.meta-field select:focus,.meta-field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
 .fav-check{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.92rem;padding:9px 14px;background:var(--bg-soft);border-radius:var(--radius-pill)}
 .fav-check input{accent-color:var(--coral-pink)}
 .editor-tabs{display:flex;gap:8px;margin-bottom:14px;background:var(--bg-soft);padding:5px;border-radius:var(--radius-pill);width:fit-content}
 .tab-btn{padding:8px 22px;border:none;background:transparent;border-radius:var(--radius-pill);cursor:pointer;color:var(--text-secondary);font-weight:600;transition:all .2s}
 .tab-btn.active{background:var(--bg-card);color:var(--sky-blue-dark);box-shadow:var(--shadow-sm)}
 .editor-textarea{width:100%;min-height:340px;padding:18px;border:1px solid color-mix(in srgb,var(--slate-blue) 30%,transparent);border-radius:var(--radius-sm);background:var(--bg-page);color:var(--text-main);font-family:'Consolas','Fira Code','Courier New',monospace;font-size:.88rem;resize:vertical;line-height:1.7;transition:all .2s}
-.editor-textarea:focus{outline:none;border-color:var(--sky-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--sky-blue) 15%,transparent)}
+.editor-textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent)}
 .editor-preview{border:1px solid color-mix(in srgb,var(--slate-blue) 25%,transparent);border-radius:var(--radius-sm);padding:18px;min-height:340px;background:var(--bg-page)}
 .write-actions{margin-top:24px;display:flex;justify-content:center}
 .write-actions .btn{padding:12px 40px;font-size:1rem}
@@ -357,9 +357,9 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 鍗＄墖鏀惰棌 / 缃《 ===== */
 .card-pin{font-size:.7rem;background:color-mix(in srgb,var(--honey-gold) 25%,transparent);color:var(--honey-ink);padding:2px 8px;border-radius:var(--radius-pill);font-weight:600}
 [data-theme='dark'] .card-pin{color:var(--honey-ink)}
-.fav-btn.fav-on{background:var(--coral-pink);color:var(--coral-on);box-shadow:0 4px 12px rgba(232,155,138,.4)}
+.fav-btn.fav-on{background:var(--coral-pink);color:#fff;box-shadow:0 4px 12px rgba(232,155,138,.4)}
 .fav-btn{color:var(--sky-ink);font-size:1.15rem}
-.meta-btn.meta-fav-on{color:var(--coral-on);background:var(--coral-pink);box-shadow:0 4px 12px rgba(232,155,138,.4)}
+.meta-btn.meta-fav-on{color:#fff;background:var(--coral-pink);box-shadow:0 4px 12px rgba(232,155,138,.4)}
 .detail-meta-icon{color:var(--sky-ink)}
 .more-arrow{font-size:1.1rem;line-height:1;transform:translateY(-1px)}
 /* ===== 绌虹姸鎬?CSS 鍥炬爣 ===== */
@@ -674,7 +674,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .media-dropzone{
   border:2px dashed color-mix(in srgb,var(--sky-blue) 45%,transparent);border-radius:var(--radius);padding:22px 16px;text-align:center;cursor:pointer;position:relative;transition:.25s;
 }
-.media-dropzone:hover,.media-panel.media-dragging .media-dropzone{border-color:var(--sky-ink);background:color-mix(in srgb,var(--sky-blue) 8%,transparent)}
+.media-dropzone:hover,.media-panel.media-dragging .media-dropzone{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
 .media-dropzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
 .media-drop-icon{font-size:1.6rem;color:var(--sky-ink);margin:0 0 4px}
 .media-drop-text{color:var(--text-secondary);font-size:.88rem;margin:0}
@@ -762,7 +762,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .attach-dropzone{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 .attach-dropzone input[type=file]{display:none}
 .attach-preview-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
-.attach-preview-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid color-mix(in srgb,var(--sky-blue) 18%,transparent);border-radius:var(--radius-sm);font-size:.85rem}
+.attach-preview-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid color-mix(in srgb,var(--accent) 18%,transparent);border-radius:var(--radius-sm);font-size:.85rem}
 .attach-preview-name{flex:1;min-width:0;word-break:break-all}
 .attach-remove{cursor:pointer;border:none;background:color-mix(in srgb,var(--coral-pink) 15%,transparent);color:var(--coral-pink);width:22px;height:22px;border-radius:50%;font-size:1rem;line-height:1}
 
@@ -776,14 +776,14 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 
 /* 媒体/附件面板内的次要按钮(关闭等)在浅色卡片上清晰可见 */
 .media-panel .btn-light{
-  background:color-mix(in srgb,var(--sky-blue) 8%,transparent);
+  background:color-mix(in srgb,var(--accent) 8%,transparent);
   color:var(--sky-ink);
-  border:1px solid color-mix(in srgb,var(--sky-blue) 45%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
   backdrop-filter:none;
   box-shadow:none;
   padding:7px 16px;font-size:.85rem;
 }
-.media-panel .btn-light:hover{ background:var(--sky-fill); color:#fff; transform:translateY(-1px) }
+.media-panel .btn-light:hover{ background:var(--accent); color:var(--accent-on); transform:translateY(-1px) }
 .media-panel .btn-light:active{ transform:translateY(0) scale(.97) }
 
 /* ===== 小说书架 ===== */
@@ -894,7 +894,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-pill:hover{background:color-mix(in srgb,var(--sky-blue) 14%,transparent)}
 
 /* ===== 小说写作编辑器 ===== */
-.novel-editor{margin-top:24px;padding:22px;background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
+.novel-editor{margin-top:24px;padding:22px;background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid color-mix(in srgb,var(--accent) 12%,transparent)}
 .novel-editor-title{font-size:1.05rem;font-weight:700;margin:0 0 14px;color:var(--text-main)}
 .novel-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px}
 .novel-field-full{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
@@ -910,9 +910,9 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-ch-title-input{flex:1;min-width:160px;padding:8px 10px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-size:.95rem;font-weight:600}
 .novel-ch-wc{color:var(--text-secondary);font-size:.78rem;white-space:nowrap}
 .novel-ch-content{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 26%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-family:var(--font-sans);resize:vertical;line-height:1.7}
-.novel-ch-content:focus,.novel-ch-title-input:focus,.novel-field-full textarea:focus{outline:none;border-color:var(--sky-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--sky-blue) 18%,transparent)}
+.novel-ch-content:focus,.novel-ch-title-input:focus,.novel-field-full textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
 /* ===== 小说发布提示 ===== */
-.novel-publish-hint{max-width:680px;margin:0 auto 14px;padding:12px 16px;border-radius:10px;background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px solid color-mix(in srgb,var(--sky-blue) 30%,transparent);color:var(--text-secondary);font-size:.88rem;line-height:1.7;text-align:center}
+.novel-publish-hint{max-width:680px;margin:0 auto 14px;padding:12px 16px;border-radius:10px;background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);color:var(--text-secondary);font-size:.88rem;line-height:1.7;text-align:center}
 .novel-publish-hint strong{color:var(--sky-ink)}
 /* ===== 草稿自动保存状态 ===== */
 .write-actions{flex-wrap:wrap}
@@ -924,26 +924,26 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 写作顶部：普通文章 / 小说 切换 ===== */
 .composer-switch{display:flex;gap:8px;margin:0 auto 18px;max-width:680px}
 .composer-switch .mode-tab{flex:1;padding:12px 16px;border-radius:12px;border:1px solid color-mix(in srgb,var(--slate-blue) 25%,transparent);background:var(--bg-card);color:var(--text-secondary);font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s}
-.composer-switch .mode-tab.on{background:var(--sky-fill);color:#fff;border-color:var(--sky-ink);box-shadow:0 6px 16px color-mix(in srgb,var(--sky-blue) 35%,transparent)}
+.composer-switch .mode-tab.on{background:var(--accent);color:var(--accent-on);border-color:transparent;box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 35%,transparent)}
 
 /* ===== 小说专用发布界面 ===== */
 .novel-composer{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 .novel-composer-desc{color:var(--text-secondary);font-size:.92rem;line-height:1.7;text-align:center;margin:0}
 .novel-switch{display:flex;gap:10px;justify-content:center}
-.novel-switch .mode-tab{padding:9px 18px;border-radius:20px;border:1px solid color-mix(in srgb,var(--sky-blue) 30%,transparent);background:transparent;color:var(--text-secondary);font-size:.92rem;cursor:pointer}
-.novel-switch .mode-tab.on{background:var(--sky-fill);color:#fff;border-color:var(--sky-ink)}
-.novel-newbox,.novel-existingbox{background:var(--bg-card);border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:14px}
+.novel-switch .mode-tab{padding:9px 18px;border-radius:20px;border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);background:transparent;color:var(--text-secondary);font-size:.92rem;cursor:pointer}
+.novel-switch .mode-tab.on{background:var(--accent);color:var(--accent-on);border-color:transparent}
+.novel-newbox,.novel-existingbox{background:var(--bg-card);border:1px solid color-mix(in srgb,var(--accent) 12%,transparent);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:14px}
 .novel-cover-row{display:flex;gap:16px;align-items:center}
 .novel-cover-preview{width:96px;height:128px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--bg-page);display:flex;align-items:center;justify-content:center;border:1px solid color-mix(in srgb,var(--slate-blue) 20%,transparent)}
 .novel-cover-img{width:100%;height:100%;object-fit:cover;display:block}
 .novel-cover-ph{color:var(--sky-ink);font-size:44px;font-weight:800}
 .novel-cover-actions{display:flex;flex-direction:column;gap:6px}
 .novel-cover-hint{color:var(--text-secondary);font-size:.8rem;margin:0}
-.novel-book-tip{color:var(--text-secondary);font-size:.9rem;line-height:1.7;margin:0;padding:10px 12px;background:color-mix(in srgb,var(--sky-blue) 8%,transparent);border-radius:8px}
-.novel-chapter-editor{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:14px;border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
+.novel-book-tip{color:var(--text-secondary);font-size:.9rem;line-height:1.7;margin:0;padding:10px 12px;background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:8px}
+.novel-chapter-editor{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:14px;border:1px solid color-mix(in srgb,var(--accent) 12%,transparent)}
 .novel-ch-ed-head{display:flex;flex-direction:column;gap:6px}
 .novel-ch-ed-head .novel-ch-title-input{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-size:1rem;font-weight:600}
-.novel-ch-ed-head .novel-ch-title-input:focus{outline:none;border-color:var(--sky-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--sky-blue) 18%,transparent)}
+.novel-ch-ed-head .novel-ch-title-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
 
 /* === 小说写作区按钮在浅色卡片上清晰可见（覆盖 btn-light 的白色样式） === */
 .novel-newbox .btn-light,
@@ -951,8 +951,8 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-chapter-editor .btn-light,
 .novel-ch-tools .btn-light{
   color:var(--sky-blue-dark);
-  background:color-mix(in srgb,var(--sky-blue) 9%,transparent);
-  border:1px solid color-mix(in srgb,var(--sky-blue) 45%,transparent);
+  background:color-mix(in srgb,var(--accent) 9%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
   backdrop-filter:none;
   box-shadow:none;
 }
@@ -960,7 +960,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-existingbox .btn-light:hover,
 .novel-chapter-editor .btn-light:hover,
 .novel-ch-tools .btn-light:hover{
-  background:var(--sky-fill);color:#fff;transform:translateY(-1px)
+  background:var(--accent);color:var(--accent-on);transform:translateY(-1px)
 }
 .novel-newbox .btn-light:disabled,
 .novel-existingbox .btn-light:disabled,
@@ -972,10 +972,10 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* === 小说编辑界面（编辑已有书） === */
 .novel-edit-wrap{padding:0;overflow:hidden}
 .novel-edit-cols{display:grid;grid-template-columns:minmax(320px,380px) 1fr;gap:0}
-.novel-edit-left{display:flex;flex-direction:column;border-right:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent);background:color-mix(in srgb,var(--bg-soft) 45%,transparent)}
-.novel-edit-section{padding:18px;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
+.novel-edit-left{display:flex;flex-direction:column;border-right:1px solid color-mix(in srgb,var(--accent) 14%,transparent);background:color-mix(in srgb,var(--bg-soft) 45%,transparent)}
+.novel-edit-section{padding:18px;border-bottom:1px solid color-mix(in srgb,var(--accent) 12%,transparent)}
 .novel-edit-section:last-child{border-bottom:none}
-.novel-edit-section-head{font-size:.95rem;font-weight:700;color:var(--sky-blue-dark);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent)}
+.novel-edit-section-head{font-size:.95rem;font-weight:700;color:var(--sky-blue-dark);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid color-mix(in srgb,var(--accent) 14%,transparent)}
 .novel-edit-cover-row{display:flex;gap:14px;align-items:center;margin-bottom:14px}
 .novel-edit-cover-row .novel-cover-preview{width:84px;height:112px}
 .novel-edit-cover-row .novel-cover-actions{flex:1}
@@ -983,14 +983,14 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-edit-chlist-title{font-size:.98rem;font-weight:700;color:var(--text-main)}
 .novel-edit-chlist-actions{display:flex;gap:8px;flex-wrap:wrap}
 .novel-edit-chitems{display:flex;flex-direction:column;gap:7px;max-height:420px;overflow-y:auto;padding-right:4px}
-.novel-edit-chitem{display:flex;align-items:center;gap:6px;border:1px solid color-mix(in srgb,var(--sky-blue) 16%,transparent);border-radius:10px;padding:7px 8px;background:var(--bg-card);transition:all .2s}
-.novel-edit-chitem:hover{border-color:color-mix(in srgb,var(--sky-blue) 35%,transparent)}
-.novel-edit-chitem.active{border-color:var(--sky-ink);box-shadow:0 0 0 2px color-mix(in srgb,var(--sky-blue) 22%,transparent)}
+.novel-edit-chitem{display:flex;align-items:center;gap:6px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-radius:10px;padding:7px 8px;background:var(--bg-card);transition:all .2s}
+.novel-edit-chitem:hover{border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.novel-edit-chitem.active{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 22%,transparent)}
 .novel-edit-chname{flex:1;display:flex;align-items:center;gap:9px;min-width:0;text-align:left;background:transparent;border:none;cursor:pointer;color:var(--text-main)}
-.novel-edit-ch-order{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:color-mix(in srgb,var(--sky-blue) 14%,transparent);color:var(--sky-blue-dark);font-size:.74rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.novel-edit-ch-order{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--sky-blue-dark);font-size:.74rem;font-weight:700;display:flex;align-items:center;justify-content:center}
 .novel-edit-ch-title-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem;font-weight:600}
 .novel-edit-chops{display:flex;gap:3px;flex-shrink:0}
-.novel-edit-chops button{width:26px;height:26px;border:none;border-radius:7px;background:color-mix(in srgb,var(--sky-blue) 9%,transparent);color:var(--text-secondary);font-size:.9rem;cursor:pointer;transition:all .18s}
+.novel-edit-chops button{width:26px;height:26px;border:none;border-radius:7px;background:color-mix(in srgb,var(--accent) 9%,transparent);color:var(--text-secondary);font-size:.9rem;cursor:pointer;transition:all .18s}
 .novel-edit-chops button:hover:not(:disabled){background:var(--coral-pink);color:var(--coral-on)}
 .novel-edit-chops button:disabled{opacity:.3;cursor:not-allowed}
 .novel-edit-empty,.novel-edit-placeholder{color:var(--text-secondary);font-size:.88rem;line-height:1.7;text-align:center;padding:30px 18px}
@@ -999,7 +999,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-edit-save-ch{display:flex;justify-content:flex-end;margin-top:14px}
 @media (max-width:860px){
   .novel-edit-cols{grid-template-columns:1fr}
-  .novel-edit-left{border-right:none;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 14%,transparent)}
+  .novel-edit-left{border-right:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 14%,transparent)}
   .novel-edit-chitems{max-height:280px}
 }
 
@@ -1010,8 +1010,8 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-toc-part{margin:14px 6px 6px;padding:5px 12px;font-size:.88rem;font-weight:700;color:var(--sky-blue-dark);background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border-left:3px solid var(--sky-blue);border-radius:6px}
 .nreader-toc-part:first-child{margin-top:4px}
 .novel-ch-part-input{width:100%;padding:9px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 26%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-size:.9rem}
-.novel-ch-part-input:focus{outline:none;border-color:var(--sky-ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--sky-blue) 16%,transparent)}
-.novel-edit-ch-part{flex-shrink:0;font-size:.7rem;color:var(--sky-blue-dark);background:color-mix(in srgb,var(--sky-blue) 12%,transparent);padding:1px 8px;border-radius:10px;white-space:nowrap}
+.novel-ch-part-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
+.novel-edit-ch-part{flex-shrink:0;font-size:.7rem;color:var(--sky-blue-dark);background:color-mix(in srgb,var(--accent) 12%,transparent);padding:1px 8px;border-radius:10px;white-space:nowrap}
 
 
 /* ===== 友情链接 ===== */
@@ -1171,3 +1171,18 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 [data-theme='dark'] .nav-avatar-placeholder,
 [data-theme='dark'] .comment-avatar,
 [data-theme='dark'] .friends-avatar{background:var(--grad-sky)}
+/* ============================================================
+   第2e步「写作页的装饰性蓝色改用亮色强调色」的暗色还原块（2026-09-14）
+   亮色下写作页的实底（普通文章/小说切换、小说「新建/编辑」切换、浅底按钮 hover）
+   由「深蓝实底 #2E6E92 + 白字」改成了「青蓝实底 #4A9BB8 + 白字」；
+   暗色主题要求原样不变，所以这一族在这里还原成天空蓝实底 + 白字。
+   淡档（8%~45% 的浅底/描边/光晕）走的是 var(--accent)——它在暗色下本来就是
+   天空蓝 #5BA8D8，与原来的 --sky-blue #6ec3ef 同族，观感不变。
+   ——将来要一起改暗色时，删掉这一段即可。 */
+[data-theme='dark'] .composer-switch .mode-tab.on,
+[data-theme='dark'] .novel-switch .mode-tab.on,
+[data-theme='dark'] .novel-newbox .btn-light:hover,
+[data-theme='dark'] .novel-existingbox .btn-light:hover,
+[data-theme='dark'] .novel-chapter-editor .btn-light:hover,
+[data-theme='dark'] .novel-ch-tools .btn-light:hover,
+[data-theme='dark'] .media-panel .btn-light:hover{background:var(--sky-fill);color:#fff;border-color:var(--sky-ink)}
