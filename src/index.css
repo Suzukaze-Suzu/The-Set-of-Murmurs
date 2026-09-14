@@ -418,7 +418,13 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 鍒嗗尯鏍囬寮鸿皟鏉?===== */
 .section-title{position:relative;padding-left:14px}
 .section-title::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:20px;border-radius:2px;background:linear-gradient(180deg,var(--sky-blue),var(--aqua-blue))}
-.cat-section .section-title::before{background:currentColor;opacity:.6}
+/* 第2i步（2026-09-14）：分区标题前那根小竖条改成「自己分区的凉风凉色卡色」。
+   原来它跟的是 currentColor（＝分类的同色系墨色、60% 透明度）：既是「拿墨色当颜色」，
+   第2h步把暗色小标题改成白色之后，它也跟着变白、整条分区头就没了颜色。
+   现在由 Home.tsx 传 --sec-color（＝该分类的色卡色本身），与分类页头 .cat-header 的左竖条同口径
+   （那一处第2f步就是 meta.color）。非分类的标题（「置顶与收藏」等）没有 --sec-color，
+   继续用上面那条天空蓝→青蓝的色卡渐变条。 */
+.cat-section .section-title::before{background:var(--sec-color,currentColor);opacity:1}
 /* ===== 淇涓€琛屽彉涓よ锛氭寜閽笉鎹㈣ ===== */
 .btn{white-space:nowrap}
 .toolbar .btn{white-space:nowrap}

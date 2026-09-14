@@ -71,8 +71,12 @@ export default function Home({ query }: Props) {
               <div className="cat-section-head">
                 {/* 第2h步：分区小标题只把「该分类的墨色」当 CSS 变量传下去，字色由 index.css 定，
                     暗色主题才能把它统一改成白色（写死 inline color 会压住暗色规则）。
+                    第2i步：再传 --sec-color＝该分类的色卡色本身，给标题前面那根小竖条用。
                     「更多」链接保持分类色，不算标题。 */}
-                <h2 className="section-title" style={{ '--sec-ink': meta.ink } as CSSProperties}>
+                <h2
+                  className="section-title"
+                  style={{ '--sec-ink': meta.ink, '--sec-color': meta.color } as CSSProperties}
+                >
                   {meta.label}
                 </h2>
                 <Link to={`/category/${c}`} className="more-link" style={{ color: meta.ink }}>
