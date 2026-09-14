@@ -1,7 +1,7 @@
 /* 自托管思源宋体 TC（Noto Serif TC / Source Han Serif TC，OFL 1.1）
  * 由 scripts/subset-noto-serif-tc.py 按字频切片生成，勿手改。
  * 每片都是可变字体（wght 200~900 一片管全部字重），浏览器按 unicode-range 只取命中的片：
- * common 是首屏必下的那一片（常用字 + 站点/线上用字），ext*/trad* 只有真的遇到对应字才下载。
+ * common 是首屏必下的那一片（常用字 + 站点/线上用字），ext、trad 片只有真的遇到对应字才下载。
  * 片外的生僻字会回退到站点字体栈里的系统衬线。许可原文见同目录 OFL.txt。
  */
 @font-face {

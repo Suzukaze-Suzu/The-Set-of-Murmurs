@@ -277,7 +277,10 @@ def main() -> int:
         "/* 自托管思源宋体 TC（Noto Serif TC / Source Han Serif TC，OFL 1.1）",
         " * 由 scripts/subset-noto-serif-tc.py 按字频切片生成，勿手改。",
         " * 每片都是可变字体（wght 200~900 一片管全部字重），浏览器按 unicode-range 只取命中的片：",
-        " * common 是首屏必下的那一片（常用字 + 站点/线上用字），ext*/trad* 只有真的遇到对应字才下载。",
+        # ⚠ 注释正文里绝对不能出现「星号紧跟斜杠」：那会提前结束这一大段注释，
+        # 余下的散字会被 CSS 解析器当成选择器，把紧随其后的**第一个** @font-face 整块吞掉
+        # （2026-09-14 踩到：common 片就是这么在浏览器里消失的，Chrome/Safari 都一样）。
+        " * common 是首屏必下的那一片（常用字 + 站点/线上用字），ext、trad 片只有真的遇到对应字才下载。",
         " * 片外的生僻字会回退到站点字体栈里的系统衬线。许可原文见同目录 OFL.txt。",
         " */",
     ]
@@ -293,8 +296,18 @@ def main() -> int:
             "}"
         )
     css_path = os.path.join(OUT_DIR, "noto-serif-tc.css")
+    text = "\n".join(css) + "\n"
+
+    # 自检（2026-09-14 补）：注释必须**恰好**一对 /* */，且第一个 @font-face 之前除了这对注释没有别的活代码。
+    # 一旦注释提前结束，多出来的散字会当选择器把第一个 @font-face 整块吞掉，浏览器里就少一片（common 片＝白切）。
+    if text.count("/*") != 1 or text.count("*/") != 1:
+        raise SystemExit("✗ 生成的 CSS 注释符数量不对：注释提前结束会吞掉第一个 @font-face，已中止")
+    first_face = text.index("@font-face")
+    if text[:first_face].count("*/") != 1 or text[:first_face].rstrip().endswith("*/") is False:
+        raise SystemExit("✗ 第一个 @font-face 前面有游离代码，会被 CSS 解析器吞掉，已中止")
+
     with open(css_path, "w", encoding="utf-8", newline="\n") as f:
-        f.write("\n".join(css) + "\n")
+        f.write(text)
 
     total = sum(s for *_, s in built)
     print(f"\n== 完成 ==\n  CSS: {os.path.relpath(css_path, BLOG)}  （{os.path.getsize(css_path) / 1024:.0f}KB）")
