@@ -52,18 +52,23 @@ export interface SiteSettings {
 
 // color=颜色（分类的色卡色：浅底/描边/实底都用它本身）；ink=该分类的**同色系墨色**（只给文字用）
 // onFill=压在「分类色实底」上的字色（分类小签在亮色下改成实底了）：
-//   第2j步（2026-09-14）：实底上的字改成**该分类自己的同色系墨色**，不再用黑字
-//   （用户原话「你怎么全改成黑色字体了，我让你把字改为同颜色的深色版本」）：
-//   天空蓝 → var(--sky-ink) 2.14:1、珊瑚粉 → var(--coral-ink) 2.61:1、蜜金 → var(--honey-ink) 3.38:1；
-//   青蓝/灰蓝这两类仍是白字（3.15 / 3.24:1，同理墨字只有 2.07 / 1.86:1，按 WCAG 大字·图形线记「偏低」）。
+//   第2j步（2026-09-14）：先改成**该分类自己的同色系墨色**（用户原话「你怎么全改成黑色字体了，
+//   我让你把字改为同颜色的深色版本」）——实测天空蓝 2.14:1、珊瑚粉 2.61:1、蜜金 3.38:1，
+//   同色系深色压同色实底必然糊。
+//   第2k步（2026-09-14）：用户原话「在每一个文章左上角小圆圈内的分类文字用白色」
+//   → **五类小签的字一律白字 #fff**（数学笔记/学习分享本来就是白字，本步把其余三类也改成白字）。
+//   实测白字压色卡实底：天空蓝 2.61:1、珊瑚粉 2.21:1、蜜金 1.58:1、青蓝 3.15:1、灰蓝 3.24:1
+//   （蜜金那档最低；用户点名要白字，两条都已记入 audit-contrast.mjs 的「已知取舍」。
+//     要回到 4.5:1 只有一条路：把实底换成该色卡的 12% 浅档——数据记在第2j步文档里）。
+//   暗色主题不动：暗色下小签＝「13% 该分类色淡底 + --cat-ink 字」，由 index.css 的「第2g步暗色还原块」管。
 // 铁律（用户 2026-09-14）：「字全部用墨色，颜色全部不用墨色」——
 //   ink 只出现在 color: 里；color 只出现在 background / border 里；
 //   随笔这类粉色族的字用**珊瑚墨色** var(--coral-ink)（只给字用，不当底色，见 index.css 注释）。
 // 2026-09-13 第2步：小说分类原来是墨绿 #2F6B4F，已换成蜜金——墨绿不在「主题灵感」的四色里。
 export const CATEGORY_META: Record<Category, { label: string; icon: string; color: string; ink: string; onFill: string }> = {
-  anime:   { label: '读后感',      icon: '', color: '#5BA8D8', ink: '#2E6E92', onFill: 'var(--sky-ink)' },
-  essay:   { label: '随笔',      icon: '', color: '#E89B8A', ink: 'var(--coral-ink)', onFill: 'var(--coral-ink)' },
-  reading: { label: '小说',    icon: '', color: '#E8C9A0', ink: '#8F6220', onFill: 'var(--honey-ink)' },
+  anime:   { label: '读后感',      icon: '', color: '#5BA8D8', ink: '#2E6E92', onFill: '#fff' },
+  essay:   { label: '随笔',      icon: '', color: '#E89B8A', ink: 'var(--coral-ink)', onFill: '#fff' },
+  reading: { label: '小说',    icon: '', color: '#E8C9A0', ink: '#8F6220', onFill: '#fff' },
   math:    { label: '数学笔记',  icon: '', color: '#4A9BB8', ink: '#2A6577', onFill: '#fff' },
   study:   { label: '学习分享',  icon: '', color: '#8A8F9A', ink: '#5C6469', onFill: '#fff' },
 };
