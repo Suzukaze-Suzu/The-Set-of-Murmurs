@@ -119,6 +119,17 @@ html,body{font-family:var(--font-serif);font-synthesis-weight:none;background:va
    显式 inherit 拿回衬线；这里用元素选择器（0,0,1），下面那些用类选择器写死字体的输入框（如 .editor-textarea
    的等宽栈）仍然赢，不受影响。 */
 button,input,select,textarea{font-family:inherit}
+/* 2026-09-17 第3步补丁（手机端「界面不对齐」修复）：表单控件改走衬线后，它们的**尺寸也跟着字体度量变**——
+   ① 单行 input 的 normal 行盒比 Arial 高约 5px：搜索胶囊 38→43、登录输入框 48→53、整页随之下移 5px；
+   ② <input> 的固有宽度（size 属性 × 字宽）也变大，.search-box 这个 flex:1 项的「自动最小尺寸」跟着变大，
+      把 .topbar-inner 撑破 10.5px——实测手机端「切换暗色」被顶到 x=298、右边缘 376.5，
+      而内容右边界只有 366（右内边距被吃掉），所以整条顶栏看着没对齐。
+   修法：单行控件把行盒钉回改动前的高度（1.09em ≈ Arial 的 normal），多行 textarea 不动（中文行高本来就该大些）；
+   搜索框（顶栏 v3 的 .nav-search-input 同理）放开 min-width，让它按 flex 分宽度、而不是按字体固有宽度撑开。
+   注意 .nav-search-input input{min-width:60px} 在文件更靠后，仍然赢，这是期望行为。 */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),select{line-height:1.09}
+.search-box,.nav-search-input{min-width:0}
+.search-box input,.nav-search-input input{min-width:0}
 a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{color:var(--coral-ink)}
 ::selection{background:color-mix(in srgb,var(--coral-pink) 26%,transparent)}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:transparent}
