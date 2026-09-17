@@ -1,5 +1,6 @@
 import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { initialFooter, rememberFooter } from '../lib/siteCache';
 
 export interface SiteTextVersion {
   id: string;
@@ -14,8 +15,10 @@ export interface FooterText {
   copyright: string;
 }
 
+// 兜底页脚文字：只在「线上 site_texts 表确实没有数据」时才用（正常情况见 src/lib/siteCache.ts）。
+// 值＝2026-09-17 线上实际在用的文案（以前这里留着更早的 slogan，慢网/请求失败时会先闪出来）。
 const DEFAULTS: FooterText = {
-  slogan: '呓语集 · 像凉风凉一样认真记录每个小瞬间',
+  slogan: '呓语集',
   caption: '',
   copyright: 'Powered by React + Vite · {year}',
 };
@@ -28,21 +31,28 @@ const FooterContext = createContext<{
 } | null>(null);
 
 export function FooterProvider({ children }: { children: ReactNode }) {
-  const [footer, setFooter] = useState<FooterText>(DEFAULTS);
+  // 首屏直接用「本机缓存 > 构建时快照」里的线上页脚文字（见 siteCache.ts）
+  const [footer, setFooter] = useState<FooterText>(() => initialFooter());
   const [saving, setSaving] = useState(false);
   const [histories, setHistories] = useState<Record<string, SiteTextVersion[]>>({});
 
   const load = async () => {
-    const { data } = await supabase.from('site_texts').select('*');
-    if (data && data.length) {
+    const { data, error } = await supabase.from('site_texts').select('*');
+    if (error) {
+      // 读失败：保留首屏已经填好的线上文案，不退回本文件里的兜底值
+      console.warn('[siteText] 页脚文字读取失败，沿用缓存/快照文案：', error.message);
+    } else if (data && data.length) {
       const m: Record<string, string> = {};
       data.forEach((r) => { m[r.key] = r.content; });
-      setFooter({
+      const next: FooterText = {
         slogan: m['footer_slogan'] ?? DEFAULTS.slogan,
         caption: m['footer_caption'] ?? '',
         copyright: m['footer_copyright'] ?? DEFAULTS.copyright,
-      });
+      };
+      setFooter(next);
+      rememberFooter(next);   // 写回本机缓存，下次首屏直接用
     } else {
+      // 线上确实没有这套文字，这才是「现在的状态」
       setFooter(DEFAULTS);
     }
     const { data: hd } = await supabase.from('site_text_versions').select('*').order('date', { ascending: false });
@@ -78,6 +88,7 @@ export function FooterProvider({ children }: { children: ReactNode }) {
         });
       }));
       setFooter(next);
+      rememberFooter(next);   // 站长自己改完页脚，本机首屏立刻就是新值
       await load();
     }
     setSaving(false);

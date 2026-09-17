@@ -1,5 +1,6 @@
 import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { initialAbout, rememberAbout } from '../lib/siteCache';
 
 export interface AboutVersion {
   id: string;
@@ -30,7 +31,9 @@ const AboutContext = createContext<{
 } | null>(null);
 
 export function AboutProvider({ children }: { children: ReactNode }) {
-  const [current, setCurrent] = useState<string>('');
+  // 首屏直接用「本机缓存 > 构建时快照」里的线上正文（见 src/lib/siteCache.ts），
+  // 不再先空着等请求，也不再用下面的 aboutInitial
+  const [current, setCurrent] = useState<string>(() => initialAbout());
   const [versions, setVersions] = useState<AboutVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,10 +41,15 @@ export function AboutProvider({ children }: { children: ReactNode }) {
   const load = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('about_versions')
         .select('*')
         .order('date', { ascending: false });
+      if (error) {
+        // 读失败：保留首屏已经填好的线上正文
+        console.warn('[about] 关于页正文读取失败，沿用缓存/快照正文：', error.message);
+        return;
+      }
       if (data && data.length) {
         const mapped = data.map((r) => ({
           id: r.id, content: r.content, date: r.date,
@@ -49,6 +57,7 @@ export function AboutProvider({ children }: { children: ReactNode }) {
         }));
         setVersions(mapped);
         setCurrent(mapped[0].content);
+        rememberAbout(mapped[0].content);   // 写回本机缓存，下次首屏直接用
       } else {
         setVersions([]);
         setCurrent(aboutInitial);
