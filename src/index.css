@@ -82,7 +82,8 @@
      中文衬线栈里**故意不放 SimSun（中易宋体）**——用户上一轮就否过它（原话「不要用宋体，太诡异了」，
      Windows 上 SimSun 大字号发虚、字重只有一档）。末尾必须落在 serif 上，保证任何平台最后兜底都是衬线。 */
   --font-serif: 'Noto Serif TC','Source Han Serif TC','Noto Serif CJK TC','Noto Serif SC','Source Han Serif SC','Songti SC','STSong','Noto Serif',serif;
-  /* --font-sans 只留给输入框/代码这类要“等宽或清晰”的场合；--font-display 与大标题仍走衬线 */
+  /* 2026-09-17 第3步（衬线收尾）：上面那个 --font-sans 现已无引用——输入框/文本域也一律走衬线了，
+     留着只为将来真需要「黑体小字」时有个现成变量；--font-display 与大标题仍走衬线 */
   --font-display: var(--font-serif);
 }
 [data-theme='dark'] {
@@ -112,6 +113,12 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{font-family:var(--font-serif);font-synthesis-weight:none;background:var(--bg-page);color:var(--text-main);line-height:1.78;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+/* 2026-09-17 第3步（衬线收尾）：**表单控件不继承 body 字体**——浏览器 UA 样式把 button/input/select/
+   textarea 的 font-family 写死成 Arial（实测 computed = Arial，中文只能掉回系统黑体：本机 Noto Sans SC，
+   手机 PingFang/鸿蒙黑体），这就是「全站文字都宋体了，但搜索框、按钮、分类小签、登录框还是黑体」的原因。
+   显式 inherit 拿回衬线；这里用元素选择器（0,0,1），下面那些用类选择器写死字体的输入框（如 .editor-textarea
+   的等宽栈）仍然赢，不受影响。 */
+button,input,select,textarea{font-family:inherit}
 a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{color:var(--coral-ink)}
 ::selection{background:color-mix(in srgb,var(--coral-pink) 26%,transparent)}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:transparent}
@@ -271,7 +278,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .editor-tabs{display:flex;gap:8px;margin-bottom:14px;background:var(--bg-soft);padding:5px;border-radius:var(--radius-pill);width:fit-content}
 .tab-btn{padding:8px 22px;border:none;background:transparent;border-radius:var(--radius-pill);cursor:pointer;color:var(--text-secondary);font-weight:600;transition:all .2s}
 .tab-btn.active{background:var(--bg-card);color:var(--sky-blue-dark);box-shadow:var(--shadow-sm)}
-.editor-textarea{width:100%;min-height:340px;padding:18px;border:1px solid color-mix(in srgb,var(--slate-blue) 30%,transparent);border-radius:var(--radius-sm);background:var(--bg-page);color:var(--text-main);font-family:'Consolas','Fira Code','Courier New',monospace;font-size:.88rem;resize:vertical;line-height:1.7;transition:all .2s}
+.editor-textarea{width:100%;min-height:340px;padding:18px;border:1px solid color-mix(in srgb,var(--slate-blue) 30%,transparent);border-radius:var(--radius-sm);background:var(--bg-page);color:var(--text-main);font-family:'Consolas','Fira Code','Courier New',var(--font-serif);font-size:.88rem;resize:vertical;line-height:1.7;transition:all .2s}
 .editor-textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent)}
 .editor-preview{border:1px solid color-mix(in srgb,var(--slate-blue) 25%,transparent);border-radius:var(--radius-sm);padding:18px;min-height:340px;background:var(--bg-page)}
 .write-actions{margin-top:24px;display:flex;justify-content:center}
@@ -295,7 +302,9 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .markdown-body h1{font-size:1.8rem}.markdown-body h2{font-size:1.5rem}.markdown-body h3{font-size:1.25rem}
 .markdown-body p{margin:.9em 0}.markdown-body ul,.markdown-body ol{padding-left:1.7em;margin:.7em 0}.markdown-body li{margin:.3em 0}
 .markdown-body blockquote{border-left:4px solid var(--coral-pink);padding:12px 18px;margin:1.1em 0;background:var(--bg-soft);border-radius:0 var(--radius-sm) var(--radius-sm) 0;color:var(--text-secondary)}
-.markdown-body code{background:color-mix(in srgb,var(--coral-pink) 15%,transparent);padding:2px 7px;border-radius:5px;font-size:.88em;color:var(--coral-ink);font-family:'Consolas',monospace}
+/* 代码字体仍用等宽，但末尾接上衬线栈：Consolas 没有汉字，手机上会掉回系统黑体，
+   接上 --font-serif 后代码块/行内码里的中文也走思源宋（拉丁字符依旧是 Consolas）。 */
+.markdown-body code{background:color-mix(in srgb,var(--coral-pink) 15%,transparent);padding:2px 7px;border-radius:5px;font-size:.88em;color:var(--coral-ink);font-family:'Consolas',var(--font-serif)}
 .markdown-body pre.code-block{background:#1e2430;color:#e2e8f0;padding:20px;border-radius:var(--radius-sm);overflow-x:auto;margin:1.1em 0;border:1px solid #2a3342}
 .markdown-body pre.code-block code{background:transparent;color:#e2e8f0;padding:0}
 .markdown-body table{border-collapse:collapse;width:100%;margin:1.1em 0}
@@ -307,6 +316,10 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .math-block-wrap{text-align:center;margin:1.3em 0;overflow-x:auto;padding:10px 0}
 /* ===== LaTeX 公式超长可横向滑动 ===== */
 .markdown-body .katex-display{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:.65em .9em;margin:1.2em 0;position:relative;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--sky-blue) 75%,#fff) transparent;background:color-mix(in srgb,var(--sky-blue) 7%,transparent);border-left:3px solid var(--sky-blue);border-radius:8px}
+/* 2026-09-17 第3步（衬线收尾）：KaTeX 自带的字体栈是 KaTeX_Main → Times New Roman → generic serif，
+   公式里的中文没有衬线兜底，手机上会掉成黑体。把 --font-serif 接在末尾（数学字形仍优先 KaTeX_Main，
+   不改变公式排版度量）；本文件排在 katex.min.css 之后，同特异性覆盖生效。 */
+.katex{font-family:KaTeX_Main,'Times New Roman',var(--font-serif)}
 .markdown-body .katex-display::-webkit-scrollbar{height:8px}
 .markdown-body .katex-display::-webkit-scrollbar-thumb{background:var(--accent);border-radius:4px;border:2px solid var(--bg-page)}
 .markdown-body .katex-display::-webkit-scrollbar-track{background:rgba(255,255,255,.5);border-radius:4px}
@@ -319,7 +332,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .comment-form{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:14px;margin-bottom:22px;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent)}
 .comment-name{padding:11px 14px;border:1px solid color-mix(in srgb,var(--slate-blue) 35%,transparent);border-radius:var(--radius-sm);background:var(--bg-page);color:var(--text-main);width:50%;transition:all .2s}
 .comment-name:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
-.comment-content{padding:11px 14px;border:1px solid color-mix(in srgb,var(--slate-blue) 35%,transparent);border-radius:var(--radius-sm);background:var(--bg-page);color:var(--text-main);resize:vertical;font-family:var(--font-sans);transition:all .2s}
+.comment-content{padding:11px 14px;border:1px solid color-mix(in srgb,var(--slate-blue) 35%,transparent);border-radius:var(--radius-sm);background:var(--bg-page);color:var(--text-main);resize:vertical;font-family:var(--font-serif);transition:all .2s}
 .comment-content:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
 .comment-form .btn-primary{align-self:flex-end}
 .submit-ok{color:var(--aqua-ink);align-self:flex-end;font-size:.9rem}
@@ -916,7 +929,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px}
 .novel-field-full{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
 .novel-field-full label{font-size:.82rem;color:var(--text-secondary)}
-.novel-field-full textarea{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-family:var(--font-sans);resize:vertical}
+.novel-field-full textarea{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-family:var(--font-serif);resize:vertical}
 .novel-ch-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .novel-ch-tools h4{margin:0;margin-right:auto;font-size:.9rem;color:var(--text-secondary)}
 .file-btn{cursor:pointer;margin:0}
@@ -926,7 +939,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-ch-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 .novel-ch-title-input{flex:1;min-width:160px;padding:8px 10px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-size:.95rem;font-weight:600}
 .novel-ch-wc{color:var(--text-secondary);font-size:.78rem;white-space:nowrap}
-.novel-ch-content{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 26%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-family:var(--font-sans);resize:vertical;line-height:1.7}
+.novel-ch-content{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 26%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-family:var(--font-serif);resize:vertical;line-height:1.7}
 .novel-ch-content:focus,.novel-ch-title-input:focus,.novel-field-full textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
 /* ===== 小说发布提示 ===== */
 .novel-publish-hint{max-width:680px;margin:0 auto 14px;padding:12px 16px;border-radius:10px;background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);color:var(--text-secondary);font-size:.88rem;line-height:1.7;text-align:center}
