@@ -1313,3 +1313,31 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
    ============================================================ */
 [data-theme='dark'] .card-cat,
 [data-theme='dark'] .detail-cat{--cat-fg:var(--cat-color)}
+
+/* ============================================================
+   开往-友链接力 入口 —— 2026-09-17
+   依据＝https://www.travellings.cn/docs/join.html 《加入开往》：
+   「您的网站须将开往的外链 https://www.travellings.cn/go.html 放置在一个打开您的网站就能看到的
+    地方，例如顶栏、侧栏。对于移动端设备，您仅需要让访客找得到开往外链即可。」
+   落地＝① .tj-link 放在 .topbar 那一行（搜索框右侧、主题切换之后）——
+           它在首屏；.navbar 滚下去会收起，这一行不会；≤640px 手机端整行保留，只收内边距与字号。
+          ② .footer-travelling 是页脚那条官方徽标，b.png / w.png 两版随主题切（.tj-badge-*）。
+   颜色：只用了既有 token（--bg-card / --sky-blue / --accent / --text-main 等），没引入新色号。
+   回滚：删掉本段 + Layout.tsx 里的 <a class="tj-link">…</a> 与 <p class="footer-travelling">…</p>
+         + public/travellings/ 两张 png 即可；快照见 blog/first/travellings-base/。
+   ============================================================ */
+.tj-link{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;text-decoration:none;
+  background:var(--bg-card);color:var(--text-main);padding:8px 14px;border-radius:var(--radius-pill);
+  font-size:.9rem;border:1px solid color-mix(in srgb,var(--sky-blue) 15%,transparent);
+  box-shadow:var(--shadow-sm);transition:all .25s cubic-bezier(.22,1,.36,1)}
+.tj-link:hover{color:var(--sky-blue-dark);transform:translateY(-2px);box-shadow:var(--shadow)}
+.tj-link svg{flex-shrink:0}
+@media (max-width:640px){
+  .tj-link{padding:7px 10px;font-size:.82rem}
+}
+.footer-travelling{margin:10px 0 2px;line-height:0}
+.footer-travelling a{display:inline-block}
+.footer-travelling img{width:120px;height:30px}
+.tj-badge-dark{display:none}
+[data-theme='dark'] .tj-badge-light{display:none}
+[data-theme='dark'] .tj-badge-dark{display:inline-block}
