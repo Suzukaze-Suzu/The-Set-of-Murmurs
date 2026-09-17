@@ -102,9 +102,12 @@ console.log(`@font-face 片数：${blocks.length}`);
 let declaredTotal = 0;
 let overClaim = 0;      // 声明了却没有字形（bug）
 const covered = new Set();  // 真实有字形的码位
+const owner = new Map();    // 码位 → 第一个声明它的片（用来查重叠）
+const overlaps = new Map(); // 码位 → [片名...]（被两片同时声明：会变成优先级不明的重复声明）
 console.log('  片名                 声明码位  真实字形  声明但无字形   体积');
 for (const b of blocks) {
   const url = (b.match(/url\('([^']+)'\)/) || [])[1];
+  const shard = path.basename(url.split('?')[0]);
   const declared = [];
   for (const m of b.matchAll(/U\+([0-9a-fA-F?]+)(?:-([0-9a-fA-F]+))?/g)) {
     const a = m[1];
@@ -115,6 +118,10 @@ for (const b of blocks) {
     const lo = parseInt(a, 16);
     const hi = m[2] ? parseInt(m[2], 16) : lo;
     for (let cp = lo; cp <= hi; cp++) declared.push(cp);
+  }
+  for (const cp of declared) {
+    if (owner.has(cp)) overlaps.set(cp, [...(overlaps.get(cp) ?? [owner.get(cp)]), shard]);
+    else owner.set(cp, shard);
   }
   const file = path.join(ROOT, 'public', url.split('?')[0].replace(/^\//, ''));
   const actual = woff2Cmap(file);
@@ -136,6 +143,16 @@ console.log(`声明码位合计 ${declaredTotal}，真实有字形 ${covered.siz
 console.log(overClaim === 0
   ? '✅ 没有任何「声明了却没有字形」的码位'
   : `❌ ${overClaim} 个码位声明了却没有字形（会导致回退系统字体，必须重切）`);
+
+// 各片 unicode-range 必须两两不相交：同族多片都声明一个码位时，到底用哪一片由声明顺序决定，
+// 万一先命中的那片没字形就又会回退系统字体（补字片就是靠「不相交」来保证一定接得住的）。
+if (overlaps.size === 0) {
+  console.log('✅ 各片 unicode-range 两两不相交（每个码位只有一片负责）');
+} else {
+  const sample = [...overlaps.entries()].slice(0, 20);
+  console.log(`❌ ${overlaps.size} 个码位被两片以上同时声明：` +
+    sample.map(([cp, names]) => `${String.fromCharCode(cp)}(${names.join('+')})`).join(' '));
+}
 
 // ---- index.html 的 preload 必须和 CSS 里的 URL 逐字一致，否则同一份字体文件会被下载两次 ----
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
@@ -200,4 +217,4 @@ console.log(probeMissing.length === 0 ? '✅ 简体探针字全覆盖' : `⚠️
 const tradProbe = '語這說們時發國學會話對錢鐵開關閉漢門風雲龍鳳臺灣體驗讀寫點線';
 const tradMissing = [...tradProbe].filter((ch) => !covered.has(ch.codePointAt(0)));
 console.log(tradMissing.length === 0 ? '✅ 繁体探针字全覆盖' : `⚠️ 繁体探针字回退系统衬线：${tradMissing.join('')}`);
-process.exit(overClaim === 0 ? 0 : 1);
+process.exit(overClaim === 0 && overlaps.size === 0 ? 0 : 1);
