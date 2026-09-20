@@ -142,29 +142,99 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .page-title.light{color:var(--text-main)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .navbar{background:color-mix(in srgb,var(--bg-card) 82%,transparent);backdrop-filter:blur(14px);box-shadow:var(--shadow-sm);position:sticky;top:0;z-index:100;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
-.nav-inner{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;flex-wrap:wrap;gap:18px}
-.nav-brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1.35rem;color:var(--text-main)}
+/* ===== 顶栏 v2（2026-09-20）=====
+   顶栏压成一行 + 三段分组（品牌 / 主导航 / 分类 / 操作区）。容器宽度仍是 1080px
+   （与 .main、.footer-inner 对齐，logo 与正文左边缘才齐），所以宽度全靠「减东西」腾出来：
+   导航文字精简 + 分类收成彩点 + 搜索与主题切换收成图标。
+   宽度账（静态估算，用来检查每一项有没有放不下；改完请跟着更新）：
+     可用宽：容器 1080 − 48 = 1032（≥1200）；1024px 时 976；390 手机可用 358。
+     元素估算：品牌 105（≤640 时 87，只留 logo 时约 37）、导航 7 项 ≈375（管理员加「写作」≈429）、
+             彩点条 104、操作区 图标 3 枚 124 ＋ 登录按钮 55 或 登录态按钮+头像 138。
+     ≥1200 访客：813 / 1032，余 219
+     ≥1200 管理员：950 / 1032，余 82（悬停展开最长项 +70 由导航区吸收，最紧约 12 —— 真顶就收
+                   1px 内边距或把展开字号降到 .78rem，不许改结构）
+     1024~1199 管理员（用下拉）：916 / 976，余 60
+     390 管理员（登录态收成头像）：345 / 358，余 45
+     ≤480 管理员（只留 logo）：295 / 358，余 95 */
+.nav-inner{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;flex-wrap:nowrap;gap:14px}
+.nav-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:1.25rem;color:var(--text-main);flex-shrink:0}
 .brand-dot{width:16px;height:16px;border-radius:50%;background:var(--grad-warm);box-shadow:0 0 0 4px color-mix(in srgb,var(--coral-pink) 20%,transparent)}
 .brand-logo{width:34px;height:34px;flex-shrink:0;display:block;object-fit:contain}
 /* 亮色主题用原版（天空蓝外环），暗色主题用换色版（珊瑚粉外环） */
 .brand-logo-dark{display:none}
 [data-theme='dark'] .brand-logo-light{display:none}
 [data-theme='dark'] .brand-logo-dark{display:block}
-.nav-links{display:flex;gap:8px;flex:1}
-.nav-links a,.nav-cats a{padding:8px 16px;color:var(--text-secondary);border-radius:var(--radius-pill);font-size:.93rem;font-weight:500;transition:all .22s cubic-bezier(.22,1,.36,1)}
-.nav-links a:hover,.nav-cats a:hover{color:var(--sky-blue-dark);background:var(--bg-soft);transform:translateY(-1px)}
-.nav-links a.active,.nav-cats a.active{color:var(--accent-on);background:var(--accent);box-shadow:0 6px 18px var(--accent-shadow-soft)}
-.nav-cats{display:flex;gap:6px;flex-wrap:wrap}.cat-text{font-size:.82rem}
-.topbar{background:color-mix(in srgb,var(--bg-page) 70%,transparent);border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent)}
-.topbar-inner{max-width:1080px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:12px}
-.search-box{flex:1;display:flex;align-items:center;background:var(--bg-card);border-radius:var(--radius-pill);padding:8px 16px;box-shadow:var(--shadow-sm);border:1px solid color-mix(in srgb,var(--sky-blue) 15%,transparent);transition:box-shadow .2s,border .2s}
-.search-box:focus-within{box-shadow:0 0 0 3px color-mix(in srgb,var(--sky-blue) 20%,transparent);border-color:var(--sky-ink)}
-.search-box input{flex:1;border:none;outline:none;background:transparent;color:var(--text-main);padding:2px;font-size:.92rem}
-.search-icon{margin-right:8px;color:var(--sky-ink)}
-.search-clear{border:none;background:color-mix(in srgb,var(--bg-soft) 70%,transparent);width:22px;height:22px;border-radius:50%;color:var(--text-secondary);cursor:pointer;font-size:.8rem;line-height:1;transition:background .2s}
+.nav-links{display:flex;align-items:center;gap:5px;flex:1;min-width:0}
+.nav-links a{padding:7px 11px;color:var(--text-secondary);border-radius:var(--radius-pill);font-size:.85rem;font-weight:500;white-space:nowrap;transition:color .2s,background .2s}
+.nav-links a:hover{color:var(--sky-blue-dark);background:var(--bg-soft)}
+.nav-links a.active{color:var(--accent-on);background:var(--accent);box-shadow:0 6px 18px var(--accent-shadow-soft)}
+/* ===== 分类彩点条（≥1200px）=====
+   停留态只有一个 8px 的点（整条占宽约 104px，原来文字版要 385px）；鼠标悬停 / 键盘 Tab 聚焦时
+   **这一个点就地变长**成「点 + 分类名」的胶囊（.cat-name 的 max-width 从 0 长到 56px），
+   不是浮在下方的小气泡；移开 / 失焦缩回。展开多出来的宽度（最长项 +70px）由 .nav-links
+   （flex:1）吸收，右侧操作区不会被推着跳。
+   配色遵守用户铁律：--c（该分类色卡色）只出现在 background / box-shadow / outline 里，
+   color 只取该分类的同色系墨色（CATEGORY_META[c].ink，由组件 inline 传下来）——
+   不是「实底 + 白字」，也没引入任何新色号。展开后单项宽度 64~86px。 */
+.nav-cats{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.cat-dot-link{display:inline-flex;align-items:center;justify-content:center;height:26px;padding:0 5px;min-width:18px;border-radius:var(--radius-pill);flex-shrink:0;background:transparent;transition:background-color .18s ease,padding .18s ease,min-width .18s ease}
+.cat-dot{display:block;width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:transform .18s ease}
+.cat-name{max-width:0;opacity:0;overflow:hidden;white-space:nowrap;font-size:.78rem;font-weight:600;line-height:1;transition:max-width .18s ease,opacity .18s ease,margin-left .18s ease}
+/* min-width 也带过渡：两字分类名（随笔 / 小说）自然展开只有 55px，够不到「展开后 64~86px」的下限，
+   用 min-width 兜到 64px。它和 .cat-name 的 max-width 一起过渡，所以悬停瞬间不会跳一下。
+   实测展开区间：随笔 64 / 小说 64 / 读后感 67 / 数学笔记 80 / 学习分享 80——都在 64~86 里。 */
+.cat-dot-link:hover,.cat-dot-link:focus-visible{background:color-mix(in srgb,var(--c) 12%,transparent);padding:0 9px 0 7px;min-width:64px}
+.cat-dot-link:hover .cat-name,.cat-dot-link:focus-visible .cat-name{max-width:56px;opacity:1;margin-left:6px}
+.cat-dot-link:hover .cat-dot,.cat-dot-link:focus-visible .cat-dot{transform:scale(1.35)}
+.cat-dot-link.active .cat-dot{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 26%,transparent)}
+.cat-dot-link:focus-visible{outline:2px solid color-mix(in srgb,var(--c) 55%,transparent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){
+  .cat-dot-link,.cat-name,.cat-dot{transition:none}
+}
+
+/* ===== 分类下拉（1024~1199px 专用）=====
+   这一档**不放彩点条**：保留彩点、悬停展开时整行会超出约 44px（见上面的宽度账）。改成文字按钮
+   「分类 ∨」+ 下拉，5 个分类名每项前面挂一条自己的颜色小竖条（色卡色只用在竖条上，字仍是墨色）。
+   Esc 关闭 + 点外部关闭写在组件里（用户要求）。≥1200 与 ≤1023 两档由下面的断点表藏掉。 */
+.nav-cat-menu{display:none;position:relative;flex-shrink:0}
+.nav-cat-toggle{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 12px;border:none;background:transparent;border-radius:var(--radius-pill);color:var(--text-secondary);cursor:pointer;font-size:.85rem;font-weight:500;white-space:nowrap;transition:background .2s,color .2s}
+.nav-cat-toggle:hover,.nav-cat-toggle.open{background:var(--bg-soft);color:var(--sky-blue-dark)}
+.nav-cat-caret{font-size:.68rem;line-height:1;transition:transform .18s ease}
+.nav-cat-toggle.open .nav-cat-caret{transform:rotate(180deg)}
+.nav-cat-panel{position:absolute;top:calc(100% + 8px);right:0;min-width:152px;padding:8px;background:var(--bg-card);border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:2px;z-index:10}
+.nav-cat-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--text-main);font-size:.88rem;font-weight:500;white-space:nowrap;transition:background .18s}
+.nav-cat-item:hover,.nav-cat-item.active{background:var(--bg-soft)}
+.nav-cat-bar{width:4px;height:16px;border-radius:2px;flex-shrink:0}
+/* ===== 顶栏操作区（搜索 / 主题切换 / 预留按钮 / 登录或头像）=====
+   2026-09-13 顶栏改造：原来顶栏下面单独一行 .topbar（全文搜索框 + 「切换暗色」按钮）被删掉，
+   搜索收成放大镜图标（点开是从顶栏下方展开的浮层，不占顶栏宽度），主题切换收成图标按钮，
+   空出来的位置留给以后要加的新按钮。 */
+.nav-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.nav-icon-btn{width:36px;height:36px;border:none;background:transparent;border-radius:10px;color:var(--text-secondary);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,color .2s}
+.nav-icon-btn:hover{background:var(--bg-soft);color:var(--accent-deep)}
+.nav-icon-btn.active{background:var(--accent);color:var(--accent-on)}
+/* ===== ≤1023px 的头像按钮 + 小菜单 =====
+   登录态在顶栏收成**纯头像按钮**（不收会溢出，见上面的宽度账），点开一个小菜单：
+   个人主页 / 退出登录。Esc 关闭 + 点外部关闭写在组件里。≥1024 两档不渲染这套结构。 */
+.nav-user{position:relative;display:flex;align-items:center}
+.nav-user-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:158px;padding:8px;background:var(--bg-card);border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:2px;z-index:10}
+.nav-user-item{display:flex;align-items:center;gap:9px;width:100%;padding:10px 12px;border:none;background:transparent;border-radius:8px;color:var(--text-main);font-size:.9rem;font-weight:500;text-align:left;white-space:nowrap;cursor:pointer;transition:background .18s}
+.nav-user-item:hover{background:var(--bg-soft)}
+.nav-user-item.danger{color:var(--coral-ink)}
+.nav-user-item.danger:hover{background:color-mix(in srgb,var(--coral-pink) 14%,transparent)}
+/* 搜索浮层：悬在顶栏正下方 */
+.nav-search{position:absolute;left:0;right:0;top:100%;background:var(--bg-card);border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent);box-shadow:0 12px 28px var(--accent-veil);animation:navSearchIn .22s ease}
+@keyframes navSearchIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.nav-search{animation:none}}
+.nav-search-inner{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center}
+.nav-search-input{flex:1;display:flex;align-items:center;background:var(--bg-page);border:1px solid color-mix(in srgb,var(--sky-blue) 15%,transparent);border-radius:var(--radius-pill);padding:9px 16px;transition:border-color .2s,box-shadow .2s}
+.nav-search-input:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-veil)}
+.nav-search-input input{flex:1;border:none;outline:none;background:transparent;color:var(--text-main);font-size:.92rem;min-width:60px}
+/* CSS 画的放大镜（原来搜索框前面是个没有任何图形的空 span） */
+.search-icon{width:14px;height:14px;border:2px solid var(--accent);border-radius:50%;position:relative;margin-right:10px;flex-shrink:0}
+.search-icon::after{content:'';position:absolute;right:-5px;bottom:-3px;width:7px;height:2px;background:var(--accent);transform:rotate(45deg);border-radius:2px}
+.search-clear{border:none;background:color-mix(in srgb,var(--bg-soft) 70%,transparent);width:22px;height:22px;border-radius:50%;color:var(--text-secondary);cursor:pointer;font-size:.8rem;line-height:1;transition:background .2s;flex-shrink:0}
 .search-clear:hover{background:var(--coral-pink);color:var(--coral-on)}
-.theme-toggle{border:none;background:var(--bg-card);box-shadow:var(--shadow-sm);padding:9px 16px;border-radius:var(--radius-pill);cursor:pointer;color:var(--text-main);font-size:.9rem;border:1px solid color-mix(in srgb,var(--sky-blue) 15%,transparent);transition:all .25s}
-.theme-toggle:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
 .footer{background:var(--bg-card);border-top:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent);margin-top:auto}
 .footer-inner{max-width:1080px;margin:0 auto;padding:26px 24px;text-align:center;color:var(--text-secondary)}
 .footer p{margin:4px 0;font-size:.9rem}.footer-links a{margin:0 8px}.footer-copy{font-size:.8rem;opacity:.7}
@@ -198,7 +268,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .hero,.hero::before,.hero::after{animation:none}
   .hero{background-position:50% 50%}
 }
-/* ===== 鍒嗗尯鏍囬 ===== */
+/* ===== 分区标题 ===== */
 /* 2026-09-14 第2h步：分区标题的字色改成「组件只传 --sec-ink 变量、由这份 CSS 决定」
    —— 首页按分类给色（随笔粉 / 读后感蓝 …），之前是组件写死 inline color，
    结果是暗色主题想把它改成白色时被 inline style 压住、改不动。
@@ -209,7 +279,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .more-link{font-size:.9rem;font-weight:600;color:var(--sky-blue-dark);display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--radius-pill);transition:all .2s;background:color-mix(in srgb,var(--sky-blue) 8%,transparent)}
 .more-link:hover{background:color-mix(in srgb,var(--sky-blue) 18%,transparent);transform:translateX(3px)}
 .search-banner{background:color-mix(in srgb,var(--honey-gold) 30%,var(--bg-card));color:var(--text-main);border-left:3px solid var(--honey-gold);padding:16px 22px;border-radius:var(--radius-sm);margin-bottom:26px;box-shadow:var(--shadow-sm)}
-/* ===== 鏂囩珷鍗＄墖 ===== */
+/* ===== 文章卡片 ===== */
 .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px}
 .card-grid.wide{gap:20px}
 .article-card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:12px;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent);transition:all .25s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden}
@@ -230,23 +300,23 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .card-date{font-size:.8rem;color:var(--text-secondary);display:flex;align-items:center;gap:5px}
 .read-more{font-size:.85rem;font-weight:700;color:var(--sky-blue-dark);display:inline-flex;align-items:center;gap:3px;transition:all .2s;padding:6px 12px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sky-blue) 8%,transparent)}
 .read-more:hover{background:color-mix(in srgb,var(--sky-blue) 18%,transparent);transform:translateX(3px)}
-/* ===== 绛涢€?===== */
+/* ===== 筛选 ===== */
 .filter-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}
 .filter-chip{border:none;cursor:pointer;padding:8px 18px;border-radius:var(--radius-pill);background:var(--bg-card);color:var(--text-main);box-shadow:var(--shadow-sm);font-size:.88rem;font-weight:500;border:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent);transition:all .2s}
 .filter-chip:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
 .filter-chip.active{color:var(--cat-on,var(--sky-ink));border-color:transparent;box-shadow:0 6px 16px var(--accent-shadow-soft);background:var(--cat-color,var(--sky-blue))}
 .result-count{color:var(--text-secondary);margin-bottom:16px;font-size:.95rem}
-/* ===== 绌虹姸鎬?===== */
+/* ===== 空状态 ===== */
 .empty-state{text-align:center;padding:70px 20px;color:var(--text-secondary)}
 .empty-icon{font-size:3rem;display:flex;width:84px;height:84px;margin:0 auto 20px;align-items:center;justify-content:center;background:var(--bg-soft);border-radius:50%;box-shadow:var(--shadow-sm)}
 .empty-state .btn{margin-top:18px}
-/* ===== 鍒嗙被椤靛ご閮?===== */
+/* ===== 分类页头 ===== */
 .cat-header{--cat-tint:var(--sky-blue);--cat-accent:var(--accent);border-radius:var(--radius);padding:36px;margin-bottom:28px;color:var(--text-main);position:relative;overflow:hidden;box-shadow:var(--shadow-sm);background:linear-gradient(135deg,color-mix(in srgb,var(--cat-tint) 12%,transparent),var(--bg-card) 72%);border:1px solid color-mix(in srgb,var(--cat-tint) 14%,transparent);border-left:4px solid var(--cat-accent)}
 .cat-header::after{content:'';position:absolute;width:200px;height:200px;right:-40px;bottom:-60px;border-radius:50%;background:color-mix(in srgb,var(--sky-blue) 18%,transparent);filter:blur(20px)}
 .back-link{color:var(--sky-ink);opacity:1;font-size:.88rem;display:inline-flex;align-items:center;gap:5px;background:color-mix(in srgb,var(--sky-blue) 12%,transparent);padding:6px 14px;border-radius:var(--radius-pill);margin-bottom:14px;transition:all .2s}
 .back-link:hover{opacity:1;background:color-mix(in srgb,var(--sky-blue) 20%,transparent);transform:translateX(-3px)}
 .cat-count{color:var(--text-secondary);position:relative;z-index:2}
-/* ===== 涓汉璧勬枡鍗＄墖 & 鍏充簬 ===== */
+/* ===== 个人资料卡片 & 关于 ===== */
 .profile-card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:28px 22px;text-align:center;align-self:start;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent);position:relative;overflow:hidden}
 .profile-card::before{content:'';position:absolute;top:0;left:0;right:0;height:80px;background:var(--accent);opacity:.14}
 .profile-avatar{width:92px;height:92px;border-radius:50%;overflow:hidden;margin:12px auto 14px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px var(--accent-shadow-soft);border:4px solid #fff;position:relative}
@@ -272,7 +342,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .avatar-upload-btn img{width:100%;height:100%;object-fit:cover}
 .form-actions{display:flex;gap:12px;margin-top:18px}
 .profile-controls p{color:var(--text-secondary);margin-bottom:14px}
-/* ===== 鍐欎綔椤?===== */
+/* ===== 写作页 ===== */
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
 .toolbar .btn{background:var(--bg-card);box-shadow:var(--shadow-sm);border:1px solid color-mix(in srgb,var(--accent) 12%,transparent);color:var(--text-main)}
 .toolbar .btn:hover{box-shadow:var(--shadow)}
@@ -294,7 +364,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .editor-preview{border:1px solid color-mix(in srgb,var(--slate-blue) 25%,transparent);border-radius:var(--radius-sm);padding:18px;min-height:340px;background:var(--bg-page)}
 .write-actions{margin-top:24px;display:flex;justify-content:center}
 .write-actions .btn{padding:12px 40px;font-size:1rem}
-/* ===== 鏂囩珷璇︽儏 ===== */
+/* ===== 文章详情 ===== */
 .article-detail{max-width:800px}
 .detail-head{margin-bottom:26px}
 .detail-cats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
@@ -307,7 +377,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .meta-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow);color:var(--sky-blue-dark)}
 .detail-body{padding:32px;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent)}
 .detail-actions{margin:22px 0;text-align:right}
-/* ===== Markdown 姝ｆ枃 ===== */
+/* ===== Markdown 正文 ===== */
 .markdown-body{font-size:1rem;line-height:1.9;color:var(--text-main)}
 .markdown-body h1,.markdown-body h2,.markdown-body h3,.markdown-body h4{font-family:var(--font-display);margin:1.5em 0 .5em;font-weight:700;letter-spacing:.02em;color:var(--sky-blue-dark);line-height:1.45}
 .markdown-body h1{font-size:1.8rem}.markdown-body h2{font-size:1.5rem}.markdown-body h3{font-size:1.25rem}
@@ -337,7 +407,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .markdown-body .katex-display>.katex{display:inline-block;max-width:100%}
 .markdown-body .katex-display.math-overflow::after{content:"»";position:absolute;right:10px;bottom:6px;color:var(--sky-ink);font-size:15px;font-weight:700;opacity:0;pointer-events:none;animation:katex-swipe-hint 1.8s ease-in-out .4s infinite}
 @keyframes katex-swipe-hint{0%{opacity:0;transform:translateX(10px)}25%{opacity:.85;transform:translateX(4px)}60%{opacity:.1;transform:translateX(-4px)}100%{opacity:0;transform:translateX(-10px)}}
-/* ===== 璇勮鍖?& 鐣欒█鏉?===== */
+/* ===== 评论区 & 留言板 ===== */
 .comment-section{margin-top:36px}
 .comment-title{font-size:1.25rem;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px}
 .comment-form{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:22px;display:flex;flex-direction:column;gap:14px;margin-bottom:22px;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent)}
@@ -356,10 +426,9 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .comment-body{color:var(--text-secondary);line-height:1.7}
 .empty-tip{color:var(--text-secondary);font-style:italic;text-align:center;padding:20px}
 .guestbook-hero{padding:24px;margin-bottom:24px}
-/* ===== 鍝嶅簲寮?===== */
+/* ===== 响应式 ===== */
 @media (max-width:768px){
   .about-grid{grid-template-columns:1fr}
-  .nav-cats{display:none}
   .card-grid{grid-template-columns:1fr}
   .hero{padding:44px 22px 40px}
   .hero-title{font-size:2.1rem;letter-spacing:.14em;text-indent:.14em}
@@ -367,15 +436,17 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .write-meta{flex-direction:column;align-items:stretch}
   .comment-name{width:100%}
 }
-/* ===== 瀵艰埅锛氬垎绫诲僵鑹插渾鐐?===== */
-.cat-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;flex-shrink:0}
-.nav-cats a{display:inline-flex;align-items:center;white-space:nowrap}
-/* ===== 瀵艰埅锛氬ご鍍忔寜閽?===== */
-.nav-avatar{width:38px;height:38px;border-radius:50%;border:2px solid #fff;box-shadow:var(--shadow-sm);cursor:pointer;overflow:hidden;padding:0;flex-shrink:0;background:var(--grad-sky);display:flex;align-items:center;justify-content:center;transition:all .25s}
+/* ===== 导航：分类彩色圆点（顶栏的彩点条见上方 .cat-dot-link，这里只管抽屉里的「彩点 + 文字」）===== */
+.nav-drawer-links .cat-dot{margin-right:2px}
+/* ===== 导航：头像按钮 ===== */
+.nav-avatar{width:38px;height:38px;border-radius:50%;border:2px solid var(--bg-card);box-shadow:var(--shadow-sm);cursor:pointer;overflow:hidden;padding:0;flex-shrink:0;background:var(--grad-sky);display:flex;align-items:center;justify-content:center;transition:all .25s}
 .nav-avatar:hover{transform:scale(1.08);box-shadow:0 6px 18px var(--accent-shadow)}
+/* 2026-09-13 顶栏改造：原来「正在个人主页」的聚焦环是写在组件里的 inline style（写死 var(--sky-blue)），
+   亮色主题的强调色已经统一成青蓝，而且 inline 样式在暗色主题里改不动——现在换成语义类（走 --accent）。 */
+.nav-avatar.active{box-shadow:0 0 0 3px var(--accent)}
 .nav-avatar img{width:100%;height:100%;object-fit:cover}
 .nav-avatar-placeholder{width:100%;height:100%;background:var(--grad-sky);position:relative}
-/* ===== 寮圭獥锛堜粙缁?& 缂╂斁锛?==== */
+/* ===== 弹窗（介绍 & 缩放） ===== */
 .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);z-index:1000;overflow:auto;padding:20px}
 .intro-modal,.zoom-modal{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-lg);position:relative;max-width:420px;width:100%;padding:36px 30px 30px;text-align:center;border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
 .modal-close{position:absolute;top:12px;right:14px;border:none;background:color-mix(in srgb,var(--bg-soft) 70%,transparent);width:30px;height:30px;border-radius:50%;cursor:pointer;color:var(--text-secondary);font-size:1.2rem;line-height:1;transition:all .2s}
@@ -389,7 +460,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .zoom-modal{max-width:820px;max-height:90vh;padding:14px;display:flex;flex-direction:column;align-items:center;overflow:auto}
 .zoom-modal img{max-width:100%;max-height:calc(90vh - 60px);border-radius:var(--radius-sm);object-fit:contain}
 .zoom-caption{margin-top:10px;color:var(--text-secondary);font-size:.9rem}
-/* ===== 鍗＄墖鏀惰棌 / 缃《 ===== */
+/* ===== 卡片收藏 / 置顶 ===== */
 .card-pin{font-size:.7rem;background:color-mix(in srgb,var(--honey-gold) 25%,transparent);color:var(--honey-ink);padding:2px 8px;border-radius:var(--radius-pill);font-weight:600}
 [data-theme='dark'] .card-pin{color:var(--honey-ink)}
 .fav-btn.fav-on{background:var(--coral-pink);color:#fff;box-shadow:0 4px 12px rgba(232,155,138,.4)}
@@ -397,7 +468,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .meta-btn.meta-fav-on{color:#fff;background:var(--coral-pink);box-shadow:0 4px 12px rgba(232,155,138,.4)}
 .detail-meta-icon{color:var(--sky-ink)}
 .more-arrow{font-size:1.1rem;line-height:1;transform:translateY(-1px)}
-/* ===== 绌虹姸鎬?CSS 鍥炬爣 ===== */
+/* ===== 空状态 CSS 图标 ===== */
 .empty-icon-magnifier{position:relative}
 .empty-icon-magnifier::before{content:'';width:30px;height:30px;border-radius:50%;border:3px solid var(--sky-blue)}
 .empty-icon-magnifier::after{content:'';position:absolute;width:14px;height:4px;background:var(--accent);transform:rotate(45deg);border-radius:2px;top:30px;left:calc(50% + 8px)}
@@ -406,12 +477,12 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .empty-icon-ghost::after{content:'';position:absolute;width:26px;height:10px;background:var(--bg-card);border-radius:50%;top:30px}
 .empty-icon-gallery::before{content:'';width:34px;height:26px;border:3px solid var(--coral-pink);border-radius:6px;position:relative}
 .empty-icon-gallery::after{content:'';position:absolute;width:18px;height:12px;background:var(--coral-pink);border-radius:3px;top:8px;left:calc(50% - 1px);transform:rotate(-12deg)}
-/* ===== 璇勮澶村儚锛堥瀛楁瘝鍦嗭級===== */
+/* ===== 评论头像（首字母圆）===== */
 .comment-avatar{width:34px;height:34px;border-radius:50%;background:var(--grad-sky);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:600;flex-shrink:0}
-/* ===== 澶村儚涓婁紶鎸夐挳 ===== */
+/* ===== 头像上传按钮 ===== */
 .avatar-upload-hint{display:flex;flex-direction:column;align-items:center;line-height:1.2;color:var(--sky-ink);font-size:1.4rem}
 .avatar-upload-hint small{font-size:.7rem;color:var(--text-secondary)}
-/* ===== 鍥鹃泦椤?===== */
+/* ===== 图集页 ===== */
 .gallery-page{max-width:960px}
 .gallery-desc{color:var(--text-secondary);font-size:.95rem;margin-bottom:20px}
 .gallery-form{display:flex;flex-direction:column;gap:12px;padding:22px;margin-bottom:28px}
@@ -430,16 +501,16 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .gallery-caption span{font-size:.86rem;color:var(--text-main);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gallery-remove{border:none;background:color-mix(in srgb,var(--coral-pink) 15%,transparent);color:var(--coral-ink);padding:4px 10px;border-radius:var(--radius-pill);cursor:pointer;font-size:.78rem;font-weight:600;transition:all .2s;flex-shrink:0}
 .gallery-remove:hover{background:var(--coral-pink);color:var(--coral-on)}
-/* ===== 鎺掔増浼樺寲锛氶伩鍏嶆爣棰樻崲琛?===== */
+/* ===== 排版优化：避免标题换行 ===== */
 .section-title{white-space:nowrap}
 .cat-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:nowrap}
 .more-link{white-space:nowrap;flex-shrink:0}
-.nav-inner{row-gap:10px}
-.nav-links{flex-wrap:wrap;row-gap:6px}
-.nav-links a,.nav-cats a{white-space:nowrap}
+/* 2026-09-13 顶栏改造：原来的 flex-wrap:wrap + row-gap 会让 861~939px 这一档把顶栏折成两行，
+   现在强制单行；「放不下」由下面的统一断点表按宽度收掉分类彩点来兜住。 */
+.nav-inner,.nav-links{flex-wrap:nowrap}
 .page-title{white-space:normal}
 @media (max-width:600px){.cat-section-head{flex-wrap:wrap}}
-/* ===== 鍒嗗尯鏍囬寮鸿皟鏉?===== */
+/* ===== 分区标题强调条 ===== */
 .section-title{position:relative;padding-left:14px}
 .section-title::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:20px;border-radius:2px;background:linear-gradient(180deg,var(--sky-blue),var(--aqua-blue))}
 /* 第2i步（2026-09-14）：分区标题前那根小竖条改成「自己分区的凉风凉色卡色」。
@@ -449,55 +520,28 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
    （那一处第2f步就是 meta.color）。非分类的标题（「置顶与收藏」等）没有 --sec-color，
    继续用上面那条天空蓝→青蓝的色卡渐变条。 */
 .cat-section .section-title::before{background:var(--sec-color,currentColor);opacity:1}
-/* ===== 淇涓€琛屽彉涓よ锛氭寜閽笉鎹㈣ ===== */
+/* ===== 修复一行变两行：按钮不换行 ===== */
 .btn{white-space:nowrap}
 .toolbar .btn{white-space:nowrap}
 .meta-btn{white-space:nowrap}
 .detail-meta{flex-wrap:nowrap}
-.search-box input{min-width:60px}
 .hero-cta a{white-space:nowrap}
 .gallery-form .btn-primary{white-space:nowrap}
-/* 椤堕儴鏉′笌瀵艰埅鍦ㄧ獎灞忔椂淇濇寔鍙 */
-@media (max-width:860px){
-  .nav-links a,.nav-cats a{padding:6px 10px;font-size:.85rem}
-  .nav-inner{gap:10px;padding:10px 16px}
-}
-@media (max-width:640px){
-  .nav-cats{display:none}
-  .topbar-inner{flex-wrap:nowrap}
-  .theme-toggle{padding:8px 12px;font-size:.82rem;white-space:nowrap}
-}
-/* ===== 瀵艰埅鏍忥細鍏ㄥ睆淇濇寔鍗曡 ===== */
-@media (min-width:1180px){
-  .nav-inner{flex-wrap:nowrap;gap:14px}
-  .nav-links{gap:4px;flex:1}
-  .nav-links a{padding:7px 12px;font-size:.9rem}
-  .nav-cats{gap:4px}
-  .nav-cats a{padding:7px 10px;font-size:.85rem}
-  .nav-brand{font-size:1.25rem}
-  .brand-logo{width:32px;height:32px}
-}
-/* 涓瓑灞忓箷锛氬搧鐗?瀵艰埅涓€琛岋紝鍒嗙被鑻ユ斁涓嬪垯鎹㈣淇濇寔鍙 */
-@media (min-width:940px) and (max-width:1179px){
-  .nav-cats{display:none}  /* 鏀句笉涓嬫椂鍏堥殣钘忓垎绫伙紝淇濊瘉涓€琛?*/
-  .nav-inner{flex-wrap:nowrap}
-  .nav-links a{padding:7px 12px;font-size:.9rem}
-}
-/* (瀵艰埅鏍忓崟琛屾柟妗堝畬鎴? */
-/* ===== 鐧诲綍/璁よ瘉 UI ===== */
-.nav-auth{flex-shrink:0;margin-left:2px;display:flex;align-items:center;gap:10px}
+/* 顶栏的断点规则统一放在文件末尾「顶栏断点表（v2）」区块里（must be after .nav-burger 的基础规则，
+   见那里的「顶栏断点表」）。这里不能放——2026-09-13 就因为是放在这里而坏过一次：
+   .nav-burger{display:none} 的基础规则在文件末尾，同特异性下靠源码顺序决胜，
+   媒体查询写在前头会被它盖掉，结果窄屏永远不出现汉堡按钮、侧边栏打不开。 */
+/* ===== 登录/认证 UI ===== */
+.nav-auth{display:flex;align-items:center;gap:10px;flex-shrink:0}
 
 .auth-form{display:flex;flex-direction:column;gap:12px;margin-top:8px}
 .auth-form .gallery-input{width:100%}
 .auth-form .btn-primary{width:100%}
 .auth-switch{border:none;background:none;color:var(--sky-ink);cursor:pointer;margin-top:14px;font-size:.88rem;text-decoration:underline}
 .btn-sm{padding:6px 14px;font-size:.85rem}
-@media (max-width:640px){
-  .nav-auth .btn-sm{padding:6px 10px;font-size:.8rem}
-}
 
 
-/* ===== 娉ㄥ唽楠岃瘉鐮?===== */
+/* ===== 注册验证码 ===== */
 .captcha-row{display:flex;align-items:center;gap:10px}
 .captcha-question{background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px dashed color-mix(in srgb,var(--sky-blue) 40%,transparent);border-radius:8px;padding:9px 14px;font-weight:600;color:var(--sky-ink);font-size:.95rem;white-space:nowrap;flex-shrink:0}
 .captcha-input{flex:1;min-width:0}
@@ -1091,7 +1135,8 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .list-loading{text-align:center;color:var(--text-secondary);font-size:.88rem;padding:26px 0 8px;letter-spacing:1px}
 .list-end{text-align:center;color:var(--text-secondary);font-size:.85rem;padding:22px 0 6px;opacity:.7}
 
-/* ===== 导航栏 v2：视觉升级 + 移动端侧边栏 ===== */
+/* ===== 导航栏骨架：滚动态 + 汉堡按钮 + 移动端抽屉 =====
+   （区块名原来叫「导航栏 v2」，与 2026-09-20 那次顶栏 v2 重做撞名，已改） */
 .navbar-scrolled{box-shadow:0 8px 24px rgba(30,41,59,.14);background:color-mix(in srgb,var(--bg-card) 94%,transparent)}
 
 .nav-burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:40px;height:40px;padding:8px;border:none;background:transparent;cursor:pointer;border-radius:10px;flex-shrink:0}
@@ -1109,6 +1154,9 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nav-drawer-head .brand-dot{width:10px;height:10px}
 .nav-drawer-close{margin-left:auto;border:none;background:color-mix(in srgb,var(--bg-soft) 80%,transparent);width:30px;height:30px;border-radius:50%;cursor:pointer;color:var(--text-secondary);font-size:.95rem;line-height:1;transition:all .2s}
 .nav-drawer-close:hover{background:var(--coral-pink);color:var(--coral-on);transform:rotate(90deg)}
+.nav-drawer-search{padding:12px 14px 2px}
+.nav-drawer-search input{width:100%;padding:11px 14px;border:1px solid color-mix(in srgb,var(--slate-blue) 32%,transparent);border-radius:var(--radius-sm);background:var(--bg-page);color:var(--text-main);font-size:.92rem}
+.nav-drawer-search input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-veil)}
 .nav-drawer-links{display:flex;flex-direction:column;padding:10px 14px 20px;gap:2px}
 .nav-drawer-links a{padding:12px 14px;border-radius:var(--radius-sm);color:var(--text-secondary);font-size:.96rem;font-weight:500;transition:all .2s;display:flex;align-items:center;gap:10px}
 .nav-drawer-links a:hover{color:var(--sky-blue-dark);background:var(--bg-soft)}
@@ -1117,14 +1165,40 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nav-drawer-auth{padding:12px 14px 4px}
 .nav-drawer-auth .btn{width:100%}
 
-@media (max-width:860px){
+/* ===== 顶栏断点表（v2：全部收敛到这一处）=====
+   改造前分类的显隐散在 4 处规则里（768 / 640 / 860 / 940~1179），max-width:860px 这个媒体查询
+   还出现了两遍，特异性相同、靠源码顺序决胜，改一处很容易被另一处盖掉；现在只此一份。
+   ⚠️ 这一块**必须放在上面 .nav-burger{display:none} 之后**：两者特异性相同，靠源码顺序决胜，
+      放到文件前面会被基础规则盖掉 → 窄屏不出现汉堡按钮、侧边栏打不开（2026-09-13 踩过一次）。
+   ≥1200px      品牌 + 主导航 + 分类彩点条 + 操作区（一行，全显）
+   1024~1199px  品牌 + 主导航 + 「分类 ∨」下拉 + 操作区（一行；这一档不放彩点条）
+   ≤1023px      汉堡 + 品牌 + 操作区（主导航与分类都进抽屉；「开往」仍留在顶栏，
+                登录态收成纯头像按钮 + 小菜单）
+   ≤640px       内边距收 16px、品牌字号收小     ≤480px 品牌只留 logo（去掉「呓语集」三个字） */
+@media (max-width:1199px){
+  .nav-cats{display:none}
+  .nav-cat-menu{display:block}
+}
+@media (max-width:1023px){
   .nav-burger{display:flex}
   .nav-links{display:none}
   .nav-cats{display:none}
-  .nav-inner{flex-wrap:nowrap;gap:8px}
-  .nav-auth{margin-left:auto}
-  .nav-brand{font-size:1.2rem}
+  .nav-cat-menu{display:none}
+  .nav-inner{gap:8px}
+  .nav-actions{margin-left:auto}
+  .nav-brand{font-size:1.15rem}
   .brand-logo{width:30px;height:30px}
+  /* 登录态收成纯头像按钮：这一档不显示「博主·退出」按钮（组件里也按同一个断点换了结构） */
+  .nav-signout{display:none}
+}
+@media (max-width:640px){
+  .nav-inner{padding:10px 16px}
+  .nav-brand{font-size:1.05rem}
+  .brand-logo{width:28px;height:28px}
+  .nav-auth .btn-sm{padding:6px 10px;font-size:.8rem}
+}
+@media (max-width:480px){
+  .brand-text{display:none}
 }
 
 /* ===== 回到顶部按钮 ===== */
@@ -1200,7 +1274,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
    与块外那批「亮色改动一律用 var(--accent*)」正好配成一对——将来要一起改暗色时删掉这一段即可。 */
 [data-theme='dark'] .btn-primary,
 [data-theme='dark'] .nav-links a.active,
-[data-theme='dark'] .nav-cats a.active,
+[data-theme='dark'] .nav-icon-btn.active,
 [data-theme='dark'] .nav-drawer-links a.active,
 [data-theme='dark'] .login-btn,
 [data-theme='dark'] .nreader-start-btn,
@@ -1315,26 +1389,17 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 [data-theme='dark'] .detail-cat{--cat-fg:var(--cat-color)}
 
 /* ============================================================
-   开往-友链接力 入口 —— 2026-09-17
-   依据＝https://www.travellings.cn/docs/join.html 《加入开往》：
-   「您的网站须将开往的外链 https://www.travellings.cn/go.html 放置在一个打开您的网站就能看到的
-    地方，例如顶栏、侧栏。对于移动端设备，您仅需要让访客找得到开往外链即可。」
-   落地＝① .tj-link 放在 .topbar 那一行（搜索框右侧、主题切换之后）——
-           它在首屏；.navbar 滚下去会收起，这一行不会；≤640px 手机端整行保留，只收内边距与字号。
-          ② .footer-travelling 是页脚那条官方徽标，b.png / w.png 两版随主题切（.tj-badge-*）。
-   颜色：只用了既有 token（--bg-card / --sky-blue / --accent / --text-main 等），没引入新色号。
-   回滚：删掉本段 + Layout.tsx 里的 <a class="tj-link">…</a> 与 <p class="footer-travelling">…</p>
-         + public/travellings/ 两张 png 即可；快照见 blog/first/travellings-base/。
+   开往-友链接力 · 页脚官方徽标 —— 2026-09-17
+   依据＝https://www.travellings.cn/docs/join.html 《加入开往》。
+   顶栏那个入口在 Navbar.tsx 的 nav-actions 里，**不用新 CSS**——它复用既有的
+   .nav-icon-btn（36×36 圆角图标按钮），和旁边的放大镜、主题切换同一套样式。
+   这里只管页脚这条官方徽标：b.png（深色字，配浅底）/ w.png（浅色字，配深底）
+   两版都渲染、按 data-theme 切一个显示，切主题时不必重挂 <img>。
+   原图 160×40，按文档示例的 width="120" 显示，所以这里写死 120×30。
+   颜色没引入任何新色号（这组规则里只用了 var(--radius) 之类的既有 token）。
+   回滚：删掉本段 + Layout.tsx 里的 <p class="footer-travelling">…</p>
+         + public/travellings/ 两张 png；快照见 first/travellings-base/。
    ============================================================ */
-.tj-link{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;text-decoration:none;
-  background:var(--bg-card);color:var(--text-main);padding:8px 14px;border-radius:var(--radius-pill);
-  font-size:.9rem;border:1px solid color-mix(in srgb,var(--sky-blue) 15%,transparent);
-  box-shadow:var(--shadow-sm);transition:all .25s cubic-bezier(.22,1,.36,1)}
-.tj-link:hover{color:var(--sky-blue-dark);transform:translateY(-2px);box-shadow:var(--shadow)}
-.tj-link svg{flex-shrink:0}
-@media (max-width:640px){
-  .tj-link{padding:7px 10px;font-size:.82rem}
-}
 .footer-travelling{margin:10px 0 2px;line-height:0}
 .footer-travelling a{display:inline-block}
 .footer-travelling img{width:120px;height:30px}
