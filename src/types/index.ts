@@ -92,7 +92,10 @@ export const BUG_CATEGORIES: { value: string; label: string }[] = [
   { value: 'other', label: '其他' },
 ];
 
-export const CATEGORIES: Category[] = ['anime', 'essay', 'reading', 'math', 'study'];
+// 2026-09-20 首页改版：用户要求「交换数学笔记和小说位置」→ 数组里把 math 提到 reading 前面，
+// 顶栏那排分类彩点、文章页的分类筛选按钮（都按本数组渲染）顺序随之同步。
+// 注意：首页 Home.tsx 已不再按本数组分区展示（分类改从彩点/文章页进），本数组只决定「入口的顺序」。
+export const CATEGORIES: Category[] = ['anime', 'essay', 'math', 'reading', 'study'];
 
 // 小说扩展数据（仅 category = 'reading' 使用）
 export interface NovelChapter {
