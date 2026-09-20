@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
-import { CATEGORIES, CATEGORY_META } from '../types';
+import { CATEGORIES, CATEGORY_META, NOVEL_STATUS_META } from '../types';
 import ArticleCard from '../components/ArticleCard';
 import NovelCard from '../components/NovelCard';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -17,7 +17,14 @@ interface Props {
    本页最终结构＝hero → 最新更新 → 置顶与收藏 → 分类浏览（5 色块导航）。
    分类分区整段删掉：分类改从顶栏彩点（.nav-cats）和 /articles 的筛选按钮进，
    底部再补一排「分类浏览」色块把手机端的入口还回来（顶栏彩点在手机上收进汉堡菜单）。
-   回滚＝把本文件换回 blog\first\home-layout-v1\Home.改动前.tsx。 */
+   回滚＝把本文件换回 blog\first\home-layout-v1\Home.改动前.tsx。
+
+   2026-09-20 追加（用户原话「我希望加一个小部分来放书籍更新」+「底下的分类能不能变成一行」）：
+   ① 新增「书籍更新」区块（.book-section，放在「最新更新」**之后**、置顶区之前）：一本小说一张书籍卡
+      （封面 / 书名 / 连载状态 / 章数·字数 / 最新章节名），按 date 倒序，一排最多 3 本；
+      手机上 ≤640 折成单列竖排（书卡是横条形，一列比两列半宽更好读）。
+   ② 「分类浏览」从 auto-fill（1080 容器下会折成 4+1）改成**恒定一行 5 张**并整体缩小
+      （padding / 字号 / 竖条 / 间距全降档），≤640 单行横向滚动、不换行。 */
 export default function Home({ query }: Props) {
   usePageTitle();
   const { articles, getByCategory, toggleFavorite } = useArticles();
@@ -42,6 +49,18 @@ export default function Home({ query }: Props) {
         .slice(0, 4),
     [articles]
   );
+
+  /* 「书籍更新」（2026-09-20 新增）：只取真正有章节的小说（与 /novels 书架同一个判据），
+     按 date 倒序，一排最多 3 本。章节本身的顺序按 order 排，
+     注意不要原地 sort —— chapters 是从 Context 里拿到的引用，sort 会改到别页的渲染顺序。 */
+  const novels = useMemo(
+    () =>
+      articles
+        .filter((a) => a.category === 'reading' && (a.novel?.chapters?.length || 0) > 0)
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    [articles]
+  );
+  const bookCards = novels.slice(0, 3);
 
   /* 搜索兜底：原来首页自己按分类过滤并显示搜索结果，现在分类分区没了，
      有搜索词就把人送到 /articles（那边有数据库全文搜索 + 滚动加载，逻辑更完整）。 */
@@ -126,9 +145,70 @@ export default function Home({ query }: Props) {
         </div>
       </section>
 
+      {/* ===== 书籍更新（2026-09-20 新增，用户原话「我希望加一个小部分来放书籍更新」）=====
+          一本小说一张书籍卡：封面 + 书名 + 连载状态小签 + 「共 N 章 · M 字」+ 最新章节名。
+          位置放在「最新更新」之后：博文更新仍是首页第一眼，书籍更新是紧随其后的一小块；
+          若用户想让它更靠前，把这一整段移到「最新更新」那个 section 之前即可。
+          配色跟随小说分类的色卡色（蜜金 #E8C9A0，与书架页 /novels 同口径）；
+          状态小签的颜色改由 CSS 变量 --chip-color/--chip-ink 传（不再写 inline color），
+          这样暗色主题才能覆盖——实测 inline 的蜜金系墨色压 13% 淡底在暗色只有 1.81:1，
+          暗色下收敛成天空蓝 #5BA8D8（4.61:1），见 index.css 本段末尾的暗色覆盖。
+          还没有任何章节的小说不进这一块（与书架页判据一致）。 */}
+      {bookCards.length > 0 && (
+        <section className="book-section">
+          <div className="cat-section-head">
+            <h2 className="section-title">书籍更新</h2>
+            <Link to="/novels" className="more-link">
+              全部书籍<span className="more-arrow">›</span>
+            </Link>
+          </div>
+          <div className="book-grid">
+            {bookCards.map((a) => {
+              const novel = a.novel;
+              const chapters = (novel?.chapters || []).slice().sort((x, y) => x.order - y.order);
+              const latestCh = chapters[chapters.length - 1]; // 不用 .at(-1)：tsconfig 的 lib 只到 ES2020
+              const statusMeta = novel?.status ? NOVEL_STATUS_META[novel.status] : null;
+              return (
+                <Link key={a.id} to={`/article/${a.id}`} className="book-card">
+                  {novel?.cover ? (
+                    <img src={novel.cover} alt={a.title} className="book-cover" loading="lazy" />
+                  ) : (
+                    <span className="book-cover book-cover-ph" aria-hidden="true">{a.title.slice(0, 1)}</span>
+                  )}
+                  <div className="book-body">
+                    <h3 className="book-title">{a.title}</h3>
+                    <div className="book-meta">
+                      {statusMeta && (
+                        <span
+                          className="book-status"
+                          style={{ '--chip-color': statusMeta.color, '--chip-ink': statusMeta.ink } as CSSProperties}
+                        >
+                          {statusMeta.label}
+                        </span>
+                      )}
+                      <span className="book-meta-text">
+                        共 {chapters.length} 章{novel?.wordCount ? ` · ${novel.wordCount} 字` : ''}
+                      </span>
+                    </div>
+                    {latestCh && (
+                      <p className="book-latest">
+                        <span className="book-latest-tag">最新</span>
+                        {latestCh.part ? `${latestCh.part} · ` : ''}{latestCh.title}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* ===== 分类浏览 =====
           替代删掉的 5 个分类分区：每块压该分类的凉风凉色卡色（左竖条 + 淡底），
-          手机端也能一眼点进分类（顶栏彩点在 ≤1199 就藏了）。 */}
+          手机端也能一眼点进分类（顶栏彩点在 ≤1199 就藏了）。
+          2026-09-20 用户要求「底下的分类变成一行」+「现在这个太大了，换小一点」：
+          恒定 5 列一行（不再 auto-fill），卡片整体缩小一档；手机端横滑仍是一行。 */}
       <section className="cat-nav-section">
         <h2 className="section-title">分类浏览</h2>
         <div className="cat-nav-grid">

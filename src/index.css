@@ -1476,7 +1476,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .latest-big>.article-card{padding:22px}
   .latest-big>.article-card .card-title{font-size:1.3rem}
   .latest-big>.novel-card>.novel-cover-wrap,.latest-big>.novel-card>.novel-cover{width:120px;flex-basis:120px;min-height:170px}
-  .cat-nav-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+  /* .cat-nav-grid 在 ≤640 的写法已挪到文件末尾「首页·书籍更新+分类一行」段（改成单行横滑），这里不再重复定义。 */
 }
 
 /* 分类浏览色块 · 暗色修正（2026-09-20 实测后补）：
@@ -1489,3 +1489,77 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
    珊瑚粉那档在暗色下本来就是亮色版（--coral-ink #f0a395），原本就达标。 */
 [data-theme='dark'] .cat-nav-name,
 [data-theme='dark'] .cat-nav-count{color:var(--sec-color,var(--accent))}
+
+/* ============================================================
+   首页 · 书籍更新 + 分类一行缩小版 —— 2026-09-20（第二轮，用户两句话）
+   用户原话：「现在很好，但是我希望能加两件事 1 加一个小部分来放书籍更新 2 底下的分类能不能变成一行」
+   追问形式后他选「书籍卡：封面+书名+状态+总章数/总字数+最新章节名」；
+   再问「手机端要不要也强行一行」时他没选选项、只回了一句「现在这个太大了，换小一点」，
+   所以按「分类卡片自己太大才是折行的根因」处理：**缩小卡片**，桌面到平板恒定一行 5 张，
+   ≤640 手机端单行横向滚动（不换行、也不把字挤到看不清）。
+   本段只改 .cat-nav-* 的尺寸（覆盖上文「首页改版」那段里的 padding/字号/grid），
+   颜色与派生色一律沿用上文既有写法（蜜金/青蓝/灰蓝 = 凉风凉色卡色 + color-mix），**没有新色号**。
+
+   ① .book-section / .book-*：一本小说一张横向书籍卡（封面 64×86 + 书名 + 状态小签 +
+      「共 N 章 · M 字」+「最新 · 最新章节名」）。位置在 hero → 最新更新 **之后**（一小块，不抢主角），
+      全书走小说分类的色卡色（蜜金 #E8C9A0，与书架页 .cat-header 同口径），淡底/描边由 color-mix 派生；
+      状态小签的颜色由组件以 CSS 变量 --chip-color/--chip-ink 传入（NOVEL_STATUS_META 的值），
+      ink 在暗色下再收敛成该分类色卡色本身（原因见本段末尾的暗色覆盖）。
+      #4A9BB8 与 #2A6577 是既有 token 值（--aqua-blue / --aqua-ink），不是新造色。
+   ② .book-grid：一排最多 3 本（每本 min 240px），超过 3 本由 Home.tsx 截断；≤640 折成单列。
+   回滚：删掉本段 + Home.tsx 里 <section className="book-section"> 整块
+         + 把 .cat-nav-* 的 padding/字号改回 20px 22px / 1.08rem / .78rem 与 auto-fill 180px。
+   ============================================================ */
+.home .book-section{margin-bottom:40px}
+.book-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.book-card{display:flex;align-items:center;gap:14px;padding:14px;border-radius:var(--radius-sm);border:1px solid color-mix(in srgb,#E8C9A0 24%,transparent);border-left:5px solid #E8C9A0;box-shadow:var(--shadow-sm);background:linear-gradient(140deg,color-mix(in srgb,#E8C9A0 8%,var(--bg-card)),var(--bg-card) 72%);transition:all .24s cubic-bezier(.22,1,.36,1);min-width:0}
+.book-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);background:linear-gradient(140deg,color-mix(in srgb,#E8C9A0 16%,var(--bg-card)),var(--bg-card) 78%)}
+.book-cover{width:64px;height:86px;flex:0 0 64px;border-radius:var(--radius-sm);object-fit:cover;background:color-mix(in srgb,#E8C9A0 26%,var(--bg-card))}
+.book-cover-ph{display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:#8F6220}
+.book-body{min-width:0;display:flex;flex-direction:column;gap:7px}
+.book-title{font-size:1.06rem;font-weight:700;color:var(--text-main);line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.book-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.book-status{font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:var(--radius-pill);line-height:1.6;white-space:nowrap;background:color-mix(in srgb,var(--chip-color,var(--accent)) 13%,transparent);color:var(--chip-ink,var(--text-secondary))}
+.book-meta-text{font-size:.76rem;color:var(--text-secondary);white-space:nowrap}
+.book-latest{display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;color:#8F6220;min-width:0}
+.book-latest-tag{flex-shrink:0;font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:var(--radius-pill);color:#2A6577;border:1px solid color-mix(in srgb,#4A9BB8 34%,transparent)}
+[data-theme='dark'] .book-title{color:var(--text-main)}
+[data-theme='dark'] .book-meta-text{color:var(--text-secondary)}
+[data-theme='dark'] .book-latest,
+[data-theme='dark'] .book-cover-ph{color:#E8C9A0}
+[data-theme='dark'] .book-latest-tag{color:#8CBEDC;border-color:color-mix(in srgb,#5BA8D8 38%,transparent)}
+/* 暗色下的状态小签修正（2026-09-20 实测）：原本照抄 NovelCard 的 inline 写法
+   （background = 状态色 + '22'、color = NOVEL_STATUS_META 的墨色），亮色没问题——
+   连载中：字 #2a6577 压 #cbe2ec 淡底 = 4.86:1 ✅；
+   但暗色下同一份墨色类字色压 13% 淡底只剩 **1.81:1**（几乎看不见）。
+   修法沿用全站既有口径（同「第2l步」的 .card-cat）：暗色下字色改用色卡色本身。
+   连载中走小说分类的青蓝系亮档 #5BA8D8（天空蓝）＝ 4.61:1 ✅；
+   已完结/暂停更新是同一族的深色墨值，暗色下也一并收敛到该分类色卡色。 */
+[data-theme='dark'] .book-status{color:var(--chip-color,var(--accent))}
+
+/* ---- 分类浏览：恒定一行 5 张 + 整体缩小一档 ----
+   桌面（.main 1080 − 40 内边距 → .page 920）实测每张约 166px 宽，
+   原来的 padding 20/22 + 字号 1.08rem 在这么窄的卡里显得很挤，所以整档降下来：
+   padding 13/14、圆角与竖条收细、名字 .95rem、数量 .72rem、行距收紧、hover 抬升减半。 */
+.cat-nav-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.cat-nav-card{gap:6px;padding:13px 14px;border-left-width:4px;justify-content:center}
+.cat-nav-card:hover{transform:translateY(-3px)}
+.cat-nav-name{font-size:.95rem;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cat-nav-count{font-size:.72rem;padding:1px 9px;line-height:1.65}
+
+@media (max-width:1023px){
+  /* 平板：这一档容器更窄（1024 时每张约 134px），再收一点内边距与字号，仍然保持一行 5 张 */
+  .cat-nav-card{padding:12px 12px;border-left-width:3px}
+  .cat-nav-name{font-size:.9rem}
+  .cat-nav-count{font-size:.69rem;padding:1px 8px}
+}
+@media (max-width:640px){
+  .book-grid{grid-template-columns:1fr;gap:12px}
+  /* 手机：5 张恒在一行，横向滑动看全（硬塞 5 张每张只剩 60px，名字会挤成一团）；
+     用负外边距把滑动区推到页面内边距外，再补回等量滚动内边距，卡片能贴到屏幕边。 */
+  .cat-nav-grid{display:flex;gap:10px;overflow-x:auto;margin:0 -20px;padding:2px 20px 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .cat-nav-grid::-webkit-scrollbar{display:none}
+  .cat-nav-card{flex:0 0 auto;min-width:96px;padding:10px 12px}
+  .cat-nav-name{font-size:.88rem}
+}
+
