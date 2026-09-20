@@ -1505,13 +1505,24 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
         v2 重做：封面 72×96 **铺满卡高**（左缘切齐圆角）+ 书名走 --font-display（站里大标题同一支衬线）
         + 「状态 + 共 N 章 · M 字」并成一行 + 最新一章单独一行且右侧「阅读 ›」。
         蜜金从「5px 粗竖条」降级成「细描边 + 7% 淡底」，与「分类浏览」的卡片语气统一。
+   ★ 第三轮 v3（2026-09-20，用户原话「书籍更新板块还是好丑」，追问下他定调
+     「**只调整方块排版，不要调整整体**」——四个整体级方案（整行大书卡/迷你书架/并进最新更新）他全否了）：
+     毛病不在配色也不在内容，在方块的排布——全站只有 1 本小说（《未至》），却被钉死在 3 列网格里，
+     桌面实测＝296px 的卡横躺在 920px 的行里、右侧 624px 全空（只占 32%）。
+     改法只动 .book-* 这一组：① 列数交给宽度（auto-fit 288px），**1 本时网格只算出一列**，
+     卡片用 max-width:520px + justify-items:start **左对齐陈列**——站点其他区块（hero / 最新更新 /
+     分类浏览）一律左对齐，居中反而突兀；他看过居中版的预览后当场定了「**靠左放置**」。
+     2 本各半、3 本仍是 296px/张，与 v2 一致（下限取 288 不是随手写的：桌面容器 920，
+     3×288+2×16=896 ≤ 920 才排得下一行；写成 300 时 3×300+32=932 > 920，第三本会掉到第二行）；② 卡内排版松一档：封面 72→88（铺满卡高不变）、
+     书名 1.08→1.15rem、状态签与章数字号各提一档、行距 7→8px。
+     **板块位置、标题、配色、内容结构一律没动**。
 
-   ① .book-section / .book-*：一本小说一张书籍卡（v2 形态见上）。位置在「最新更新」**之后**、
+   ① .book-section / .book-*：一本小说一张书籍卡（v3 形态见上）。位置在「最新更新」**之后**、
       「置顶与收藏」之前（一小块，不抢主角），色走小说分类的色卡色（蜜金 #E8C9A0，与书架页 .cat-header 同口径）；
       状态小签的颜色由组件以 CSS 变量 --chip-color/--chip-ink 传入（NOVEL_STATUS_META 的值），
       ink 在暗色下再收敛成该分类色卡色本身（原因见本段末尾的暗色覆盖）。
       #4A9BB8 与 #2A6577 是既有 token 值（--aqua-blue / --aqua-ink），不是新造色。
-   ② .book-grid：一排最多 3 本（超过 3 本由 Home.tsx 截断）；≤640 折成单列。
+   ② .book-grid：列数按宽度自适应（1 本居中、2 本各半、3 本一排三张；超过 3 本由 Home.tsx 截断）；≤640 折成单列。
    回滚：删掉本段 + Home.tsx 里 <section className="book-section"> 整块
          + 把 .cat-nav-* 的 padding/字号改回 20px 22px / 1.08rem / .78rem 与 auto-fill 180px。
          （v1 那版「恒定 5 列 + 手机横滑」的原文在 blog\first\home-books-v1\index.css，可整段取回。）
@@ -1520,18 +1531,18 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* v2 书籍卡：封面 72×96 铺满卡高（左缘贴齐、不切圆角），右侧文字列三行：
    书名（衬线大字）/ 状态 + 共 N 章 · M 字 / 最新一章 + 「阅读 ›」。
    蜜金只作「细描边 + 7% 淡底」，不再用 v1 那条 5px 粗竖条。 */
-.book-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
-.book-card{display:grid;grid-template-columns:72px minmax(0,1fr);gap:16px;padding:0;overflow:hidden;min-width:0;border-radius:var(--radius);border:1px solid color-mix(in srgb,#E8C9A0 26%,transparent);box-shadow:var(--shadow-sm);background:linear-gradient(120deg,color-mix(in srgb,#E8C9A0 7%,var(--bg-card)),var(--bg-card) 52%);transition:all .25s cubic-bezier(.22,1,.36,1)}
+.book-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(288px,1fr));gap:16px;align-items:stretch;justify-items:start}
+.book-card{width:100%;max-width:520px;display:grid;grid-template-columns:88px minmax(0,1fr);gap:16px;padding:0;overflow:hidden;min-width:0;border-radius:var(--radius);border:1px solid color-mix(in srgb,#E8C9A0 26%,transparent);box-shadow:var(--shadow-sm);background:linear-gradient(120deg,color-mix(in srgb,#E8C9A0 7%,var(--bg-card)),var(--bg-card) 52%);transition:all .25s cubic-bezier(.22,1,.36,1)}
 .book-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:color-mix(in srgb,#E8C9A0 44%,transparent)}
-.book-cover{width:72px;height:100%;min-height:104px;align-self:stretch;object-fit:cover;display:block;background:color-mix(in srgb,#E8C9A0 26%,var(--bg-card))}
+.book-cover{width:88px;height:100%;min-height:112px;align-self:stretch;object-fit:cover;display:block;background:color-mix(in srgb,#E8C9A0 26%,var(--bg-card))}
 .book-cover-ph{display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;font-weight:700;color:#8F6220}
-.book-body{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:14px 16px 14px 0}
-.book-title{font-family:var(--font-display);font-size:1.08rem;font-weight:700;letter-spacing:.02em;color:var(--text-main);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.book-meta{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0}
-.book-status{flex-shrink:0;font-size:.7rem;font-weight:700;padding:1px 8px;border-radius:var(--radius-pill);line-height:1.7;white-space:nowrap;background:transparent;border:1px solid color-mix(in srgb,var(--chip-color,var(--accent)) 42%,transparent);color:var(--chip-ink,var(--text-secondary))}
-.book-meta-text{font-size:.76rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.book-latest{display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;color:#8F6220;min-width:0}
-.book-latest-tag{flex-shrink:0;font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:var(--radius-pill);color:#2A6577;background:color-mix(in srgb,#4A9BB8 10%,transparent)}
+.book-body{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:15px 18px 15px 0}
+.book-title{font-family:var(--font-display);font-size:1.15rem;font-weight:700;letter-spacing:.02em;color:var(--text-main);line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.book-meta{display:flex;align-items:center;gap:9px;flex-wrap:nowrap;min-width:0}
+.book-status{flex-shrink:0;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:var(--radius-pill);line-height:1.6;white-space:nowrap;background:transparent;border:1px solid color-mix(in srgb,var(--chip-color,var(--accent)) 42%,transparent);color:var(--chip-ink,var(--text-secondary))}
+.book-meta-text{font-size:.78rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-latest{display:flex;align-items:center;gap:8px;font-size:.84rem;font-weight:600;color:#8F6220;min-width:0}
+.book-latest-tag{flex-shrink:0;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:var(--radius-pill);color:#2A6577;background:color-mix(in srgb,#4A9BB8 10%,transparent)}
 .book-latest-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* 「阅读 ›」做成和站里 .read-more 同一语气的小圆钮：8% 天空蓝淡底、hover 时底色加深并横移 3px */
 .book-arrow{margin-left:auto;flex-shrink:0;font-size:.95rem;font-weight:700;line-height:1;color:var(--sky-blue-dark);padding:5px 10px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sky-blue) 8%,transparent);transition:all .2s}
@@ -1568,7 +1579,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
      5 张就变成 2+2+1、第 5 张孤在第三行；降到 104px 后 3×104+2×8=328 ≤ 350 → 三列 111px/张，
      5 张正好两行 3+2（与用户说的「可以接受两行」一致）。 */
   .book-grid{grid-template-columns:1fr;gap:12px}
-  .book-body{padding:13px 14px 13px 0}
+  .book-body{padding:14px 15px 14px 0}
   .cat-nav-grid{grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
 }
 @media (min-width:561px) and (max-width:640px){
