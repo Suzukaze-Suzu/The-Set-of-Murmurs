@@ -22,21 +22,28 @@
     <meta name="description" content="呓语集 - 记录动漫、随想、读后感与数学学习的个人博客" />
     <title>呓语集</title>
     <!-- 正文/标题用的思源宋（Noto Serif TC 为主 + Noto Serif SC 补字）：自托管 woff2 分片，见 public/fonts/noto-serif-tc/
-         （由 scripts/subset-noto-serif-tc.py 按字频切片：common 一片＝常用字＋站点语料用字，
-           一片管 wght 200~900 全部字重；ext1~4 生僻字、trad1~2 繁体字只在正文真出现时才取；
-           **fill1 是必须跟着首屏下的补字片**——Google 版 Noto Serif TC 只有繁体字集，
-           呓/语/这/为 这类简体字它没有字形，由 Noto Serif SC 补切，否则这些字在手机上会掉成黑体；
-           fill2~3 是其余补字，按需取。浏览器按 unicode-range 只取命中的片，不依赖 Google 的 CDN） -->
-    <!-- 首屏必然命中 common 片（约 1MB）+ fill1 片（约 145KB），提前发起下载，少一段「先用回退字形、再换宋体」的闪烁。
+         （由 scripts/subset-noto-serif-tc.py 按字频切片：
+            symbol1＝界面符号/标点（★ ☆ ✓ → ‹ › − ▪ ─ ⋯ ⚠、全角标点等）；
+            common 一片＝常用字＋站点语料用字；两者都一片管 wght 200~900 全部字重；
+            ext1~4 国标生僻字、trad1~2 繁体字、long1~24 冷僻字全量、
+            fill2~25 补字（其余缺字）——这些**只在正文真出现对应字时才下载**；
+            **symbol1 / common / fill1 是必须跟着首屏下的**：fill1 装的是 Google 版 Noto Serif TC
+            缺字形的简体字（呓/语/这/为…），由 Noto Serif SC 补切，否则这些字在手机上会掉成黑体。
+            2026-09-19 全量版：托管汉字从 9322 涨到 27584（＝两个源字体全部基本区汉字），
+            冷僻字不再回退系统字体；总 12.34MB，但首屏仍只有 1.3MB。浏览器按 unicode-range 只取命中的片） -->
+    <!-- 首屏必然命中 common 片（约 1MB）+ fill1 片（约 145KB）+ symbol1 片（约 142KB），提前发起下载，
+         少一段「先用回退字形、再换宋体」的闪烁。
          rel=preload 拉字体必须带 crossorigin（字体请求一律走 CORS 模式，同源也算），
          且 URL 必须与 CSS 里的 ?v= 完全一致，否则同一份文件会被下载两次 -->
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/noto-serif-tc/nstc-common.woff2?v=3" crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/noto-serif-tc/nstc-fill1.woff2?v=3" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/noto-serif-tc/nstc-symbol1.woff2?v=4" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/noto-serif-tc/nstc-common.woff2?v=4" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/noto-serif-tc/nstc-fill1.woff2?v=4" crossorigin />
     <!-- 字体 CSS 的 URL 带版本号：2026-09-14 修「注释吞掉 common 片」时发现，老访客（含 iPhone）
          把坏版本按 /fonts/* 的一年 immutable 缓存揣在本地，改了文件名之外必须换 URL 才会重新拉。
-         2026-09-17 补字片那一版再把 ?v 从 2 提到 3（CSS 与 woff2 用同一个号，见 public 里生成的 CSS 注释）。
+         2026-09-17 补字片那一版把 ?v 从 2 提到 3；2026-09-19 全量版提到 4
+         （CSS 与 woff2 用同一个号，见 public 里生成的 CSS 注释）。
          以后只要重切字体或改这份 CSS，就把 ?v= 往上加一。woff2 分片本身仍走一年长缓存。 -->
-    <link rel="stylesheet" href="/fonts/noto-serif-tc/noto-serif-tc.css?v=3" />
+    <link rel="stylesheet" href="/fonts/noto-serif-tc/noto-serif-tc.css?v=4" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
     <style>
       html,body{margin:0;padding:0;height:100%;}

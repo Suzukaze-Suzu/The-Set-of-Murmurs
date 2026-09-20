@@ -71,14 +71,28 @@ TRAD_FILE = os.path.join(RAW, "opencc-STCharacters.txt")
 # 字体版本号：vercel.json 给 *.woff2 配了一年 immutable，同名文件在访客设备上会留很久。
 # 所以 CSS 里的 woff2 URL 和 index.html 的 preload 都带 ?v=（**两处必须同一个号**，否则会重复下载），
 # 只要重切字体或改动分片内容，就把这个号 +1，老访客自然会拿到一整套一致的新文件。
-# v2＝2026-09-14 修「注释吞掉 common 片」时的 CSS 版本；v3＝2026-09-17 补字片（本版）。
-FONT_VERSION = 3
+# v2＝2026-09-14 修「注释吞掉 common 片」时的 CSS 版本；v3＝2026-09-17 补字片；
+# v4＝2026-09-19 全量汉字（国标之外的冷僻字/异体字）+ 符号片（用户原话「字体太少了，有好多文字无法显示」）。
+FONT_VERSION = 4
 
 COMMON_END = 3500     # 片 common 收的频率排名上限（一把常用字，避免被少数冷字拖下整片）
 EXT_PARTS = 4         # 生僻字片再均分成几片（命中一两个冷字时只下其中一片）
 TRAD_PARTS = 2        # 繁体补充片均分成几片
 FILL_PARTS = 2        # 补字片的「其余缺字」再均分几片（fill1 永远是站点真用到的那些字）
 FAMILY = "Noto Serif TC"
+
+# ---- 2026-09-19 全量汉字（用户抉择 B：「A + 汉字全量（15958 字）」）----
+# 起因：查覆盖率时发现，交付片里汉字只有 9322 个，而**国标《通用规范汉字表》一~三级 7909 字早就全覆盖**，
+# 也就是说缺的必然是国标之外的冷僻字/异体字/罕用繁体（实测源字体里还有 18262 个基本区汉字没交付）。
+# 现在把 TC|SC 两个源字体里**全部基本区汉字（27584）**都切出来，冷僻字再也不掉系统字体。
+#
+# 体积与首屏的关系（关键设计）：全量约 9.8MB，**绝不能一股脑塞进首屏**。
+#   · 按字频把冷僻字切成 LONGFORM_PARTS 片（每片约 1.6MB 里的一小块），
+#     浏览器只在页面**真的出现**某个字时，才按 unicode-range 拉它所在的那一片 —— 首页一个冷僻字都没有时，这片一分钱不花。
+#   · 首屏仍然只 preload common（常用+站点线上用字）+ fill1（TC 缺的简体字补片）+ symbol1（符号片）。
+#   · 因此 total 体积变大，但**首屏体积基本不变**，代价只体现在「正文真出现冷僻字时那一次多下几百 KB」。
+LONGFORM_PARTS = 24   # 国标之外冷僻字的均分片数（按字频排，常用的排前面、先被下到）
+SYMBOLS = True        # 符号片：标点/箭头/带圈数字/几何/杂项符号/全角/CJK 标点（2026-09-19 加）
 
 # 线上（Supabase）内容也扫一遍：文章/关于/留言里出现过的字必须进 common 片，
 # 否则页面里冒出**一个**未收录的字，就会把一整片 1MB 级的生僻字片拽下来（2026-09-13 实测踩到：瞳、蹩）
@@ -98,6 +112,40 @@ PUNCT = "".join(dict.fromkeys(PUNCT))
 
 # 站点内容里出现、但不在简体字频表/规范表里的小撮字（日式汉字、异体字；例如文章里的「藤咲私立高中」）
 EXTRA_CHARS = "咲涼々〆ヶ辻畑峠働榊雫凪髙﨑壹贰叁肆"
+
+# 扫描过程中顺手记下的「站点源码 + 线上内容里真正出现过的非汉字字符」（不参与汉字切片，只喂符号片）
+NON_CJK_SEEN: set[str] = set()
+
+# ---- 符号片（2026-09-19 加，起因见上面 LONGFORM_PARTS 的说明）----
+# 为什么单独切：站点界面里有一批**非汉字**字符（★ ☆ ✓ → ↓ ↑ ▶ ‹ › − » ▪ ─ ⋯ ⚠ 等）不在 PUNCT 里，
+# 于是它们从不进托管片，只能回退系统字体。实测源字体（思源宋）里除「✕(U+2715)」外全都有字形，
+# 所以把下面这些码位段一次切进托管片，符号也不用再赌设备有没有装。
+# ⚠ 码位段一律**先与源字体 cmap 求交**再切，否则会造出「声明了却没有字形」的假覆盖（2026-09-17 的坑）。
+SYMBOL_RANGES = [
+    (0x2000, 0x206F),  # 通用标点（– — ’ “ ” … ‰ 等）
+    (0x2070, 0x209F),  # 上下标
+    (0x20A0, 0x20BF),  # 货币符号
+    (0x2100, 0x214F),  # 字母式符号（№ ™ Ω 等）
+    (0x2150, 0x218F),  # 数字形式（①② Ⅰ ½ 等）
+    (0x2190, 0x21FF),  # 箭头（← → ↑ ↓ ↔ 等）
+    (0x2200, 0x22FF),  # 数学运算符（− ≠ ≤ ∞ ∑ 等）
+    (0x2300, 0x23FF),  # 杂项技术符号（⌘ ⌛ 等）
+    (0x2460, 0x24FF),  # 带圈字母数字
+    (0x25A0, 0x25FF),  # 几何图形（▪ ▶ ◆ ● 等）
+    (0x2600, 0x26FF),  # 杂项符号（★ ☆ ⚠ ♪ 等）
+    (0x2700, 0x27BF),  # 装饰符号（✓ ✗ ➜ 等）
+    (0x2E00, 0x2E7F),  # 补充标点
+    (0x3000, 0x303F),  # CJK 标点（、。「」〈〉《》等）
+    (0xFE30, 0xFE4F),  # CJK 兼容形式（﹏ 等）
+    (0xFF00, 0xFFEF),  # 全角 ASCII 与全角标点
+    # 2026-09-19 第二轮：下面三段是「正文/留言里真的出现过、源字体也真有字形」的，一并收进来
+    (0x02B0, 0x02FF),  # 修饰字母（˙ ˉ ˊ 等，留言里的语气符号）
+    (0x0370, 0x03FF),  # 希腊字母（ω π Ω 等，数学/留言里出现）
+    (0x3040, 0x30FF),  # 日文平假名+片假名（タ ケ 等，文章标题里有）
+]
+# ⚠ 故意**不收 emoji**（U+1F300 以上与 ✕ U+2715 这类）：emoji 应当交回系统字体，
+#   一旦收进思源宋，iPhone 上原本彩色的 emoji 会被换成单色字形，反而更糟。
+#   ✕(U+2715) 则是两个源字体都真的没有字形（实测），只能回退系统字体。
 
 
 def fetch(url: str, path: str) -> None:
@@ -150,6 +198,8 @@ def scan_source_chars() -> set[str]:
             except UnicodeDecodeError:
                 continue
             out |= {ch for ch in text if 0x3400 <= ord(ch) <= 0x9FFF}
+            # 顺手收集非汉字字符（含 emoji、符号）供符号片对账用，见 SYMBOL_RANGES 的说明
+            NON_CJK_SEEN.update(ch for ch in text if ord(ch) > 0x20 and not (0x3400 <= ord(ch) <= 0x9FFF))
     return out
 
 
@@ -169,6 +219,7 @@ def fetch_online_chars() -> set[str]:
     def walk(o):
         if isinstance(o, str):
             found.update(ch for ch in o if 0x3400 <= ord(ch) <= 0x9FFF)
+            NON_CJK_SEEN.update(ch for ch in o if ord(ch) > 0x20 and not (0x3400 <= ord(ch) <= 0x9FFF))
         elif isinstance(o, dict):
             for v in o.values():
                 walk(v)
@@ -288,13 +339,35 @@ def main() -> int:
     set_common = (
         set(freq[:COMMON_END]) | set(PUNCT) | set(EXTRA_CHARS) | site_chars | online_chars
     )
-    set_ext = levels - set_common
+    # 符号片：先取码位段，再**只留两个源字体里真有字形的**（否则又会出现「声明却没字形」）
+    # 2026-09-19 第二轮修正：光靠码位段总会漏掉散例（实测漏过 ─(U+2500) »(U+00BB)），
+    # 所以这里再补一刀「站点源码 + 线上内容里真正出现过的非汉字字符」——
+    # 码位段管通用面，用字集管散例，两者并起来才不漏。
+    set_symbol = set()
+    if SYMBOLS:
+        for lo, hi in SYMBOL_RANGES:
+            set_symbol |= {chr(cp) for cp in range(lo, hi + 1)}
+        set_symbol |= {c for c in (PUNCT + EXTRA_CHARS)}          # 已有的标点白名单
+        set_symbol |= NON_CJK_SEEN                                # 站点/线上真用到的非汉字字符（散例就靠这条兜住）
+        # 汉字本身由 common/ext/trad/long 负责，符号片只管非汉字（避免与汉字片争码位）
+        set_symbol = {c for c in set_symbol if not (0x3400 <= ord(c) <= 0x9FFF)}
+        # emoji（U+1F300 以上）一律留给系统字体：收进思源宋会把 iPhone 的彩色 emoji 换成单色字形
+        set_symbol = {c for c in set_symbol if ord(c) < 0x1F300}
+        set_symbol = {c for c in set_symbol if ord(c) in tc_cmap or ord(c) in sc_cmap}
+        set_symbol -= set_common
+
+    set_ext = levels - set_common - set_symbol
     # 片 trad：常用简体字 + 站点/线上用字对应的繁体字 —— 正文偶尔写繁体时也不掉回系统字体
     set_trad = (
         load_trad_map(set(freq[:COMMON_END]) | site_chars | online_chars | set(EXTRA_CHARS))
         - set_common
+        - set_symbol
         - set_ext
     )
+    # 片 longform：国标之外的全部冷僻字/异体字/罕用繁体（2026-09-19 全量覆盖）
+    # 目标＝TC|SC 两个源字体里**所有基本区汉字**，已有分片覆盖的扣掉，剩下的按字频均分
+    all_cjk = {chr(cp) for cp in (tc_cmap | sc_cmap) if 0x3400 <= cp <= 0x9FFF}
+    set_longform = all_cjk - set_common - set_symbol - set_ext - set_trad
 
     os.makedirs(OUT_DIR, exist_ok=True)
     for f in os.listdir(OUT_DIR):
@@ -302,12 +375,23 @@ def main() -> int:
             os.remove(os.path.join(OUT_DIR, f))
 
     print(f"  源码用字 {len(site_chars)} + 线上用字 {len(online_chars)} 已并入 common 片")
+    if SYMBOLS:
+        print(f"  符号片要切的码位 {len(set_symbol)} 个（源字体里真有字形的）")
+    print(f"  全量冷僻字分片：源字体可用基本区汉字 {len(all_cjk)}，扣掉已有分片后剩 {len(set_longform)} 个")
     print("== 切片（可变字体，wght 200~900 全字重）==")
-    slices: list[tuple[str, set[str], str]] = [("common", set_common, "片common 常用+站点线上字")]
+    # 顺序＝CSS 里 @font-face 的声明顺序：首屏那几片排最前，便于阅读生成的 CSS
+    slices: list[tuple[str, set[str], str]] = []
+    if set_symbol:
+        slices.append(("symbol1", set_symbol, "片symbol1 符号/标点"))
+    slices.append(("common", set_common, "片common 常用+站点线上字"))
     for i, part in enumerate(split_into(set_ext, EXT_PARTS, rank), 1):
         slices.append((f"ext{i}", part, f"片ext{i} 生僻字"))
     for i, part in enumerate(split_into(set_trad, TRAD_PARTS, rank), 1):
         slices.append((f"trad{i}", part, f"片trad{i} 繁体补充"))
+    if set_longform:
+        parts = split_into(set_longform, LONGFORM_PARTS, rank)
+        for i, part in enumerate(parts, 1):
+            slices.append((f"long{i}", part, f"片long{i} 冷僻字全量 {i}/{len(parts)}"))
 
     built: list[tuple[str, set[int], str, int, str]] = []   # (key, 真实码位, 文件名, 字节, 源)
     residual: set[str] = set()
@@ -317,15 +401,19 @@ def main() -> int:
         residual |= {c for c in chars if ord(c) not in actual}
 
     # ---- 补字片：TC 字集里没有的简体字，从 SC 字体切 ----
+    # ⚠ 全量模式下「其余缺字」可能上万，但它分成 long* 片时就已按字频均分过，
+    #   这里保持原样：fill1 永远是「站点/线上真用到的缺字」，因为 index.html 会 preload 它。
     print("== 补字片（TC 字集缺失的简体字，源＝Noto Serif SC）==")
     fill_used = {c for c in residual if c in site_chars or c in online_chars}
     fill_rest = residual - fill_used
+    # 其余缺字按字频均分成与冷僻片同一量级的小片（片名沿用 fill2.. 保证老链接不失效）
+    fill_parts = max(FILL_PARTS, LONGFORM_PARTS) if fill_rest else FILL_PARTS
     fill_slices: list[tuple[str, set[str], str]] = []
     n = 1
     if fill_used:
         fill_slices.append(("fill1", fill_used, "片fill1 站点/线上用到的缺字"))
         n = 2
-    for part in split_into(fill_rest, FILL_PARTS, rank):
+    for part in split_into(fill_rest, fill_parts, rank):
         fill_slices.append((f"fill{n}", part, f"片fill{n} 其余缺字"))
         n += 1
 
@@ -336,7 +424,7 @@ def main() -> int:
             residual = {c for c in residual if ord(c) not in actual}
 
     # ---- 覆盖面自检 ----
-    requested = set_common | set_ext | set_trad
+    requested = set_common | set_ext | set_trad | set_symbol | set_longform
     covered = set().union(*(a for _, a, *_ in built))
     holes = sorted((c for c in requested if ord(c) not in covered), key=lambda c: (rank.get(ord(c), 10**6), ord(c)))
     print("\n== 覆盖面自检 ==")
@@ -346,6 +434,8 @@ def main() -> int:
         print(f"  ⚠ {len(holes)} 个字两个源字体都没有（只能回退系统字体）：{''.join(holes[:120])}")
     else:
         print("  ✅ 请求的字全部在托管片里真的有字形（不会再回退系统字体）")
+    cjk_total = len({c for c in covered if 0x3400 <= c <= 0x9FFF})
+    print(f"  托管片里的汉字总数：{cjk_total}（全量模式目标＝源字体所有基本区汉字 {len(all_cjk)}）")
 
     css = [
         "/* 自托管思源宋（Noto Serif TC 为主 + Noto Serif SC 补字，OFL 1.1）",
@@ -388,12 +478,17 @@ def main() -> int:
         f.write(text)
 
     total = sum(s for *_, s, _ in built)
-    first = [b for b in built if b[0] in ("common", "fill1")]
+    # 首屏必下的片＝common（常用+站点线上用字）+ fill1（TC 缺的简体字补片）+ symbol1（界面符号/标点）
+    # index.html 里的 preload 必须就是这几个，改这里要同步改 index.html（见文件末尾打印）
+    first = [b for b in built if b[0] in ("common", "fill1", "symbol1")]
     print(f"\n== 完成 ==\n  CSS: {os.path.relpath(css_path, BLOG)}  （{os.path.getsize(css_path) / 1024:.0f}KB）")
     print(f"  共 {len(built)} 片合计 {total / 1048576:.2f}MB")
     print("  首屏必下：" + " + ".join(f"{k} {s / 1024:.0f}KB" for k, _a, _n, s, _src in first)
           + f" ≈ {sum(s for *_, s, _ in first) / 1024:.0f}KB")
-    print("  其余按 unicode-range 按需取。")
+    print("  其余按 unicode-range 按需取（正文出现哪个片里的字，才下那一片）。")
+    print("  ⚠ index.html 需要的 preload：")
+    for k, _a, n, _s, _src in first:
+        print(f'      <link rel="preload" as="font" type="font/woff2" href="/fonts/noto-serif-tc/{n}?v={FONT_VERSION}" crossorigin />')
     return 0
 
 

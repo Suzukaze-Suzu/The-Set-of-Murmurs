@@ -272,7 +272,7 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
           <div className="nreader-toc" onClick={(e) => e.stopPropagation()}>
             <div className="nreader-toc-head">
               <span>章节目录</span>
-              <button className="nreader-top-btn" onClick={() => setTocOpen(false)}>✕</button>
+              <button className="nreader-top-btn" onClick={() => setTocOpen(false)}>×</button>
             </div>
             <div className="nreader-toc-list">
               {chapters.map((ch, ix) => {
