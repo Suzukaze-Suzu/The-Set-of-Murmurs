@@ -1,13 +1,20 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { CSSProperties } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 import { CATEGORIES, CATEGORY_META, NOVEL_STATUS_META } from '../types';
+import type { Article } from '../types';
 import ArticleCard from '../components/ArticleCard';
 import NovelCard from '../components/NovelCard';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useInfiniteList } from '../hooks/useInfiniteList';
+import { searchArticles } from '../lib/search';
+
+/* 空数组常量：useInfiniteList 依赖 items 引用稳定，别在渲染里现造 [] */
+const NO_RESULTS: Article[] = [];
+const SEARCH_PAGE_SIZE = 12;
 
 interface Props {
   query: string;
@@ -28,12 +35,56 @@ interface Props {
       第三轮他说「书籍更新板块还是好丑」，定调「只调整方块排版，不要调整整体」→
       板块不动，只把 .book-* 的方块排布改掉（1 本时不再被钉在 3 列网格的左 1/3，改成居中陈列）。
    ② 「分类浏览」：第一轮按「变一行」做成恒定 5 列；第二轮他说「手机端可以接受两行的，
-      让按钮根据宽度调整行数」→ 改成 auto-fit 按宽度自适应列数（桌面一行 5 张、手机折 2 行），不再横滑。 */
+      让按钮根据宽度调整行数」→ 改成 auto-fit 按宽度自适应列数（桌面一行 5 张、手机折 2 行），不再横滑。
+
+    2026-09-20 第四轮（搜索线，独立于上面三条）：顶栏搜索词进来时首页**自己出结果**，
+    不再显示「正在为你跳转到全部文章」的横幅。回滚＝把本文件换回
+    blog\first\home-search-inline\Home.改动前.tsx。 */
 export default function Home({ query }: Props) {
-  usePageTitle();
+  /* 有搜索词时标签页也跟着变成「搜索：xxx - 呓语集」（与 /articles 的口径一致） */
+  usePageTitle(query.trim() ? `搜索：${query.trim()}` : undefined);
   const { articles, getByCategory, toggleFavorite } = useArticles();
   const { isAdmin } = useAuth();
   const { profile } = useProfile();
+
+  /* ===== 首页直接出搜索结果（2026-09-20）=====
+     用户原话：「首页搜索很别扭：搜完只弹一句『正在为你跳转…』，想在首页直接看到搜索结果」。
+     改法：不再把人送去 /articles，首页自己跑同一套数据库全文搜索（lib/search.ts，300ms 防抖），
+     结果用与 /articles 完全相同的卡片 + 滚动加载（useInfiniteList）渲染。
+     搜索时整页只剩搜索结果区（原来那条 .search-banner 横幅不再用它，CSS 保留未删）。 */
+  const [searchResults, setSearchResults] = useState<Article[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setSearchResults(null);
+      setSearching(false);
+      return;
+    }
+    let cancelled = false;
+    setSearching(true);
+    const timer = setTimeout(() => {
+      searchArticles(q).then((res) => {
+        if (!cancelled) {
+          setSearchResults(res);
+          setSearching(false);
+        }
+      });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query]);
+
+  const searchList = useMemo(() => searchResults ?? NO_RESULTS, [searchResults]);
+  const {
+    visible: searchVisible,
+    hasMore: searchHasMore,
+    total: searchTotal,
+    sentinelRef: searchSentinelRef,
+  } = useInfiniteList(searchList, SEARCH_PAGE_SIZE);
 
   /* 「最新更新」按 articles.date 倒序（日期是用户自己写的，跟各页原来的排法一致；
      articles 表没有 updated_at，没有更细的时间戳可用）。
@@ -66,16 +117,46 @@ export default function Home({ query }: Props) {
   );
   const bookCards = novels.slice(0, 3);
 
-  /* 搜索兜底：原来首页自己按分类过滤并显示搜索结果，现在分类分区没了，
-     有搜索词就把人送到 /articles（那边有数据库全文搜索 + 滚动加载，逻辑更完整）。 */
+  /* 有搜索词 → 首页直接给结果（用户 2026-09-20 拍板）。
+     顺序与 /articles 一致：数据库已按 pinned desc, date desc 排好，这里不再重排。
+     整页替换：搜索时首页的 hero / 最新更新 / 书籍更新 / 分类浏览全部不渲染。 */
   if (query.trim()) {
     return (
       <div className="page home">
-        <section className="search-banner">
-          <p>
-            首页不再按分类展示，正在为你跳转到「全部文章」搜索 “<strong>{query}</strong>”…
+        <section className="home-search-section">
+          <div className="cat-section-head">
+            <h2 className="section-title">搜索结果</h2>
+            <Link to="/articles" className="more-link">
+              在全部文章里看<span className="more-arrow">›</span>
+            </Link>
+          </div>
+          <p className="result-count">
+            搜索 “<strong>{query}</strong>”，{searching ? '搜索中…' : <>共 {searchTotal} 篇</>}
           </p>
-          <Link to="/articles" className="btn btn-primary">立即前往搜索结果</Link>
+
+          {searchList.length === 0 ? (
+            <div className="empty-state">
+              <span className="empty-icon empty-icon-magnifier" />
+              <p>{searching ? '搜索中…' : '没有找到匹配的文章'}</p>
+            </div>
+          ) : (
+            <>
+              <div className="card-grid wide">
+                {searchVisible.map((a) =>
+                  a.novel?.chapters?.length ? (
+                    <NovelCard key={a.id} article={a} />
+                  ) : (
+                    <ArticleCard key={a.id} article={a} onToggleFavorite={toggleFavorite} />
+                  )
+                )}
+              </div>
+              {searchHasMore ? (
+                <div ref={searchSentinelRef} className="list-loading">滚动加载更多…</div>
+              ) : (
+                <p className="list-end">已加载全部 {searchTotal} 篇</p>
+              )}
+            </>
+          )}
         </section>
       </div>
     );
