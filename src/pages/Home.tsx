@@ -140,7 +140,7 @@ export default function Home({ query }: Props) {
                 key={c}
                 to={`/category/${c}`}
                 className="cat-nav-card"
-                style={{ '--sec-color': meta.color } as CSSProperties}
+                style={{ '--sec-color': meta.color, '--sec-ink': meta.ink } as CSSProperties}
               >
                 <span className="cat-nav-name">{meta.label}</span>
                 <span className="cat-nav-count">{count} 篇</span>
