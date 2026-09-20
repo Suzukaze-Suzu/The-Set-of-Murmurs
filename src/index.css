@@ -1495,71 +1495,86 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
    用户原话：「现在很好，但是我希望能加两件事 1 加一个小部分来放书籍更新 2 底下的分类能不能变成一行」
    追问形式后他选「书籍卡：封面+书名+状态+总章数/总字数+最新章节名」；
    再问「手机端要不要也强行一行」时他没选选项、只回了一句「现在这个太大了，换小一点」，
-   所以按「分类卡片自己太大才是折行的根因」处理：**缩小卡片**，桌面到平板恒定一行 5 张，
-   ≤640 手机端单行横向滚动（不换行、也不把字挤到看不清）。
-   本段只改 .cat-nav-* 的尺寸（覆盖上文「首页改版」那段里的 padding/字号/grid），
-   颜色与派生色一律沿用上文既有写法（蜜金/青蓝/灰蓝 = 凉风凉色卡色 + color-mix），**没有新色号**。
+   于是 v1 做成了：**缩小卡片** + 桌面到平板恒定一行 5 张 + ≤640 手机端单行横滑。
 
-   ① .book-section / .book-*：一本小说一张横向书籍卡（封面 64×86 + 书名 + 状态小签 +
-      「共 N 章 · M 字」+「最新 · 最新章节名」）。位置在 hero → 最新更新 **之后**（一小块，不抢主角），
-      全书走小说分类的色卡色（蜜金 #E8C9A0，与书架页 .cat-header 同口径），淡底/描边由 color-mix 派生；
+   ★ 第二轮 v2（2026-09-20 当晚，他的原话两句话，全部照此改）：
+     「手机端可以接受两行的，让按钮根据宽度调整行数，然后书籍更新的方块丑，修改一下」
+     ① 分类：**改为按宽度自适应列数**（auto-fit minmax 156px），不再强制 5 列、手机也不再横滑——
+        宽度够就一行 5 张，手机窄了自然折成 2 行；平板那档单独收字号（见文末 media 块）。
+     ② 书籍卡：v1 是「细长横条 + 封面 64×86 没铺满卡高（卡 116px）」，上下留缝、重心散，看着不像站里的卡。
+        v2 重做：封面 72×96 **铺满卡高**（左缘切齐圆角）+ 书名走 --font-display（站里大标题同一支衬线）
+        + 「状态 + 共 N 章 · M 字」并成一行 + 最新一章单独一行且右侧「阅读 ›」。
+        蜜金从「5px 粗竖条」降级成「细描边 + 7% 淡底」，与「分类浏览」的卡片语气统一。
+
+   ① .book-section / .book-*：一本小说一张书籍卡（v2 形态见上）。位置在「最新更新」**之后**、
+      「置顶与收藏」之前（一小块，不抢主角），色走小说分类的色卡色（蜜金 #E8C9A0，与书架页 .cat-header 同口径）；
       状态小签的颜色由组件以 CSS 变量 --chip-color/--chip-ink 传入（NOVEL_STATUS_META 的值），
       ink 在暗色下再收敛成该分类色卡色本身（原因见本段末尾的暗色覆盖）。
       #4A9BB8 与 #2A6577 是既有 token 值（--aqua-blue / --aqua-ink），不是新造色。
-   ② .book-grid：一排最多 3 本（每本 min 240px），超过 3 本由 Home.tsx 截断；≤640 折成单列。
+   ② .book-grid：一排最多 3 本（超过 3 本由 Home.tsx 截断）；≤640 折成单列。
    回滚：删掉本段 + Home.tsx 里 <section className="book-section"> 整块
          + 把 .cat-nav-* 的 padding/字号改回 20px 22px / 1.08rem / .78rem 与 auto-fill 180px。
+         （v1 那版「恒定 5 列 + 手机横滑」的原文在 blog\first\home-books-v1\index.css，可整段取回。）
    ============================================================ */
 .home .book-section{margin-bottom:40px}
-.book-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.book-card{display:flex;align-items:center;gap:14px;padding:14px;border-radius:var(--radius-sm);border:1px solid color-mix(in srgb,#E8C9A0 24%,transparent);border-left:5px solid #E8C9A0;box-shadow:var(--shadow-sm);background:linear-gradient(140deg,color-mix(in srgb,#E8C9A0 8%,var(--bg-card)),var(--bg-card) 72%);transition:all .24s cubic-bezier(.22,1,.36,1);min-width:0}
-.book-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);background:linear-gradient(140deg,color-mix(in srgb,#E8C9A0 16%,var(--bg-card)),var(--bg-card) 78%)}
-.book-cover{width:64px;height:86px;flex:0 0 64px;border-radius:var(--radius-sm);object-fit:cover;background:color-mix(in srgb,#E8C9A0 26%,var(--bg-card))}
-.book-cover-ph{display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:#8F6220}
-.book-body{min-width:0;display:flex;flex-direction:column;gap:7px}
-.book-title{font-size:1.06rem;font-weight:700;color:var(--text-main);line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.book-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.book-status{font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:var(--radius-pill);line-height:1.6;white-space:nowrap;background:color-mix(in srgb,var(--chip-color,var(--accent)) 13%,transparent);color:var(--chip-ink,var(--text-secondary))}
-.book-meta-text{font-size:.76rem;color:var(--text-secondary);white-space:nowrap}
+/* v2 书籍卡：封面 72×96 铺满卡高（左缘贴齐、不切圆角），右侧文字列三行：
+   书名（衬线大字）/ 状态 + 共 N 章 · M 字 / 最新一章 + 「阅读 ›」。
+   蜜金只作「细描边 + 7% 淡底」，不再用 v1 那条 5px 粗竖条。 */
+.book-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+.book-card{display:grid;grid-template-columns:72px minmax(0,1fr);gap:16px;padding:0;overflow:hidden;min-width:0;border-radius:var(--radius);border:1px solid color-mix(in srgb,#E8C9A0 26%,transparent);box-shadow:var(--shadow-sm);background:linear-gradient(120deg,color-mix(in srgb,#E8C9A0 7%,var(--bg-card)),var(--bg-card) 52%);transition:all .25s cubic-bezier(.22,1,.36,1)}
+.book-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:color-mix(in srgb,#E8C9A0 44%,transparent)}
+.book-cover{width:72px;height:100%;min-height:104px;align-self:stretch;object-fit:cover;display:block;background:color-mix(in srgb,#E8C9A0 26%,var(--bg-card))}
+.book-cover-ph{display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;font-weight:700;color:#8F6220}
+.book-body{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:14px 16px 14px 0}
+.book-title{font-family:var(--font-display);font-size:1.08rem;font-weight:700;letter-spacing:.02em;color:var(--text-main);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.book-meta{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0}
+.book-status{flex-shrink:0;font-size:.7rem;font-weight:700;padding:1px 8px;border-radius:var(--radius-pill);line-height:1.7;white-space:nowrap;background:transparent;border:1px solid color-mix(in srgb,var(--chip-color,var(--accent)) 42%,transparent);color:var(--chip-ink,var(--text-secondary))}
+.book-meta-text{font-size:.76rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .book-latest{display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;color:#8F6220;min-width:0}
-.book-latest-tag{flex-shrink:0;font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:var(--radius-pill);color:#2A6577;border:1px solid color-mix(in srgb,#4A9BB8 34%,transparent)}
-[data-theme='dark'] .book-title{color:var(--text-main)}
-[data-theme='dark'] .book-meta-text{color:var(--text-secondary)}
+.book-latest-tag{flex-shrink:0;font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:var(--radius-pill);color:#2A6577;background:color-mix(in srgb,#4A9BB8 10%,transparent)}
+.book-latest-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 「阅读 ›」做成和站里 .read-more 同一语气的小圆钮：8% 天空蓝淡底、hover 时底色加深并横移 3px */
+.book-arrow{margin-left:auto;flex-shrink:0;font-size:.95rem;font-weight:700;line-height:1;color:var(--sky-blue-dark);padding:5px 10px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sky-blue) 8%,transparent);transition:all .2s}
+.book-card:hover .book-arrow{background:color-mix(in srgb,var(--sky-blue) 18%,transparent);transform:translateX(3px)}
 [data-theme='dark'] .book-latest,
 [data-theme='dark'] .book-cover-ph{color:#E8C9A0}
-[data-theme='dark'] .book-latest-tag{color:#8CBEDC;border-color:color-mix(in srgb,#5BA8D8 38%,transparent)}
-/* 暗色下的状态小签修正（2026-09-20 实测）：原本照抄 NovelCard 的 inline 写法
-   （background = 状态色 + '22'、color = NOVEL_STATUS_META 的墨色），亮色没问题——
-   连载中：字 #2a6577 压 #cbe2ec 淡底 = 4.86:1 ✅；
-   但暗色下同一份墨色类字色压 13% 淡底只剩 **1.81:1**（几乎看不见）。
-   修法沿用全站既有口径（同「第2l步」的 .card-cat）：暗色下字色改用色卡色本身。
-   连载中走小说分类的青蓝系亮档 #5BA8D8（天空蓝）＝ 4.61:1 ✅；
-   已完结/暂停更新是同一族的深色墨值，暗色下也一并收敛到该分类色卡色。 */
-[data-theme='dark'] .book-status{color:var(--chip-color,var(--accent))}
+[data-theme='dark'] .book-latest-tag{color:#8CBEDC;background:color-mix(in srgb,#5BA8D8 14%,transparent)}
+/* 暗色下的状态小签修正（2026-09-20 实测）：v1 照抄 NovelCard 的 inline 写法
+   （background = 状态色 + '22'、color = NOVEL_STATUS_META 的墨色）在暗色下只剩 **1.81:1**（几乎看不见）。
+   修法沿用全站既有口径（同「第2l步」的 .card-cat）：暗色下字色改用色卡色本身（实测 4.57:1）。 */
+[data-theme='dark'] .book-status{color:var(--chip-color,var(--accent));border-color:color-mix(in srgb,var(--chip-color,var(--accent)) 46%,transparent)}
 
-/* ---- 分类浏览：恒定一行 5 张 + 整体缩小一档 ----
-   桌面（.main 1080 − 40 内边距 → .page 920）实测每张约 166px 宽，
-   原来的 padding 20/22 + 字号 1.08rem 在这么窄的卡里显得很挤，所以整档降下来：
-   padding 13/14、圆角与竖条收细、名字 .95rem、数量 .72rem、行距收紧、hover 抬升减半。 */
-.cat-nav-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+/* ---- 分类浏览：按宽度自适应列数（用户第二轮原话「手机端可以接受两行的，让按钮根据宽度调整行数」）----
+   v1 是「恒定 5 列一行 + 手机单行横滑」，他不接受横滑、接受两行，于是改成 auto-fit 交给宽度决定：
+   实测列数＝桌面 920 容器 5 列（174px/张，一行 5 张）；手机 350 容器 3 列 → 5 张排成 **两行 3+2**；
+   640 容器 3 列 → 同样两行；768 容器 4 列 → 4+1。
+   卡片尺寸沿用 v1 缩小后的档位（padding 13/14、名字 .95rem、数量 .72rem、竖条 4px）。 */
+.cat-nav-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(156px,1fr));gap:12px}
 .cat-nav-card{gap:6px;padding:13px 14px;border-left-width:4px;justify-content:center}
 .cat-nav-card:hover{transform:translateY(-3px)}
 .cat-nav-name{font-size:.95rem;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cat-nav-count{font-size:.72rem;padding:1px 9px;line-height:1.65}
 
-@media (max-width:1023px){
-  /* 平板：这一档容器更窄（1024 时每张约 134px），再收一点内边距与字号，仍然保持一行 5 张 */
+@media (min-width:641px) and (max-width:1023px){
+  /* 只给平板/窄桌面收字号：1024 那档容器 976、5 张各 134px 偏挤（会自然折成 4 列），
+     所以这一档字号与内边距再降一档。手机不在这一档（手机写死 2 列，字号不用再缩）。 */
   .cat-nav-card{padding:12px 12px;border-left-width:3px}
   .cat-nav-name{font-size:.9rem}
   .cat-nav-count{font-size:.69rem;padding:1px 8px}
 }
 @media (max-width:640px){
+  /* 手机：书籍卡单列；分类把列宽下限从 156px 降到 104px。
+     为什么要单独降下限：350 容器下 156px 的下限**只算得出 2 列**（3×156+2×8=484 > 350），
+     5 张就变成 2+2+1、第 5 张孤在第三行；降到 104px 后 3×104+2×8=328 ≤ 350 → 三列 111px/张，
+     5 张正好两行 3+2（与用户说的「可以接受两行」一致）。 */
   .book-grid{grid-template-columns:1fr;gap:12px}
-  /* 手机：5 张恒在一行，横向滑动看全（硬塞 5 张每张只剩 60px，名字会挤成一团）；
-     用负外边距把滑动区推到页面内边距外，再补回等量滚动内边距，卡片能贴到屏幕边。 */
-  .cat-nav-grid{display:flex;gap:10px;overflow-x:auto;margin:0 -20px;padding:2px 20px 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .cat-nav-grid::-webkit-scrollbar{display:none}
-  .cat-nav-card{flex:0 0 auto;min-width:96px;padding:10px 12px}
-  .cat-nav-name{font-size:.88rem}
+  .book-body{padding:13px 14px 13px 0}
+  .cat-nav-grid{grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+}
+@media (min-width:561px) and (max-width:640px){
+  /* 561~640：容器 560~600，auto-fit 会算出 5 列、每张只剩 113px（太窄），钉成 4 列（136px/张，4+1）。
+     这条**必须放在上面那条 max-width:640px 之后**：两条在 640 同时命中、同权重，靠后者才生效
+     （2026-09-20 实测踩到过——写在前面时被 auto-fit 那条盖掉，640 仍是 5 列）。 */
+  .cat-nav-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 }
 

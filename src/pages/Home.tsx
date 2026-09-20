@@ -23,8 +23,10 @@ interface Props {
    ① 新增「书籍更新」区块（.book-section，放在「最新更新」**之后**、置顶区之前）：一本小说一张书籍卡
       （封面 / 书名 / 连载状态 / 章数·字数 / 最新章节名），按 date 倒序，一排最多 3 本；
       手机上 ≤640 折成单列竖排（书卡是横条形，一列比两列半宽更好读）。
-   ② 「分类浏览」从 auto-fill（1080 容器下会折成 4+1）改成**恒定一行 5 张**并整体缩小
-      （padding / 字号 / 竖条 / 间距全降档），≤640 单行横向滚动、不换行。 */
+      当晚第二轮他又说「书籍更新的方块丑，修改一下」→ 卡面在 index.css 里重做成
+      「封面铺满卡高 + 衬线书名 + 状态与章数字数并排 + 最新一章带「阅读 ›」」。
+   ② 「分类浏览」：第一轮按「变一行」做成恒定 5 列；第二轮他说「手机端可以接受两行的，
+      让按钮根据宽度调整行数」→ 改成 auto-fit 按宽度自适应列数（桌面一行 5 张、手机折 2 行），不再横滑。 */
 export default function Home({ query }: Props) {
   usePageTitle();
   const { articles, getByCategory, toggleFavorite } = useArticles();
@@ -193,7 +195,10 @@ export default function Home({ query }: Props) {
                     {latestCh && (
                       <p className="book-latest">
                         <span className="book-latest-tag">最新</span>
-                        {latestCh.part ? `${latestCh.part} · ` : ''}{latestCh.title}
+                        <span className="book-latest-text">
+                          {latestCh.part ? `${latestCh.part} · ` : ''}{latestCh.title}
+                        </span>
+                        <span className="book-arrow" aria-hidden="true">阅读 ›</span>
                       </p>
                     )}
                   </div>
