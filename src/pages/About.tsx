@@ -1,4 +1,5 @@
-import { useState, ChangeEvent, useRef, FormEvent } from 'react';
+import { useState, ChangeEvent, useRef, FormEvent, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 import { useAbout, AboutVersion } from '../context/AboutContext';
@@ -16,6 +17,7 @@ function fmt(iso: string, dateLocale: string) {
 export default function About() {
   const t = useT();
   const { dateLocale, locale } = useLocale();
+  const location = useLocation();
   usePageTitle(t('about.title'));
   const { profile, setProfile } = useProfile();
   const { isAdmin } = useAuth();
@@ -55,6 +57,21 @@ export default function About() {
   };
 
   const openEdit = () => { setEditText(current); setPreviewing(false); setEditMode(true); };
+
+  // 中文页上那个「编辑英文简介 →」链接会把 ?edit=1 带过来，落到英文页直接开编辑器。
+  // 用 ref 保证**只自动开一次**：存完之后 loading 会再翻一次，没这个开关会把编辑器又弹回来
+  // （2026-09-21 踩过：存完英文版页面仍停在编辑器里）。
+  const autoEditDone = useRef(false);
+  useEffect(() => {
+    if (autoEditDone.current || loading || editMode || !isAdmin) return;
+    if (new URLSearchParams(location.search).get('edit') === '1') {
+      autoEditDone.current = true;
+      setEditText(current);
+      setPreviewing(false);
+      setEditMode(true);
+    }
+  }, [loading, isAdmin, location.search]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const saveIntro = async () => {
     try {
       await save(editText);
@@ -97,6 +114,11 @@ export default function About() {
                   <button className={'tab-btn ' + (previewing ? 'active' : '')} onClick={() => setPreviewing(true)}>预览</button>
                 </div>
               </div>
+              {locale === 'en' && (
+                <p className="detail-i18n-notice">
+                  正在编辑英文版：下面预填的是中文原文，改写成英文再保存即可；中文版正文一个字都不会动。
+                </p>
+              )}
               {previewing ? (
                 <div className="editor-preview"><MarkdownRenderer content={editText} /></div>
               ) : (
@@ -113,8 +135,16 @@ export default function About() {
                 <h2>{t('about.introTitle')}</h2>
                 {!loading && isAdmin && (
                 <div className="about-head-actions">
-                  <button className="btn btn-light btn-sm" onClick={() => { setPreviewVersion(null); setShowHistory(true); }}>{t('about.history', { n: versions.length })}</button>
-                  <button className="btn btn-primary btn-sm" onClick={openEdit}>{locale === 'en' ? '编辑英文简介' : '编辑简介'}</button>
+                  {versions.length > 0 && (
+                    <button className="btn btn-light btn-sm" onClick={() => { setPreviewVersion(null); setShowHistory(true); }}>{t('about.history', { n: versions.length })}</button>
+                  )}
+                  {/* 入口按钮跟着页面语言走（英文页上不能是中文按钮）；点开后的编辑器仍是中文（博主后台） */}
+                  <button className="btn btn-primary btn-sm" onClick={openEdit}>{t('about.editIntro')}</button>
+                  {/* 中文页上再给一个直达英文版编辑器的入口：英文简介只在 /en/about 上写，这边不指路就等于没有入口。
+                      必须用普通 <a> 走整页跳转——react-router 的 <Link> 是客户端跳转，不会换 locale（语言只由 URL 决定）。 */}
+                  {locale === 'zh' && (
+                    <a className="btn btn-light btn-sm" href="/en/about?edit=1">编辑英文简介</a>
+                  )}
                 </div>
                 )}
               </div>
@@ -177,7 +207,7 @@ export default function About() {
             <p className="history-hint">点击「预览」查看某个版本，点击「设为当前」回滚到该版本。</p>
             <div className="history-list">
               {versions.length === 0 ? (
-                <p className="empty-tip">还没有历史版本。</p>
+                <p className="empty-tip">{locale === 'en' ? '英文版还没有历史版本（中文版的历史在 /about 上看）。' : '还没有历史版本。'}</p>
               ) : (
                 versions.map((v, i) => (
                   <div key={v.id} className="history-item">

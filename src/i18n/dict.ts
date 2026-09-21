@@ -307,8 +307,11 @@ export const dict: Dict = {
   'about.honeyGold': { zh: '蜜金 · 长发', en: 'Honey gold · hair' },
   'about.coralPink': { zh: '珊瑚粉 · 长发', en: 'Coral pink · hair' },
   'about.aqua': { zh: '青蓝 · 眼睛', en: 'Clear aqua · eyes' },
-  // 后台编辑区（仅博主可见，中文页照常；英文页不给博主用，留键只为结构完整）
-  'about.editIntro': { zh: '编辑本站简介', en: 'Edit this site’s intro' },
+  // 简介卡的「编辑」入口按钮：**跟着页面语言走**。
+  // 2026-09-21 修正：原先是硬编码中文「编辑英文简介」，在 /en/about 上和英文的「History (7)」
+  // 并排出现，用户当场问「编辑英文简介真的对吗」。按钮在页面正文区 → 归公开呈现，跟着页面语言；
+  // 点开之后的编辑器内部（编辑/预览/保存并生成新版本）仍是中文，那是博主后台。
+  'about.editIntro': { zh: '编辑简介', en: 'Edit the English intro' },
   'about.editProfile': { zh: '编辑个人资料', en: 'Edit profile' },
   'about.profileManage': { zh: '个人资料管理', en: 'Profile' },
 

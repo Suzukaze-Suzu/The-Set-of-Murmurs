@@ -65,20 +65,18 @@ export function AboutProvider({ children }: { children: ReactNode }) {
       }));
       // 按当前语言挑：本语言有版本就用本语言，没有就回退中文原文（英文页会另加一行提示）
       const own = rows.filter((r) => r.locale === locale);
-      const fallback = rows.filter((r) => r.locale === 'zh');
-      const useRows = own.length ? own : fallback;
       if (own.length) {
         setVersions(own);
         setCurrent(own[0].content);
         if (locale === 'zh') rememberAbout(own[0].content); // 本机缓存只存中文正文（首屏用）
         setHasOwnVersion(true);
-      } else if (useRows.length) {
-        setVersions(useRows);
-        setCurrent(useRows[0].content);
-        setHasOwnVersion(false);
       } else {
+        // 当前语言还没写过自己的版本：**正文**回退中文（英文页另给一行提示），
+        // 但**版本史必须是空的**——2026-09-21 修：原先这里把中文版本列给英文页，
+        // 「设为当前」一点就会把中文正文当成英文版写进 en 线（isolation 被破坏）。
+        const zhRows = rows.filter((r) => r.locale === 'zh');
         setVersions([]);
-        setCurrent(aboutInitial);
+        setCurrent(zhRows.length ? zhRows[0].content : aboutInitial);
         setHasOwnVersion(false);
       }
     } finally {
