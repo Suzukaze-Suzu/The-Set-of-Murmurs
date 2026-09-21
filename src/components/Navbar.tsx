@@ -5,6 +5,9 @@ import { CATEGORIES, CATEGORY_META } from '../types';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useT, useLocale } from '../i18n';
+import type { DictKey } from '../i18n/dict';
+import { catKey } from '../i18n/dict';
 
 /* ============================================================
    顶栏 v2 —— 2026-09-20
@@ -29,6 +32,31 @@ import { useTheme } from '../context/ThemeContext';
 
    本版**不做**（用户明确）：搜索浮层不点外部关闭、不加 / 或 Ctrl+K 快捷键、不加 aria-current、
    不加阅读进度条、不改滚动隐藏行为、不处理搜索跨页失效。
+
+   ★★ 英文版顶栏（2026-09-21，用户报「英文版网站顶栏冲突」，随后又要求「彩点留着，整体拉宽一点」）★★
+   实测根因（无头 Chrome，.nav-inner 原定格 1080 宽、正文宽 1032）：
+     中文整行需要 103 + 374.4(导航) + 114(彩点条) + 231.8(操作区) + 3×14 = 865.2 → 余 166.8；
+     英文整行需要 135.9 + 545.9(导航) + 114 + 252.4 + 42 = 1090.2 → **超 58.2px**。
+   超出的部分既没被裁剪也没换行（.nav-links 是 flex:1、各项 nowrap），所以末项 About 顶出
+   自己的盒子、压到分类彩点上——实测重叠 44px，这就是「冲突」的实体。
+   英文更挤的原因：7 个导航项中文各 2 个字（每项 49.2），英文是 5~9 个字母
+   （Guestbook 91.6 / Bookshelf 86.7 / Articles 72.9…），光导航就多 171.5px。
+
+   最终形态（用户拍板「彩点留着」）：
+     ① 英文顶栏**整条拉宽**：.nav-inner 与 .nav-search-inner 的 max-width 1080 → 1160
+        （正文宽 1032 → 1112）。拉宽安全：顶栏本来就不跟内容列对齐——.page / .hero / 各
+        section 都是 920 宽，1440 视口下顶栏 180~1260、内容列 260~1180；
+     ② 英文导航项只收内边距与项间距（11→7 / 5→2），**字号保持 .85rem 不动**；
+     ③ 英文分类名比中文长（Impressions 75 / Study Notes 71 / Math Notes 68），中文那档
+        悬停展开的 56px 上限会把英文名剪掉 → 英文单独放到 88px；
+     ④ 英文页登录态**任何宽度都收成「头像 + 小菜单」**（isNarrow || locale === 'en'）：
+        英文的「Author · Sign out」比中文「博主 · 退出登录」宽 21.8px，≥1200 整行放不下。
+     以上 ①②③ 全在 index.css 末尾「英文页顶栏宽度账」；本文件只负责 ④ 与下面的 ⑤。
+     ⑤ 本文件里剩下的硬编码中文（分类下拉的「分类」按钮、彩点与抽屉里的分类名、几处
+        aria-label）全部换成字典键——原来英文站的顶栏会蹦出「分类」「读后感」这类中文。
+   实测结果（.tmp-nav-en-verify.mjs，2 语 × 11 个宽度，含**彩点逐个展开的峰值**在内共 22 项断言全绿）：
+     中文 865.2/1032（展开峰值余 118.8）、英文 996.1/1112（展开峰值余 39.3）、
+     1024 视口英文 982.6/992（这一档按断点表走「Categories ∨」下拉）。
    ============================================================ */
 
 const CATEGORY_ROUTES: Record<string, string> = {
@@ -40,19 +68,21 @@ const CATEGORY_ROUTES: Record<string, string> = {
 };
 
 /* active 判定统一成 startsWith：原来只有 pathname === path 才算激活，
-   所以停在 /article/xxx、/category/xxx 这类详情页时「文章」不会高亮。 */
-const NAV_ITEMS: { to: string; label: string; match: (path: string) => boolean }[] = [
-  { to: '/', label: '首页', match: (p) => p === '/' },
+   所以停在 /article/xxx、/category/xxx 这类详情页时「文章」不会高亮。
+   ★ 英文版（2026-09-21）：label 换成**字典键**，由 t() 按当前语言取词；
+     路由 to 仍是语言无关的（react-router 的 basename 会补上 /en 前缀）。 */
+const NAV_ITEMS: { to: string; labelKey: DictKey; match: (path: string) => boolean }[] = [
+  { to: '/', labelKey: 'nav.home', match: (p) => p === '/' },
   {
     to: '/articles',
-    label: '文章',
+    labelKey: 'nav.articles',
     match: (p) => p.startsWith('/articles') || p.startsWith('/article/') || p.startsWith('/category/'),
   },
-  { to: '/novels', label: '书架', match: (p) => p.startsWith('/novels') },
-  { to: '/gallery', label: '图集', match: (p) => p.startsWith('/gallery') },
-  { to: '/guestbook', label: '留言', match: (p) => p.startsWith('/guestbook') },
-  { to: '/friends', label: '友链', match: (p) => p.startsWith('/friends') },
-  { to: '/about', label: '关于', match: (p) => p.startsWith('/about') },
+  { to: '/novels', labelKey: 'nav.bookshelf', match: (p) => p.startsWith('/novels') },
+  { to: '/gallery', labelKey: 'nav.gallery', match: (p) => p.startsWith('/gallery') },
+  { to: '/guestbook', labelKey: 'nav.guestbook', match: (p) => p.startsWith('/guestbook') },
+  { to: '/friends', labelKey: 'nav.friends', match: (p) => p.startsWith('/friends') },
+  { to: '/about', labelKey: 'nav.about', match: (p) => p.startsWith('/about') },
 ];
 
 /** ≤1023px 这一档要换一套结构（登录态收成纯头像 + 菜单），所以宽度得让 JS 也知道。 */
@@ -81,6 +111,8 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
   const { myProfile } = useProfile();
   const { isAdmin, user, signOut } = useAuth();
   const { theme, toggle } = useTheme();
+  const t = useT();
+  const { altHref, locale } = useLocale();
   const isNarrow = useMediaQuery('(max-width:1023px)');
 
   const [hidden, setHidden] = useState(false); // 向下滚动隐藏
@@ -198,7 +230,7 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
           <button
             className={`nav-burger${menuOpen ? ' open' : ''}`}
             onClick={() => setMenuOpen((o) => !o)}
-            aria-label="打开菜单"
+            aria-label={t('nav.openMenu')}
             aria-expanded={menuOpen}
           >
             <span />
@@ -209,17 +241,17 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
           <Link to="/" className="nav-brand">
             <img src="/logo.svg" alt="" className="brand-logo brand-logo-light" />
             <img src="/logo-dark.svg" alt="" className="brand-logo brand-logo-dark" />
-            <span className="brand-text">呓语集</span>
+            <span className="brand-text">{t('brand.short')}</span>
           </Link>
 
           <div className="nav-links">
             {NAV_ITEMS.map((item) => (
               <Link key={item.to} to={item.to} className={isActive(item) ? 'active' : ''}>
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             ))}
             {isAdmin && (
-              <Link to="/write" className={location.pathname.startsWith('/write') ? 'active' : ''}>写作</Link>
+              <Link to="/write" className={location.pathname.startsWith('/write') ? 'active' : ''}>{t('nav.write')}</Link>
             )}
           </div>
 
@@ -228,7 +260,7 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
               展开多出来的宽度由 .nav-links（flex:1）吸收，右侧操作区不会被推着跳。
               配色遵守铁律：该分类色的 12% 淡底 + 该分类的同色系墨色字（CATEGORY_META[c].ink）——
               不是「实底 + 白字」，也没引入任何新色号。--c 只用于 background，ink 只用于 color。 */}
-          <div className="nav-cats" aria-label="分类浏览">
+          <div className="nav-cats" aria-label={t('nav.browseCategories')}>
             {CATEGORIES.map((c) => {
               const to = CATEGORY_ROUTES[c];
               const meta = CATEGORY_META[c];
@@ -237,12 +269,12 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
                   key={c}
                   to={to}
                   className={`cat-dot-link${location.pathname === to ? ' active' : ''}`}
-                  title={meta.label}
-                  aria-label={meta.label}
+                  title={t(catKey(c))}
+                  aria-label={t(catKey(c))}
                   style={{ '--c': meta.color, color: meta.ink } as CSSProperties}
                 >
                   <span className="cat-dot" style={{ background: meta.color }} />
-                  <span className="cat-name">{meta.label}</span>
+                  <span className="cat-name">{t(catKey(c))}</span>
                 </Link>
               );
             })}
@@ -255,11 +287,11 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
             <button
               className={`nav-cat-toggle${catMenuOpen ? ' open' : ''}`}
               onClick={() => setCatMenuOpen((o) => !o)}
-              aria-label="分类浏览"
+              aria-label={t('nav.browseCategories')}
               aria-haspopup="true"
               aria-expanded={catMenuOpen}
             >
-              分类
+              {t('nav.categories')}
               <span className="nav-cat-caret" aria-hidden="true">∨</span>
             </button>
             {catMenuOpen && (
@@ -274,7 +306,7 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
                       className={`nav-cat-item${location.pathname === to ? ' active' : ''}`}
                     >
                       <span className="nav-cat-bar" style={{ background: meta.color }} />
-                      {meta.label}
+                      {t(catKey(c))}
                     </Link>
                   );
                 })}
@@ -286,9 +318,9 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
             <button
               className={`nav-icon-btn${searchOpen ? ' active' : ''}`}
               onClick={() => setSearchOpen((o) => !o)}
-              aria-label="全文搜索"
+              aria-label={t('nav.search')}
               aria-expanded={searchOpen}
-              title="全文搜索"
+              title={t('nav.search')}
             >
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <circle cx="11" cy="11" r="6.5" />
@@ -310,8 +342,8 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
               href="https://www.travellings.cn/go.html"
               target="_blank"
               rel="noopener noreferrer"
-              title="开往-友链接力"
-              aria-label="开往-友链接力"
+              title={t('nav.travellingsTitle')}
+              aria-label={t('nav.travellings')}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -336,8 +368,8 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
             <button
               className="nav-icon-btn"
               onClick={toggle}
-              aria-label="切换主题"
-              title={theme === 'light' ? '切换暗色' : '切换亮色'}
+              aria-label={t('nav.switchTheme')}
+              title={t(theme === 'light' ? 'nav.darkMode' : 'nav.lightMode')}
             >
               {theme === 'light' ? (
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -351,18 +383,37 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
               )}
             </button>
 
+            {/* ★ 语言切换（英文版 P1，2026-09-21）★
+                用 <a> 而不是 <Link>：切语言＝换 URL 前缀，整页重载最干净
+                （字典、<html lang>、首屏字体 preload 都要跟着换，SPA 内切会留下旧语言的字形缓存）。
+                显示的字是**目标语言**：中文站显示 EN，英文站显示 中文。
+                宽度：.nav-icon-btn 是 36×36 的圆角图标按钮，所以标签刻意做成 2 字符。 */}
+            <a
+              className="nav-icon-btn nav-lang-btn"
+              href={altHref()}
+              title={t('locale.switchTitle')}
+              aria-label={t('locale.switchTitle')}
+              lang={t('locale.switch') === 'EN' ? 'en' : 'zh-CN'}
+            >
+              <span className="nav-lang-text">{t('locale.switch')}</span>
+            </a>
+
             <div className="nav-auth">
               {user ? (
-                isNarrow ? (
-                  /* ≤1023px：登录态收成**纯头像按钮** + 小菜单（不收会溢出，见宽度账） */
+                isNarrow || locale === 'en' ? (
+                  /* ≤1023px：登录态收成**纯头像按钮** + 小菜单（不收会溢出，见宽度账）
+                     ★ 英文页（2026-09-21）：任何宽度都走这一套——英文的「Author · Sign out」
+                     比中文「博主 · 退出登录」宽 21.8px，加上英文导航多出的 171.5px，
+                     ≥1200 的管理员整行会超出 75px（实测）。头像版只需 931.5px，放得下。
+                     中文站 ≥1024 的行为不变（仍是「博主 · 退出登录」+ 头像）。 */
                   <div className="nav-user" ref={userMenuRef}>
                     <button
                       className={`nav-avatar${location.pathname === '/profile' ? ' active' : ''}`}
                       onClick={() => setUserMenuOpen((o) => !o)}
-                      aria-label="账号菜单"
+                      aria-label={t('nav.account')}
                       aria-haspopup="true"
                       aria-expanded={userMenuOpen}
-                      title={isAdmin ? '博主' : '账号'}
+                      title={t(isAdmin ? 'nav.author' : 'nav.account')}
                     >
                       {myProfile?.avatar ? (
                         <img src={myProfile.avatar} alt="" />
@@ -373,26 +424,26 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
                     {userMenuOpen && (
                       <div className="nav-user-menu">
                         <Link to="/profile" className="nav-user-item" onClick={() => setUserMenuOpen(false)}>
-                          个人主页
+                          {t('nav.myProfile')}
                         </Link>
                         <button className="nav-user-item danger" onClick={() => signOut()}>
-                          退出登录
+                          {t('nav.signOut')}
                         </button>
                       </div>
                     )}
                   </div>
                 ) : (
                   <>
-                    <button className="btn btn-primary btn-sm nav-signout" onClick={() => signOut()} title="退出登录">
-                      {isAdmin ? '博主' : '账号'} · 退出
+                    <button className="btn btn-primary btn-sm nav-signout" onClick={() => signOut()} title={t('nav.signOut')}>
+                      {t(isAdmin ? 'nav.author' : 'nav.account')} · {t('nav.signOut')}
                     </button>
                     <Link
                       to="/profile"
                       className={`nav-avatar${location.pathname === '/profile' ? ' active' : ''}`}
-                      title="我的主页"
+                      title={t('nav.myProfile')}
                     >
                       {myProfile?.avatar ? (
-                        <img src={myProfile.avatar} alt="头像" />
+                        <img src={myProfile.avatar} alt={t('common.avatar')} />
                       ) : (
                         <span className="nav-avatar-placeholder" />
                       )}
@@ -400,7 +451,7 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
                   </>
                 )
               ) : (
-                <Link to="/login" className="btn btn-primary btn-sm">登录</Link>
+                <Link to="/login" className="btn btn-primary btn-sm">{t('nav.signIn')}</Link>
               )}
             </div>
           </div>
@@ -415,12 +466,12 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
                 <input
                   ref={searchRef}
                   type="text"
-                  placeholder="全文搜索文章…（Esc 关闭）"
+                  placeholder={t('nav.searchPlaceholderEsc')}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
                 {query && (
-                  <button className="search-clear" onClick={() => setQuery('')} aria-label="清除搜索词">×</button>
+                  <button className="search-clear" onClick={() => setQuery('')} aria-label={t('nav.clearSearch')}>×</button>
                 )}
               </div>
             </div>
@@ -434,43 +485,43 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
         <aside className={`nav-drawer${menuOpen ? ' open' : ''}`} onClick={(e) => e.stopPropagation()}>
           <div className="nav-drawer-head">
             <span className="brand-dot" />
-            菜单
-            <button className="nav-drawer-close" onClick={() => setMenuOpen(false)} aria-label="关闭菜单">×</button>
+            {t('nav.menu')}
+            <button className="nav-drawer-close" onClick={() => setMenuOpen(false)} aria-label={t('nav.closeMenu')}>×</button>
           </div>
 
           {/* 抽屉里补上搜索框：顶栏的搜索图标在窄屏也在，但抽屉里直接输入更顺手 */}
           <div className="nav-drawer-search">
             <input
               type="text"
-              placeholder="全文搜索文章…"
+              placeholder={t('nav.searchPlaceholder')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              aria-label="全文搜索文章"
+              aria-label={t('nav.searchPlaceholder')}
             />
           </div>
 
           <div className="nav-drawer-links">
             {NAV_ITEMS.map((item) => (
               <Link key={item.to} to={item.to} className={isActive(item) ? 'active' : ''}>
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             ))}
             {isAdmin && (
-              <Link to="/write" className={location.pathname.startsWith('/write') ? 'active' : ''}>写作</Link>
+              <Link to="/write" className={location.pathname.startsWith('/write') ? 'active' : ''}>{t('nav.write')}</Link>
             )}
 
             {/* 手机端分类保持现状不动：抽屉里就是「彩点 + 文字」那套 */}
-            <div className="nav-drawer-divider">分类浏览</div>
+            <div className="nav-drawer-divider">{t('nav.browseCategories')}</div>
             {CATEGORIES.map((c) => (
               <Link key={c} to={CATEGORY_ROUTES[c]} className={location.pathname === CATEGORY_ROUTES[c] ? 'active' : ''}>
                 <span className="cat-dot" style={{ background: CATEGORY_META[c].color }} />
-                {CATEGORY_META[c].label}
+                {t(catKey(c))}
               </Link>
             ))}
 
             {!user && (
               <div className="nav-drawer-auth">
-                <Link to="/login" className="btn btn-primary btn-sm">登录</Link>
+                <Link to="/login" className="btn btn-primary btn-sm">{t('nav.signIn')}</Link>
               </div>
             )}
           </div>

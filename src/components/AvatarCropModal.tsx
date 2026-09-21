@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useT } from '../i18n';
 
 interface Props {
   open: boolean;
@@ -44,6 +45,7 @@ export function cropToCircle(imageSrc: string, offsetX: number, offsetY: number,
 }
 
 export default function AvatarCropModal({ open, imageSrc, onCancel, onConfirm }: Props) {
+  const t = useT();
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
   // 相对中心点的偏移量与缩放
   const stateRef = useRef({ x: 0, y: 0, scale: 1 });
@@ -142,16 +144,16 @@ export default function AvatarCropModal({ open, imageSrc, onCancel, onConfirm }:
       const out = await cropToCircle(imageSrc, stateRef.current.x, stateRef.current.y, stateRef.current.scale);
       onConfirm(out);
     } catch {
-      alert('图片处理失败，请重试');
+      alert(t('crop.failed'));
     }
   };
 
   return (
     <div className="modal-overlay" onClick={onCancel}>
       <div className="avatar-crop-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onCancel} aria-label="关闭">×</button>
-        <h3 className="avatar-crop-title">调整头像</h3>
-        <p className="avatar-crop-hint">拖动图片调整位置，滚动滚轮（或拖动滑块）缩放。</p>
+        <button className="modal-close" onClick={onCancel} aria-label={t('crop.close')}>×</button>
+        <h3 className="avatar-crop-title">{t('crop.title')}</h3>
+        <p className="avatar-crop-hint">{t('crop.hint')}</p>
 
         <div
           ref={containerRef}
@@ -175,8 +177,8 @@ export default function AvatarCropModal({ open, imageSrc, onCancel, onConfirm }:
         />
 
         <div className="avatar-crop-actions">
-          <button className="btn btn-primary" onClick={confirm}>确定</button>
-          <button className="btn" onClick={onCancel}>取消</button>
+          <button className="btn btn-primary" onClick={confirm}>{t('crop.confirm')}</button>
+          <button className="btn" onClick={onCancel}>{t('crop.cancel')}</button>
         </div>
       </div>
     </div>

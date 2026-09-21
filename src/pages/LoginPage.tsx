@@ -2,6 +2,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useT } from '../i18n';
 
 const REMEMBER_KEY = 'murmur_remembered';
 
@@ -19,7 +20,8 @@ function generateMathCaptcha(): { text: string; answer: number } {
 }
 
 export default function LoginPage() {
-  usePageTitle('登录');
+  const t = useT();
+  usePageTitle(t('login.pageTitle'));
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -65,17 +67,17 @@ export default function LoginPage() {
 
     if (mode === 'signup') {
       if (!/(?=.*[A-Za-z])(?=.*\d).{8,}/.test(password)) {
-        setError('密码需至少8位，且同时包含字母和数字');
+        setError(t('login.errPasswordRule'));
         setCaptcha(generateMathCaptcha());
         return;
       }
       if (password !== confirm) {
-        setError('两次输入的密码不一致');
+        setError(t('login.errPasswordMismatch'));
         setCaptcha(generateMathCaptcha());
         return;
       }
       if (String(captcha.answer) !== captchaInput.trim()) {
-        setError('验证码不正确，请重新输入');
+        setError(t('login.errCaptcha'));
         setCaptcha(generateMathCaptcha());
         setCaptchaInput('');
         return;
@@ -95,7 +97,7 @@ export default function LoginPage() {
         else if (session) {
           navigate('/');   // 免邮箱验证：注册即登录
         } else {
-          setInfo('注册成功！我们已向你的邮箱发送验证链接，请点击验证后再登录。');
+          setInfo(t('login.verifySent'));
           setPassword('');
           setConfirm('');
           setCaptchaInput('');
@@ -119,10 +121,10 @@ export default function LoginPage() {
       <div className="login-deco login-deco-1" />
       <div className="login-deco login-deco-2" />
       <div className="login-card">
-        <button className="login-card-close" onClick={() => navigate('/')} aria-label="返回">×</button>
+        <button className="login-card-close" onClick={() => navigate('/')} aria-label={t('login.back')}>×</button>
 
-        <h1 className="login-card-title">{mode === 'signin' ? '呓语集' : '加入呓语集'}</h1>
-        <p className="login-card-sub">{mode === 'signin' ? '登录你的账号，继续书写呓语' : '创建一个新账号'}</p>
+        <h1 className="login-card-title">{mode === 'signin' ? t('login.cardSignIn') : t('login.cardSignUp')}</h1>
+        <p className="login-card-sub">{mode === 'signin' ? t('login.subSignIn') : t('login.subSignUp')}</p>
 
         {info && <p className="captcha-info">{info}</p>}
         {error && <p className="auth-error">{error}</p>}
@@ -135,7 +137,7 @@ export default function LoginPage() {
             <input
               type="email"
               className="login-input"
-              placeholder="邮箱"
+              placeholder={t('login.email')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -149,14 +151,14 @@ export default function LoginPage() {
             <input
               type={showPassword ? 'text' : 'password'}
               className="login-input"
-              placeholder="密码（至少8位，含字母和数字）"
+              placeholder={t('login.password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             />
-            <button type="button" className="login-eye" onClick={() => setShowPassword((v) => !v)} aria-label="显示/隐藏密码" title={showPassword ? '隐藏密码' : '显示密码'}>
+            <button type="button" className="login-eye" onClick={() => setShowPassword((v) => !v)} aria-label={t('login.togglePassword')} title={showPassword ? t('login.hidePassword') : t('login.showPassword')}>
               {showPassword ? (
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
               ) : (
@@ -172,14 +174,14 @@ export default function LoginPage() {
               <input
                 type={showConfirm ? 'text' : 'password'}
                 className="login-input"
-                placeholder="确认密码"
+                placeholder={t('login.confirmPassword')}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 required
                 minLength={6}
                 autoComplete="new-password"
               />
-              <button type="button" className="login-eye" onClick={() => setShowConfirm((v) => !v)} aria-label="显示/隐藏密码" title={showConfirm ? '隐藏密码' : '显示密码'}>
+              <button type="button" className="login-eye" onClick={() => setShowConfirm((v) => !v)} aria-label={t('login.togglePassword')} title={showConfirm ? t('login.hidePassword') : t('login.showPassword')}>
                 {showConfirm ? (
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
                 ) : (
@@ -196,7 +198,7 @@ export default function LoginPage() {
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
               />
-              <span>记住登录（保持登录，下次免输入）</span>
+              <span>{t('login.remember')}</span>
             </label>
           )}
 
@@ -206,7 +208,7 @@ export default function LoginPage() {
               <input
                 type="text"
                 className="login-input captcha-input"
-                placeholder="填答案"
+                placeholder={t('login.captchaAnswer')}
                 value={captchaInput}
                 onChange={(e) => setCaptchaInput(e.target.value)}
                 required
@@ -215,14 +217,14 @@ export default function LoginPage() {
           )}
 
           <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? '提交中…' : (mode === 'signin' ? '登 录' : '注 册')}
+            {loading ? t('login.submitting') : (mode === 'signin' ? t('login.signIn') : t('login.signUp'))}
           </button>
         </form>
 
         <p className="login-switch">
-          {mode === 'signin' ? '没有账号？' : '已有账号？'}
+          {mode === 'signin' ? t('login.noAccount') : t('login.haveAccount')}
           <button type="button" onClick={switchMode} className="login-switch-btn">
-            {mode === 'signin' ? '去注册' : '去登录'}
+            {mode === 'signin' ? t('login.goSignUp') : t('login.goSignIn')}
           </button>
         </p>
       </div>

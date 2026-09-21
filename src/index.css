@@ -1638,3 +1638,388 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
   .cat-nav-count{font-size:.69rem}
 }
 
+/* ============================================================================
+   ★ 英文版 · P1 块（2026-09-21，路线 B）★
+   ----------------------------------------------------------------------------
+   这一块是**纯追加**，用 html[lang='en'] 限定作用域：中文站（lang=zh-CN）
+   一个字都不会受影响，回滚＝直接删掉这一整段。
+   规则一律写在这里（index.css 末尾），不新建 CSS 文件——沿用全站唯一
+   样式文件的既有约定（暗色块也是追加在同一文件末尾）。
+
+   ① 字体栈：英文页换成 Source Serif 4（拉丁），把中文字体降到最后兜底。
+      不是"英文更好看"，是因为 **Noto Serif TC/SC 的拉丁部分本来就是
+      Source Serif 的骨架**——两边同源，中英混排不会有两套字感。
+      中文放最后是有意的：英文页只有真出现汉字（还没翻译的文章）才去碰中文
+      分片；否则为了一个 ★ 就要拉 142KB 的中文符号片（★☆ 已单独切成 1104 字节）。
+   ② 语言切换按钮：复用 .nav-icon-btn（36×36 圆角图标按钮），只补文字排布。
+   ③ 英文的排印档位：中文那套 letter-spacing（.18em 级）是按"两三个汉字"调的，
+      英文会散成一地。这里给英文页单独收一档。
+   ========================================================================== */
+
+html[lang='en']{
+  --font-serif:'Source Serif 4','Murmur UI Symbols',Georgia,'Times New Roman','Noto Serif TC','Noto Serif SC','Songti SC','STSong',serif;
+}
+
+/* 语言切换按钮：图标按钮的尺寸不变，只放两个字符（EN / 中文） */
+.nav-lang-btn{text-decoration:none}
+.nav-lang-text{font-size:.72rem;font-weight:600;letter-spacing:0;line-height:1;font-family:var(--font-serif)}
+
+/* 英文页的字距档：中文的超宽字距在英文里会散架 */
+html[lang='en'] .hero-title{letter-spacing:.02em;text-indent:0}
+html[lang='en'] .page-title{letter-spacing:0}
+html[lang='en'] .section-title{letter-spacing:0}
+html[lang='en'] .nav-brand{letter-spacing:0}
+
+/* ----------------------------------------------------------------------------
+   ④ 英文页顶栏宽度账（2026-09-21，用户报「英文版网站顶栏冲突」→ 又要求「彩点留着，整体拉宽一点」）
+   ----------------------------------------------------------------------------
+   实测（无头 Chrome，.nav-inner 原定格 1080 宽、去 padding 后正文宽 1032）：
+     中文整行需要 103 + 374.4(导航) + 114(彩点条) + 231.8(操作区) + 3×14 = 865.2 → 余 166.8；
+     英文整行需要 135.9 + 545.9(导航) + 114 + 252.4 + 42 = 1090.2 → **超 58.2**。
+   超出来的部分没有裁剪也没有换行（.nav-links 是 flex:1 + 各项 nowrap），所以末项 About
+   直接顶出自己的盒子压到分类彩点上——实测重叠 44px，这就是「顶栏冲突」。
+   英文为什么更挤：7 个导航项的中文全是 2 个字（每项 49.2），英文单词 5~9 个字母
+   （Guestbook 91.6 / Bookshelf 86.7 / Articles 72.9…），光导航就多 171.5px。
+
+   ★ 定稿：**彩点条留着，把英文顶栏整条拉宽**（用户 2026-09-21 原话「我还挺喜欢彩点的，
+     你能不能试一下整体拉宽一点」）。拉宽为什么安全：顶栏本来就不跟内容列对齐——
+     实测 .nav-inner 1080 宽（正文 1032），而 .page / .hero / 各 section 是 920 宽
+     （1440 视口下：顶栏 180~1260，内容列 260~1180），所以拉宽顶栏不动任何对齐关系。
+   最终账（英文，.nav-inner 加宽到 1160 → 正文宽 1112）：
+     彩点条悬停峰值实测：中文展开 数学笔记 = 176（比静止 114 多 62）；
+       英文展开 Impressions = 200.5（名字 75px，中文那档 56px 上限会把英文名剪掉 → 见下面 ⑥）
+     导航项收紧一档：内边距 11→7、项间距 5→2（**字号保持 .85rem 不动**——用户选了"用宽度
+       换字号"这条路，别再去缩字）→ 导航 459.9 → 471.9 含间距
+     访客整行 = 135.9 + 471.9 + 114 + 244.4 + 3×10 = 996.2，悬停峰值 1082.7 / 1112（余 29.3）；
+     登录态（头像版）= 957.8，悬停峰值 1044.3（余 67.7）。
+   1024~1199 这档仍按中文那套用「分类 ∨」下拉（断点表原样生效，本块不再单独覆盖显隐），
+   额外把 .nav-inner 左右内边距 24→16：视口 <1192 时 .nav-inner 撑不满，省下的就是实宽。
+   登录态另有一条（在组件里）：英文页**任何宽度都收成「头像 + 小菜单」**，不显示
+   「Author · Sign out」文字按钮——英文那串字比中文「博主 · 退出登录」宽 21.8px，
+   加上英文导航多出的 171.5px，≥1200 的管理员整行会超 55px（实测）。
+   ⚠️ 中文站一个字都没动：所有规则都挂在 html[lang='en'] 下，且 .nav-inner 的 1080 / 断点表
+      仍是中文那套（英文只是把 max-width 覆盖成 1160，搜索浮层的 .nav-search-inner 同步跟）。 */
+@media (min-width:1024px){
+  html[lang='en'] .nav-inner,
+  html[lang='en'] .nav-search-inner{max-width:1160px}
+  html[lang='en'] .nav-inner{gap:10px}
+  html[lang='en'] .nav-links{gap:2px}
+  html[lang='en'] .nav-links a{padding:7px 7px}
+  html[lang='en'] .nav-actions{gap:6px}
+  html[lang='en'] .nav-cat-toggle{font-size:.8rem;padding:0 10px}
+}
+/* 只在这一小段生效：视口 <1192 时 .nav-inner 撑不满 1160，内边距少 8px 就是实打实的 16px 宽度 */
+@media (min-width:1024px) and (max-width:1199px){
+  html[lang='en'] .nav-inner,
+  html[lang='en'] .nav-search-inner{padding-left:16px;padding-right:16px}
+}
+
+/* ⑥ 英文分类名比中文长，悬停展开会被中文那档的 56px 上限剪掉（实测）
+   中文名最长 数学笔记 50px，英文 Impressions 75 / Study Notes 71 / Math Notes 68。
+   放开到 88px 后英文名完整显示；展开峰值也因此从 182 涨到 200.5，已经算进④的宽度账里。 */
+html[lang='en'] .cat-dot-link:hover .cat-name,
+html[lang='en'] .cat-dot-link:focus-visible .cat-name{max-width:88px}
+
+/* ⑤ 英文页 hero 下方那句简介排成一行（2026-09-21，用户要求「hero 的下方文字调整为一行」）
+   同一句简介的自然宽度：中文 372.5px、英文 557.3px，而 .hero-desc 的 max-width 是 540px
+   —— 中文本来就落在 540 里（一行），英文 557.3 卡在 540 必然折成两行。
+   放开英文的宽度上限即可（hero-inner 宽 830，够放）；窄屏（hero-inner 830→304）仍旧按
+   可用宽度自然折行，不需要额外断点，中文站的 540px 上限也不动。 */
+html[lang='en'] .hero-desc{max-width:none}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   第P3步：英文翻译工作台（2026-09-21）
+   ---------------------------------------------------------------------------
+   新增两块东西，都只出现在「英文页」或「后台写作页」，中文公开页看不到：
+     ① .detail-i18n-notice —— 英文页缺译时那行提示（文章详情 / 关于页共用）；
+     ② .tr-* —— 写作页的 English 译文工作台（左中右对照 + 章节列表）。
+   配色照旧只用凉风凉四色与本表 token（墨色只进 color:，底/描边只进 background/border），
+   暗色**不需要单独覆盖**：底走 --bg-soft / --bg-card，字走 --text-secondary / 墨色 token，
+   这些在 [data-theme='dark'] 里已经整体换过一轮。 */
+.detail-i18n-notice{
+  margin:14px 0 0; padding:10px 14px;
+  border-left:3px solid var(--accent); border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  background:color-mix(in srgb,var(--accent) 8%,transparent);
+  color:var(--text-secondary); font-size:.9rem; line-height:1.7; font-style:italic;
+}
+
+.tr-workbench{display:flex;flex-direction:column;gap:14px;margin-top:4px}
+.tr-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tr-head-main{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tr-title{margin:0;font-size:1.15rem;color:var(--text-main)}
+.tr-head-actions{display:flex;gap:8px;flex-wrap:wrap}
+.tr-status{font-size:.78rem;padding:3px 10px;border-radius:var(--radius-pill);white-space:nowrap}
+.tr-status-draft{background:color-mix(in srgb,var(--slate-blue) 16%,transparent);color:var(--slate-ink)}
+.tr-status-reviewed{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--aqua-ink)}
+.tr-dirty{font-size:.78rem;color:var(--coral-ink)}
+.tr-hint{margin:0;color:var(--text-secondary);font-size:.85rem;line-height:1.75}
+.tr-hint strong{color:var(--aqua-ink)}
+.tr-loading{padding:28px 0;text-align:center;color:var(--text-secondary)}
+
+.tr-meta-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:900px){.tr-meta-row{grid-template-columns:1fr}}
+.tr-field{display:flex;flex-direction:column;gap:6px}
+.tr-label{font-size:.82rem;color:var(--text-secondary)}
+
+.tr-input,.tr-textarea{
+  width:100%; box-sizing:border-box; font-family:inherit; font-size:.92rem; line-height:1.75;
+  color:var(--text-main); background:var(--bg-card);
+  border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
+  border-radius:var(--radius-sm); padding:10px 12px;
+}
+.tr-input:focus,.tr-textarea:focus{outline:none;border-color:var(--accent)}
+.tr-textarea{resize:vertical}
+.tr-textarea-sm{min-height:56px}
+.tr-textarea-lg{min-height:360px}
+
+.tr-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:980px){.tr-cols{grid-template-columns:1fr}}
+.tr-col{display:flex;flex-direction:column;gap:10px;background:var(--bg-soft);border-radius:var(--radius-sm);padding:14px}
+.tr-col-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.82rem;color:var(--text-secondary)}
+.tr-count{color:var(--aqua-ink)}
+.tr-mini-btn{
+  font-family:inherit;font-size:.78rem;cursor:pointer;color:var(--aqua-ink);
+  background:transparent;border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
+  border-radius:var(--radius-pill);padding:2px 10px;
+}
+.tr-count-line{font-size:.8rem;color:var(--text-secondary);text-align:right}
+
+/* 左栏：中文原文（只读）——长文限高滚动，避免把右侧编辑框顶到屏幕外 */
+.tr-zh-title{font-family:var(--font-serif);font-size:1rem;color:var(--text-main);line-height:1.6}
+.tr-zh-summary{margin:0;font-size:.85rem;color:var(--text-secondary);line-height:1.7}
+.tr-zh-text{
+  white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto;
+  font-family:var(--font-serif);font-size:.9rem;line-height:1.95;color:var(--text-secondary);
+}
+.tr-preview{background:var(--bg-card);border-radius:var(--radius-sm);padding:4px 14px;max-height:520px;overflow:auto}
+
+/* 小说：左侧章节列表 + 已译状态小圆点 */
+.tr-chapter-list{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow:auto}
+.tr-chapter-item{
+  display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer;
+  font-family:inherit;font-size:.85rem;color:var(--text-secondary);
+  background:transparent;border:1px solid transparent;border-radius:10px;padding:6px 8px;
+}
+.tr-chapter-item:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.tr-chapter-item.active{
+  background:color-mix(in srgb,var(--accent) 14%,transparent);
+  border-color:color-mix(in srgb,var(--accent) 45%,transparent);
+  color:var(--text-main);
+}
+.tr-chapter-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:color-mix(in srgb,var(--slate-blue) 45%,transparent)}
+.tr-chapter-dot.on{background:var(--accent)}
+.tr-chapter-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-chapter-wc{font-size:.75rem;color:var(--slate-ink);white-space:nowrap}
+
+.tr-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:4px}
+.tr-msg{font-size:.85rem;color:var(--aqua-ink)}
+
+
+/* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?   绗琍4姝ワ細鑻辨枃缈昏瘧宸ヤ綔鍙?v2锛堟钀藉鐓?+ 鏇存柊閫昏緫锛?026-09-21锛?   ---------------------------------------------------------------------------
+   涓庣P3姝ョ殑鍏崇郴锛歅3 鐨勩€屽乏鏁寸瘒涓枃 / 鍙虫暣绡囪嫳鏂囥€嶄袱鏍忚**娈靛娈?*鍙栦唬锛?   鎵€浠ヨ繖閲屾柊澧?.tr-seg-*锛堟钀借锛夈€?tr-note-*锛堟彁绀烘潯锛夈€?tr-history-*锛堝巻鍙茬増鏈級銆?   鑰佹锛?tr-cols / .tr-col / .tr-zh-text / .tr-chapter-list锛?*淇濈暀涓嶅姩**锛?   瀹冧滑宸茬粡涓嶅啀琚紩鐢紝鍥炴粴 v2 鏃惰繕鑳界洿鎺ョ敤銆?   閰嶈壊鐓ф棫鍙敤鍑夐鍑夊洓鑹蹭笌鏈〃 token锛堝ⅷ鑹插彧杩?color:锛屽簳/鎻忚竟鍙繘 background/border锛夛紱
+   鏆楄壊**涓嶉渶瑕佸崟鐙鐩?*锛氬簳璧?--bg-soft/--bg-card锛屽瓧璧?--*-ink锛岃繖浜涘湪
+   [data-theme='dark'] 閲屽凡缁忔暣浣撴崲杩囦竴杞紙P3 鐨勮€佽鐭╋級銆?*/
+
+/* 鈹€鈹€ 娈佃惤瀵圭収涓讳綋 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
+.tr-body{display:block}
+.tr-body-novel{display:grid;grid-template-columns:212px minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:1080px){.tr-body-novel{grid-template-columns:1fr}}
+
+.tr-chapter-rail{
+  display:flex;flex-direction:column;gap:4px;
+  background:var(--bg-soft);border-radius:var(--radius-sm);padding:10px 8px;
+  max-height:640px;overflow:auto;
+}
+.tr-rail-head{font-size:.78rem;color:var(--text-secondary);padding:2px 6px 8px}
+.tr-chapter-dot.part{background:color-mix(in srgb,var(--honey-gold) 85%,transparent)}
+.tr-chapter-dot.stale{background:var(--coral-solid)}
+
+.tr-seg-pane{display:flex;flex-direction:column;gap:10px;min-width:0}
+.tr-pane-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tr-pane-title{font-size:.88rem;color:var(--text-main);font-weight:600}
+.tr-pane-stats{font-size:.78rem;color:var(--aqua-ink)}
+.tr-input-ch{margin-bottom:2px}
+.tr-empty-seg{padding:22px 0;text-align:center;color:var(--text-secondary);font-size:.86rem}
+.tr-mini-danger{color:var(--coral-ink);border-color:color-mix(in srgb,var(--coral-solid) 45%,transparent)}
+
+/* 鈹€鈹€ 涓€琛?= 宸︿腑鏂囨 / 鍙宠嫳鏂囨 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
+.tr-seg-list{display:flex;flex-direction:column;gap:12px}
+.tr-seg{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;
+  background:var(--bg-soft);border-radius:var(--radius-sm);
+  border-left:3px solid color-mix(in srgb,var(--slate-blue) 40%,transparent);
+  padding:10px 12px;
+}
+@media (max-width:980px){.tr-seg{grid-template-columns:1fr}}
+.tr-seg:hover{background:color-mix(in srgb,var(--accent) 6%,var(--bg-soft))}
+/* 鐘舵€佽壊锛氬簳/鎻忚竟鐢ㄨ壊鍗¤壊鏈韩锛岀粷涓嶇敤澧ㄨ壊锛堥厤鑹查搧寰嬬 鈶?鏉★級 */
+.tr-seg-done{border-left-color:var(--accent)}
+.tr-seg-stale{border-left-color:var(--coral-solid);background:color-mix(in srgb,var(--coral-pink) 8%,var(--bg-soft))}
+.tr-seg-empty{border-left-color:color-mix(in srgb,var(--slate-blue) 40%,transparent)}
+.tr-seg-edited{border-left-color:var(--honey-gold)}
+
+.tr-seg-zh{display:flex;gap:8px;min-width:0}
+.tr-seg-no{
+  flex:0 0 20px;font-size:.72rem;color:var(--slate-ink);
+  padding-top:3px;text-align:right;
+}
+.tr-seg-zh-text{
+  flex:1;min-width:0;
+  font-family:var(--font-serif);font-size:.88rem;line-height:1.95;
+  color:var(--text-secondary);white-space:pre-wrap;word-break:break-word;
+  max-height:280px;overflow:auto;
+}
+.tr-seg-en{display:flex;flex-direction:column;gap:6px;min-width:0}
+.tr-seg-input{
+  width:100%;box-sizing:border-box;font-family:inherit;font-size:.9rem;line-height:1.8;
+  color:var(--text-main);background:var(--bg-card);
+  border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);
+  border-radius:var(--radius-sm);padding:8px 10px;resize:vertical;min-height:66px;
+}
+.tr-seg-input:focus{outline:none;border-color:var(--accent)}
+.tr-seg-input::placeholder{color:var(--slate-ink)}
+
+.tr-seg-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.74rem}
+.tr-seg-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:color-mix(in srgb,var(--slate-blue) 55%,transparent)}
+.tr-seg-dot-done{background:var(--accent)}
+.tr-seg-dot-stale{background:var(--coral-solid)}
+.tr-seg-dot-empty{background:color-mix(in srgb,var(--slate-blue) 55%,transparent)}
+.tr-seg-dot-edited{background:var(--honey-gold)}
+.tr-seg-state{color:var(--text-secondary)}
+.tr-seg-stale .tr-seg-state{color:var(--coral-ink)}
+.tr-seg-edited .tr-seg-state{color:var(--honey-ink)}
+.tr-seg-old{color:var(--text-secondary)}
+.tr-seg-old summary{cursor:pointer;color:var(--aqua-ink);font-size:.74rem}
+.tr-seg-old-text{
+  margin-top:6px;padding:8px 10px;border-radius:var(--radius-sm);
+  background:var(--bg-card);color:var(--text-secondary);
+  font-size:.82rem;line-height:1.75;white-space:pre-wrap;word-break:break-word;
+}
+
+/* 鈹€鈹€ 鎻愮ず鏉★細涓枃鏈繚瀛?/ 鍘熸枃宸插彉 / 澶氱獥鍙ｅ啿绐?鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
+.tr-note{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 14px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  font-size:.85rem;line-height:1.7;color:var(--text-secondary);
+}
+.tr-note-warn{
+  border-left:3px solid var(--honey-gold);
+  background:color-mix(in srgb,var(--honey-gold) 14%,transparent);
+}
+.tr-note-stale{
+  border-left:3px solid var(--coral-solid);
+  background:color-mix(in srgb,var(--coral-pink) 12%,transparent);
+  color:var(--coral-ink);
+}
+.tr-note-conflict{
+  border-left:3px solid var(--coral-solid);
+  background:color-mix(in srgb,var(--coral-pink) 16%,transparent);
+  color:var(--text-secondary);
+}
+.tr-note-sub{font-size:.78rem;color:var(--text-secondary)}
+.tr-saving{font-size:.78rem;color:var(--text-secondary)}
+.tr-autosave{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text-secondary);cursor:pointer}
+.tr-autosave input{cursor:pointer}
+
+/* 鈹€鈹€ 鍘嗗彶鐗堟湰锛堟诞灞傦級 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
+.tr-history-mask{
+  position:fixed;inset:0;z-index:60;background:rgba(45,52,54,.42);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.tr-history{
+  width:min(560px,100%);max-height:78vh;overflow:auto;
+  background:var(--bg-card);border-radius:var(--radius);
+  padding:18px 20px;box-shadow:var(--shadow-lg);
+}
+.tr-history-head{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--text-main)}
+.tr-history-desc{margin:8px 0 12px;font-size:.8rem;color:var(--text-secondary);line-height:1.7}
+.tr-history-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.tr-history-list li{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:8px 10px;border-radius:var(--radius-sm);background:var(--bg-soft);
+}
+.tr-history-time{font-size:.82rem;color:var(--text-main)}
+.tr-history-words{font-size:.76rem;color:var(--text-secondary);margin-left:auto}
+
+/* 鈹€鈹€ 缈昏瘧鎬昏锛堝啓浣滈〉鐨勮繘搴﹂潰鏉匡級 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
+.tov-wrap{display:flex;flex-direction:column;gap:14px}
+.tov-sum{display:flex;gap:10px;flex-wrap:wrap}
+.tov-chip{
+  font-size:.8rem;padding:5px 12px;border-radius:var(--radius-pill);
+  background:var(--bg-soft);color:var(--text-secondary);
+}
+.tov-chip b{color:var(--text-main)}
+.tov-chip-stale{background:color-mix(in srgb,var(--coral-pink) 14%,transparent);color:var(--coral-ink)}
+.tov-chip-done{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--aqua-ink)}
+.tov-list{display:flex;flex-direction:column;gap:8px}
+.tov-row{
+  display:grid;grid-template-columns:minmax(0,1fr) 96px 132px 116px 84px;gap:10px;align-items:center;
+  padding:10px 12px;border-radius:var(--radius-sm);background:var(--bg-soft);
+  border-left:3px solid transparent;
+}
+.tov-row-stale{border-left-color:var(--coral-solid)}
+.tov-row-review{border-left-color:var(--accent)}
+.tov-row-draft{border-left-color:var(--honey-gold)}
+@media (max-width:900px){
+  .tov-row{grid-template-columns:minmax(0,1fr) auto;grid-auto-rows:auto}
+  .tov-row .tov-col-extra{display:none}
+}
+.tov-title{font-size:.88rem;color:var(--text-main);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tov-title-en{font-size:.78rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tov-col{font-size:.78rem;color:var(--text-secondary);white-space:nowrap}
+.tov-state{font-size:.76rem;padding:3px 10px;border-radius:var(--radius-pill);text-align:center;white-space:nowrap}
+.tov-state-reviewed{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--aqua-ink)}
+.tov-state-draft{background:color-mix(in srgb,var(--honey-gold) 20%,transparent);color:var(--honey-ink)}
+.tov-state-none{background:color-mix(in srgb,var(--slate-blue) 16%,transparent);color:var(--slate-ink)}
+.tov-state-stale{background:color-mix(in srgb,var(--coral-pink) 18%,transparent);color:var(--coral-ink)}
+.tov-bar{height:6px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--slate-blue) 22%,transparent);overflow:hidden}
+.tov-bar span{display:block;height:100%;background:var(--accent)}
+.tov-loading{padding:28px 0;text-align:center;color:var(--text-secondary)}
+
+/* ============================================================================
+   第P5步：标签翻译（2026-09-21）
+   ----------------------------------------------------------------------------
+   Saber 的指令：「支持标签翻译」。两块：
+     ① /write/translations 上的「标签词典」区（.tag-gloss / .tg-*）
+     ② 翻译工作台里的「本篇标签」条（.tr-tags / .tr-tag-*）
+   只用主题 token，暗色无需另写覆盖。
+   ============================================================================ */
+.tag-gloss{display:flex;flex-direction:column;gap:12px;margin-top:10px;padding-top:22px;border-top:1px solid color-mix(in srgb,var(--accent) 22%,transparent)}
+.tg-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tg-title{margin:0;font-size:1.05rem;color:var(--text-main)}
+.tg-sum{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tg-chip{font-size:.8rem;padding:5px 12px;border-radius:var(--radius-pill);background:var(--bg-soft);color:var(--text-secondary)}
+.tg-chip b{color:var(--text-main)}
+.tg-chip-done{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--aqua-ink)}
+.tg-saving{font-size:.78rem;color:var(--text-secondary)}
+.tg-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tg-list{display:flex;flex-direction:column;gap:8px}
+.tg-row{display:grid;grid-template-columns:minmax(0,250px) minmax(0,1fr) 84px 138px;gap:10px;align-items:center;padding:8px 12px;border-radius:var(--radius-sm);background:var(--bg-soft);border-left:3px solid transparent}
+.tg-tag{display:flex;align-items:center;gap:8px;min-width:0}
+.tg-tag-cn{font-size:.86rem;color:var(--text-main);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tg-count{font-size:.74rem;color:var(--text-secondary);white-space:nowrap}
+.tg-ascii{font-size:.72rem;color:var(--slate-ink);background:color-mix(in srgb,var(--slate-blue) 16%,transparent);border-radius:var(--radius-pill);padding:2px 8px;white-space:nowrap}
+.tg-input{width:100%;box-sizing:border-box;font-family:inherit;font-size:.9rem;color:var(--text-main);background:var(--bg-card);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);border-radius:var(--radius-sm);padding:6px 10px}
+.tg-input:focus{outline:none;border-color:var(--accent)}
+.tg-input::placeholder{color:var(--slate-ink)}
+.tg-state{font-size:.76rem;padding:3px 10px;border-radius:var(--radius-pill);text-align:center;white-space:nowrap;background:color-mix(in srgb,var(--slate-blue) 16%,transparent);color:var(--slate-ink)}
+.tg-state.draft{background:color-mix(in srgb,var(--honey-gold) 20%,transparent);color:var(--honey-ink)}
+.tg-state.on{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--aqua-ink)}
+.tg-actions{display:flex;gap:6px;justify-content:flex-end}
+.tg-btn-on{color:var(--aqua-ink);border-color:color-mix(in srgb,var(--accent) 70%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+@media (max-width:760px){
+  .tg-row{grid-template-columns:1fr;gap:8px}
+  .tg-actions{justify-content:flex-start}
+}
+.tr-tags{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.8rem}
+.tr-tags-label{color:var(--text-secondary)}
+.tr-tags .tr-mini-btn{text-decoration:none}
+.tr-tag{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:var(--radius-pill);background:var(--bg-soft);border:1px solid color-mix(in srgb,var(--slate-blue) 22%,transparent);font-size:.78rem}
+.tr-tag-zh{color:var(--text-secondary)}
+.tr-tag-arrow{color:var(--slate-ink)}
+.tr-tag-en{color:var(--text-main)}
+.tr-tag-state{font-size:.72rem;color:var(--slate-ink)}
+.tr-tag-reviewed{border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.tr-tag-reviewed .tr-tag-state{color:var(--aqua-ink)}
+.tr-tag-draft{border-color:color-mix(in srgb,var(--honey-gold) 55%,transparent)}
+.tr-tag-draft .tr-tag-state{color:var(--honey-ink)}

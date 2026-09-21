@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
+import { useTranslations } from '../context/TranslationContext';
 import { CATEGORIES, CATEGORY_META, NOVEL_STATUS_META } from '../types';
 import type { Article } from '../types';
 import ArticleCard from '../components/ArticleCard';
@@ -11,6 +12,9 @@ import NovelCard from '../components/NovelCard';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useInfiniteList } from '../hooks/useInfiniteList';
 import { searchArticles } from '../lib/search';
+import { useT, useLocale } from '../i18n';
+import { catKey } from '../i18n/dict';
+import { countWords, formatCount } from '../lib/wordCount';
 
 /* 空数组常量：useInfiniteList 依赖 items 引用稳定，别在渲染里现造 [] */
 const NO_RESULTS: Article[] = [];
@@ -41,11 +45,15 @@ interface Props {
     不再显示「正在为你跳转到全部文章」的横幅。回滚＝把本文件换回
     blog\first\home-search-inline\Home.改动前.tsx。 */
 export default function Home({ query }: Props) {
+  const t = useT();
+  const { locale } = useLocale();
   /* 有搜索词时标签页也跟着变成「搜索：xxx - 呓语集」（与 /articles 的口径一致） */
-  usePageTitle(query.trim() ? `搜索：${query.trim()}` : undefined);
+  usePageTitle(query.trim() ? t('home.titleSearch', { q: query.trim() }) : undefined);
   const { articles, getByCategory, toggleFavorite } = useArticles();
   const { isAdmin } = useAuth();
   const { profile } = useProfile();
+  /* 英文页：首页这几处自己渲染标题（小清单 / 书籍卡），也要换成已审校的译文 */
+  const { localize } = useTranslations();
 
   /* ===== 首页直接出搜索结果（2026-09-20）=====
      用户原话：「首页搜索很别扭：搜完只弹一句『正在为你跳转…』，想在首页直接看到搜索结果」。
@@ -125,19 +133,20 @@ export default function Home({ query }: Props) {
       <div className="page home">
         <section className="home-search-section">
           <div className="cat-section-head">
-            <h2 className="section-title">搜索结果</h2>
+            <h2 className="section-title">{t('home.searchResults')}</h2>
             <Link to="/articles" className="more-link">
-              在全部文章里看<span className="more-arrow">›</span>
+              {t('home.seeAllArticles')}<span className="more-arrow">›</span>
             </Link>
           </div>
           <p className="result-count">
-            搜索 “<strong>{query}</strong>”，{searching ? '搜索中…' : <>共 {searchTotal} 篇</>}
+            {t('search.prefix')}<strong>{query}</strong>
+            {searching ? t('search.suffixIng') : t('search.suffix', { n: searchTotal })}
           </p>
 
           {searchList.length === 0 ? (
             <div className="empty-state">
               <span className="empty-icon empty-icon-magnifier" />
-              <p>{searching ? '搜索中…' : '没有找到匹配的文章'}</p>
+              <p>{searching ? t('search.searching') : t('search.noMatch')}</p>
             </div>
           ) : (
             <>
@@ -151,9 +160,9 @@ export default function Home({ query }: Props) {
                 )}
               </div>
               {searchHasMore ? (
-                <div ref={searchSentinelRef} className="list-loading">滚动加载更多…</div>
+                <div ref={searchSentinelRef} className="list-loading">{t('count.loadingMore')}</div>
               ) : (
-                <p className="list-end">已加载全部 {searchTotal} 篇</p>
+                <p className="list-end">{t('count.allLoaded', { n: searchTotal })}</p>
               )}
             </>
           )}
@@ -164,15 +173,17 @@ export default function Home({ query }: Props) {
 
   return (
     <div className="page home">
-      {/* 头部横幅：浅底深字（亮色主题下对比度达标） */}
+      {/* 头部横幅：浅底深字（亮色主题下对比度达标）
+          ★ 英文版：站名用全名；签名与简介在英文页走字典（对应 profile.signature/intro），
+            中文页继续用 Supabase 上站长可编辑的线上文案，中文线一字未改。 */}
       <section className="hero">
         <div className="hero-inner">
-          <h1 className="hero-title">呓语集</h1>
-          <p className="hero-sub">{profile.signature}</p>
-          <p className="hero-desc">{profile.intro}</p>
+          <h1 className="hero-title">{t('brand.full')}</h1>
+          <p className="hero-sub">{locale === 'en' ? t('brand.tagline') : profile.signature}</p>
+          <p className="hero-desc">{locale === 'en' ? t('brand.intro') : profile.intro}</p>
           <div className="hero-cta">
-            {isAdmin && <Link to="/write" className="btn btn-primary">开始写作</Link>}
-            <Link to="/articles" className="btn btn-light-outline">浏览全部</Link>
+            {isAdmin && <Link to="/write" className="btn btn-primary">{t('home.startWriting')}</Link>}
+            <Link to="/articles" className="btn btn-light-outline">{t('home.browseAll')}</Link>
           </div>
         </div>
       </section>
@@ -183,9 +194,9 @@ export default function Home({ query }: Props) {
       {latestBig && (
         <section className="latest-section">
           <div className="cat-section-head">
-            <h2 className="section-title">最新更新</h2>
+            <h2 className="section-title">{t('home.latestUpdates')}</h2>
             <Link to="/articles" className="more-link">
-              更多<span className="more-arrow">›</span>
+              {t('home.more')}<span className="more-arrow">›</span>
             </Link>
           </div>
           <div className={`latest-wrap${latestSmall.length ? '' : ' single'}`}>
@@ -200,14 +211,15 @@ export default function Home({ query }: Props) {
               <ul className="latest-list">
                 {latestSmall.map((a) => {
                   const meta = CATEGORY_META[a.category];
+                  const li = localize(a).article; // 英文页换成译文标题
                   return (
                     <li key={a.id} className="latest-item">
                       {/* 小圆点＝该分类的色卡色本身（分类的 ink 只给文字用，不当颜色） */}
                       <span className="latest-dot" style={{ background: meta.color }} aria-hidden="true" />
                       <div className="latest-item-main">
-                        <Link to={`/article/${a.id}`} className="latest-item-title">{a.title}</Link>
+                        <Link to={`/article/${a.id}`} className="latest-item-title">{li.title}</Link>
                         <span className="latest-item-meta">
-                          {meta.label} · {a.date}
+                          {t(catKey(a.category))} · {a.date}
                         </span>
                       </div>
                       <span className="latest-arrow" aria-hidden="true">›</span>
@@ -222,7 +234,7 @@ export default function Home({ query }: Props) {
 
       {/* ===== 置顶与收藏（原样保留，与最新更新不去重） ===== */}
       <section className="featured-section">
-        <h2 className="section-title">置顶与收藏</h2>
+        <h2 className="section-title">{t('home.pinnedSaved')}</h2>
         <div className="card-grid">
           {featured.map((a) => (
             <ArticleCard key={a.id} article={a} onToggleFavorite={toggleFavorite} />
@@ -242,13 +254,14 @@ export default function Home({ query }: Props) {
       {bookCards.length > 0 && (
         <section className="book-section">
           <div className="cat-section-head">
-            <h2 className="section-title">书籍更新</h2>
+            <h2 className="section-title">{t('home.bookUpdates')}</h2>
             <Link to="/novels" className="more-link">
-              全部书籍<span className="more-arrow">›</span>
+              {t('home.allBooks')}<span className="more-arrow">›</span>
             </Link>
           </div>
           <div className="book-grid">
-            {bookCards.map((a) => {
+            {bookCards.map((raw) => {
+              const a = localize(raw).article; // 英文页：书名/章节名换成译文
               const novel = a.novel;
               const chapters = (novel?.chapters || []).slice().sort((x, y) => x.order - y.order);
               const latestCh = chapters[chapters.length - 1]; // 不用 .at(-1)：tsconfig 的 lib 只到 ES2020
@@ -268,20 +281,30 @@ export default function Home({ query }: Props) {
                           className="book-status"
                           style={{ '--chip-color': statusMeta.color, '--chip-ink': statusMeta.ink } as CSSProperties}
                         >
-                          {statusMeta.label}
+                          {novel?.status ? t(`cat.${novel.status}` as 'cat.serializing') : statusMeta.label}
                         </span>
                       )}
+                      {/* ★ 数字口径（2026-09-21）：按当前语言**实时算**——
+                          中文＝去空白字数（与历史数字完全一致），英文＝真词数。
+                          novel.wordCount 只在内容缺失时兜底，不再当英文页的词数。 */}
                       <span className="book-meta-text">
-                        共 {chapters.length} 章{novel?.wordCount ? ` · ${novel.wordCount} 字` : ''}
+                        {(() => {
+                          const body = chapters.map((ch) => ch.content || '').join('\n');
+                          const n = countWords(body, locale) || novel?.wordCount || 0;
+                          return t('count.chaptersWords', {
+                            n: chapters.length,
+                            m: formatCount(n),
+                          });
+                        })()}
                       </span>
                     </div>
                     {latestCh && (
                       <p className="book-latest">
-                        <span className="book-latest-tag">最新</span>
+                        <span className="book-latest-tag">{t('home.newTag')}</span>
                         <span className="book-latest-text">
                           {latestCh.part ? `${latestCh.part} · ` : ''}{latestCh.title}
                         </span>
-                        <span className="book-arrow" aria-hidden="true">阅读 ›</span>
+                        <span className="book-arrow" aria-hidden="true">{t('article.read')} ›</span>
                       </p>
                     )}
                   </div>
@@ -298,7 +321,7 @@ export default function Home({ query }: Props) {
           2026-09-20 用户要求「底下的分类变成一行」+「现在这个太大了，换小一点」：
           恒定 5 列一行（不再 auto-fill），卡片整体缩小一档；手机端横滑仍是一行。 */}
       <section className="cat-nav-section">
-        <h2 className="section-title">分类浏览</h2>
+        <h2 className="section-title">{t('home.browseByCategory')}</h2>
         <div className="cat-nav-grid">
           {CATEGORIES.map((c) => {
             const meta = CATEGORY_META[c];
@@ -310,8 +333,8 @@ export default function Home({ query }: Props) {
                 className="cat-nav-card"
                 style={{ '--sec-color': meta.color, '--sec-ink': meta.ink } as CSSProperties}
               >
-                <span className="cat-nav-name">{meta.label}</span>
-                <span className="cat-nav-count">{count} 篇</span>
+                <span className="cat-nav-name">{t(catKey(c))}</span>
+                <span className="cat-nav-count">{t('count.posts', { n: count })}</span>
               </Link>
             );
           })}

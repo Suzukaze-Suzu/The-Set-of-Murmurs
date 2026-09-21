@@ -8,6 +8,8 @@ import NovelCard from '../components/NovelCard';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useInfiniteList } from '../hooks/useInfiniteList';
 import { searchArticles } from '../lib/search';
+import { useT } from '../i18n';
+import { catKey } from '../i18n/dict';
 
 interface Props {
   query: string;
@@ -16,7 +18,8 @@ interface Props {
 const PAGE_SIZE = 12;
 
 export default function Articles({ query }: Props) {
-  usePageTitle('全部文章');
+  const t = useT();
+  usePageTitle(t('article.all'));
   const { articles } = useArticles();
   const [catFilter, setCatFilter] = useState<string>('all');
 
@@ -67,11 +70,11 @@ export default function Articles({ query }: Props) {
 
   return (
     <div className="page">
-      <h1 className="page-title">全部文章</h1>
+      <h1 className="page-title">{t('article.all')}</h1>
 
       <div className="filter-bar">
         <button className={`filter-chip ${catFilter === 'all' ? 'active' : ''}`} onClick={() => setCatFilter('all')}>
-          全部
+          {t('article.filterAll')}
         </button>
         {CATEGORIES.map((c) => (
           <button
@@ -81,21 +84,22 @@ export default function Articles({ query }: Props) {
             /* 第2g步：激活态＝该分类色卡色实底（亮色），字色走 --cat-on；暗色见 index.css 还原块 */
             style={catFilter === c ? ({ '--cat-color': CATEGORY_META[c].color, '--cat-ink': CATEGORY_META[c].ink, '--cat-on': CATEGORY_META[c].onFill } as CSSProperties) : {}}
           >
-            {CATEGORY_META[c].label}
+            {t(catKey(c))}
           </button>
         ))}
       </div>
 
       {query && (
         <p className="result-count">
-          搜索 “<strong>{query}</strong>”，{searching ? '搜索中…' : <>共 {total} 篇</>}
+          {t('search.prefix')}<strong>{query}</strong>
+          {searching ? t('search.suffixIng') : t('search.suffix', { n: total })}
         </p>
       )}
 
       {sorted.length === 0 ? (
         <div className="empty-state">
           <span className="empty-icon empty-icon-magnifier" />
-          <p>{searching ? '搜索中…' : '没有找到匹配的文章'}</p>
+          <p>{searching ? t('search.searching') : t('search.noMatch')}</p>
         </div>
       ) : (
         <>
@@ -109,9 +113,9 @@ export default function Articles({ query }: Props) {
             )}
           </div>
           {hasMore ? (
-            <div ref={sentinelRef} className="list-loading">滚动加载更多…</div>
+            <div ref={sentinelRef} className="list-loading">{t('count.loadingMore')}</div>
           ) : (
-            <p className="list-end">已加载全部 {total} 篇</p>
+            <p className="list-end">{t('count.allLoaded', { n: total })}</p>
           )}
         </>
       )}

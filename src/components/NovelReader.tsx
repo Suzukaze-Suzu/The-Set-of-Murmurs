@@ -4,6 +4,9 @@ import { Article, Comment, NOVEL_STATUS_META } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import MarkdownRenderer from './MarkdownRenderer';
 import CommentSection from './CommentSection';
+import { useT, useLocale } from '../i18n';
+import { novelStatusKey } from '../i18n/dict';
+import { countWords, formatCount } from '../lib/wordCount';
 
 interface Props {
   article: Article;
@@ -17,6 +20,8 @@ const FONT_SIZES = ['1.05rem', '1.2rem', '1.35rem', '1.5rem'];
 const LINE_HEIGHTS = ['1.8', '2', '2.2'];
 
 export default function NovelReader({ article, allComments, onAddComment, onDeleteComment, currentUserId }: Props) {
+  const t = useT();
+  const { locale } = useLocale();
   const novel = article.novel;
   const chapters = useMemo(
     () => (novel?.chapters || []).slice().sort((a, b) => a.order - b.order),
@@ -143,18 +148,25 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
               <div className="nreader-hero-cover nreader-hero-cover-ph">{article.title.slice(0, 1)}</div>
             )}
             <div className="nreader-hero-info">
-              <Link to={`/category/${article.category}`} className="nreader-cat">小说</Link>
+              <Link to={`/category/${article.category}`} className="nreader-cat">{t('cat.reading')}</Link>
               <h1 className="nreader-book-title">{article.title}</h1>
-              {novel?.author && <div className="nreader-book-author">作者 {novel.author}</div>}
+              {novel?.author && <div className="nreader-book-author">{t('shelf.byAuthor', { name: novel.author })}</div>}
               {statusMeta && (
                 <span className="nreader-status-badge" style={{ background: statusMeta.color + '22', color: statusMeta.ink }}>
-                  {statusMeta.label}
+                  {novel?.status ? t(novelStatusKey(novel.status)) : statusMeta.label}
                 </span>
               )}
               <div className="nreader-book-meta">
-                <span>共 {total} 章</span>
-                {novel?.wordCount ? <span>· {novel.wordCount} 字</span> : null}
-                {readPct > 0 ? <span>· 已读 {readPct}%</span> : null}
+                <span>{t('count.chapters', { n: total })}</span>
+                {/* ★ 数字口径（2026-09-21）：按当前语言实时算，见 lib/wordCount.ts */}
+                {(() => {
+                  const words =
+                    countWords(chapters.map((ch) => ch.content || '').join('\n'), locale) ||
+                    novel?.wordCount ||
+                    0;
+                  return words ? <span>· {t('count.words', { n: formatCount(words) })}</span> : null;
+                })()}
+                {readPct > 0 ? <span>{t('shelf.readPct', { p: readPct })}</span> : null}
               </div>
             </div>
           </div>
@@ -164,13 +176,13 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
           <div className="nreader-shelf-actions">
             <button className="nreader-start-btn" onClick={() => startReading(startIx)}>
               <span className="nreader-start-ico">▶</span>
-              {readPct > 0 ? '继续阅读 · ' + cur.title : '开始阅读'}
+              {readPct > 0 ? t('shelf.continueReading', { title: cur.title }) : t('shelf.startReading')}
             </button>
-            <button className="nreader-toc-btn" onClick={() => setTocOpen(true)}>目录</button>
+            <button className="nreader-toc-btn" onClick={() => setTocOpen(true)}>{t('shelf.contents')}</button>
           </div>
 
           <details className="nreader-book-comments" open>
-            <summary>整本评论（{bookComments.length}）</summary>
+            <summary>{t('shelf.bookComments', { n: bookComments.length })}</summary>
             <CommentSection
               comments={bookComments}
               onAdd={(name, content, parentId, parentName, avatar) => onAddComment(article.id, { name, content, parentId, parentName, avatar })}
@@ -197,8 +209,8 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
           onMouseMove={() => { if (!barsVisible) showBars(); }}
           onClick={(e) => {
             // 点击正文中间唤出/隐藏工具条（忽略点击按钮、链接、评论时）
-            const t = e.target as HTMLElement;
-            if (t.closest('button, a, .nreader-toc, .nreader-sheet, textarea, input, .comment-section')) return;
+            const el = e.target as HTMLElement;
+            if (el.closest('button, a, .nreader-toc, .nreader-sheet, textarea, input, .comment-section')) return;
             const r = e.currentTarget.getBoundingClientRect();
             const mx = e.clientX - r.left;
             const midW = r.width / 3;
@@ -210,14 +222,14 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
           {/* 顶栏 */}
           <div className="nreader-topbar">
             <div className="nreader-top-left">
-              <button className="nreader-top-btn back" onClick={backToShelf} title="返回书籍">‹</button>
+              <button className="nreader-top-btn back" onClick={backToShelf} title={t('shelf.backToBook')}>‹</button>
             </div>
-            <button className="nreader-top-title" onClick={() => setTocOpen(true)} title="章节目录">
+            <button className="nreader-top-title" onClick={() => setTocOpen(true)} title={t('shelf.chaptersTitle')}>
               {cur.title}
             </button>
             <div className="nreader-top-right">
               <span className="nreader-top-progress">{curIx + 1}/{total}</span>
-              <button className="nreader-top-btn" onClick={() => setSettingOpen(true)} title="设置">Aa</button>
+              <button className="nreader-top-btn" onClick={() => setSettingOpen(true)} title={t('shelf.settings')}>Aa</button>
             </div>
           </div>
 
@@ -240,17 +252,17 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
               disabled={curIx <= 0}
               onClick={() => goTo(curIx - 1)}
             >
-              <span className="nreader-foot-dir">上一章</span>
+              <span className="nreader-foot-dir">{t('shelf.prevChapter')}</span>
               <span className="nreader-foot-name">{curIx > 0 ? chapters[curIx - 1].title : ''}</span>
             </button>
             <button className="nreader-foot-btn right" disabled={curIx >= total - 1} onClick={() => goTo(curIx + 1)}>
-              <span className="nreader-foot-dir">下一章</span>
+              <span className="nreader-foot-dir">{t('shelf.nextChapter')}</span>
               <span className="nreader-foot-name">{curIx < total - 1 ? chapters[curIx + 1].title : ''}</span>
             </button>
           </div>
 
           <div className="nreader-chapter-comments">
-            <h3 className="nreader-comments-ttl">本章评论（{curComments.length}）</h3>
+            <h3 className="nreader-comments-ttl">{t('shelf.chapterComments', { n: curComments.length })}</h3>
             <CommentSection
               comments={curComments}
               onAdd={(name, content, parentId, parentName, avatar) => onAddComment(article.id + '::' + cur.id, { name, content, parentId, parentName, avatar })}
@@ -271,7 +283,7 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
         <div className="nreader-toc-mask" onClick={() => setTocOpen(false)}>
           <div className="nreader-toc" onClick={(e) => e.stopPropagation()}>
             <div className="nreader-toc-head">
-              <span>章节目录</span>
+              <span>{t('shelf.chaptersTitle')}</span>
               <button className="nreader-top-btn" onClick={() => setTocOpen(false)}>×</button>
             </div>
             <div className="nreader-toc-list">
@@ -286,7 +298,10 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
                     >
                       <span className="nreader-toc-no">{ix + 1}</span>
                       <span className="nreader-toc-name">{ch.title}</span>
-                      {ch.wordCount ? <span className="nreader-toc-wc">{ch.wordCount} 字</span> : null}
+                      {(() => {
+                        const n = countWords(ch.content, locale) || ch.wordCount || 0;
+                        return n ? <span className="nreader-toc-wc">{t('count.words', { n: formatCount(n) })}</span> : null;
+                      })()}
                     </button>
                   </Fragment>
                 );
@@ -302,28 +317,28 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
           <div className="nreader-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="nreader-sheet-grip" />
             <div className="nreader-sheet-row">
-              <span className="nreader-sheet-label">夜间模式</span>
+              <span className="nreader-sheet-label">{t('shelf.nightMode')}</span>
               <button
                 className={'nreader-pill' + (theme === 'night' ? ' on' : '')}
                 onClick={() => setTheme(theme === 'night' ? 'light' : 'night')}
               >
-                {theme === 'night' ? '已开启' : '开启'}
+                {theme === 'night' ? t('shelf.on') : t('shelf.off')}
               </button>
             </div>
             <div className="nreader-sheet-row">
-              <span className="nreader-sheet-label">字号</span>
+              <span className="nreader-sheet-label">{t('shelf.textSize')}</span>
               <div className="nreader-sheet-group">
                 <button className="nreader-pill" onClick={() => setFontIx(Math.max(0, fontIx - 1))}>A−</button>
-                <span className="nreader-size-val">{['小','中','大','特大'][fontIx]}</span>
+                <span className="nreader-size-val">{[t('shelf.sizeS'), t('shelf.sizeM'), t('shelf.sizeL'), t('shelf.sizeXL')][fontIx]}</span>
                 <button className="nreader-pill" onClick={() => setFontIx(Math.min(FONT_SIZES.length - 1, fontIx + 1))}>A＋</button>
               </div>
             </div>
             <div className="nreader-sheet-row">
-              <span className="nreader-sheet-label">行距</span>
+              <span className="nreader-sheet-label">{t('shelf.lineSpacing')}</span>
               <div className="nreader-sheet-group">
-                <button className="nreader-pill" onClick={() => setLineIx(Math.max(0, lineIx - 1))}>紧凑</button>
-                <span className="nreader-size-val">适中</span>
-                <button className="nreader-pill" onClick={() => setLineIx(Math.min(LINE_HEIGHTS.length - 1, lineIx + 1))}>宽松</button>
+                <button className="nreader-pill" onClick={() => setLineIx(Math.max(0, lineIx - 1))}>{t('shelf.tight')}</button>
+                <span className="nreader-size-val">{t('shelf.normal')}</span>
+                <button className="nreader-pill" onClick={() => setLineIx(Math.min(LINE_HEIGHTS.length - 1, lineIx + 1))}>{t('shelf.loose')}</button>
               </div>
             </div>
           </div>

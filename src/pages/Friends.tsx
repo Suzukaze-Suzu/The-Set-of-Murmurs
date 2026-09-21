@@ -3,6 +3,7 @@ import { useFriendLinks } from '../context/FriendLinkContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useT } from '../i18n';
 
 interface Draft {
   name: string;
@@ -13,13 +14,15 @@ interface Draft {
 
 const emptyDraft: Draft = { name: '', url: '', desc: '', avatar: '' };
 
-function initials(name: string) {
+/* 图标占位字＝站名首字母；没有站名时退回「友」（英文页退回 Friends 的首字母 F） */
+function initials(name: string, fallback: string) {
   const t = name.trim();
-  return t ? t.charAt(0).toUpperCase() : '友';
+  return t ? t.charAt(0).toUpperCase() : fallback;
 }
 
 export default function Friends() {
-  usePageTitle('友链');
+  const t = useT();
+  usePageTitle(t('friends.title'));
   const { friends, loading, addFriend, updateFriend, deleteFriend } = useFriendLinks();
   const { isAdmin } = useAuth();
   const [showForm, setShowForm] = useState(false);
@@ -92,8 +95,8 @@ export default function Friends() {
   return (
     <div className="page friends-page">
       <div className="friends-head card">
-        <h1 className="page-title">友情链接</h1>
-        <p className="friends-desc">记录与我互相关注、相互链接的小伙伴们，欢迎交换友链～</p>
+        <h1 className="page-title">{t('friends.heading')}</h1>
+        <p className="friends-desc">{t('friends.desc')}</p>
         {isAdmin && !showForm && (
           <button className="btn btn-primary btn-sm" onClick={openAdd}>＋ 添加友链</button>
         )}
@@ -157,11 +160,11 @@ export default function Friends() {
       {msg && <p className="friends-msg">{msg}</p>}
 
       {loading ? (
-        <div className="about-loading"><span className="about-loading-spin"/><p>正在加载友链…</p></div>
+        <div className="about-loading"><span className="about-loading-spin"/><p>{t('friends.loading')}</p></div>
       ) : friends.length === 0 ? (
         <div className="empty-state">
           <span className="empty-icon empty-icon-ghost" />
-          <p>还没有友链，等你来添加～</p>
+          <p>{t('friends.none')}</p>
         </div>
       ) : (
         <div className="friends-grid">
@@ -169,7 +172,7 @@ export default function Friends() {
             <div key={f.id} className="friends-card card">
               <a href={f.url} target="_blank" rel="noopener noreferrer" className="friends-main">
                 <span className="friends-avatar">
-                  {f.avatar ? <img src={f.avatar} alt="" loading="lazy" /> : <span className="friends-avatar-ph">{initials(f.name)}</span>}
+                  {f.avatar ? <img src={f.avatar} alt="" loading="lazy" /> : <span className="friends-avatar-ph">{initials(f.name, t('friends.title').charAt(0))}</span>}
                 </span>
                 <span className="friends-info">
                   <span className="friends-name">{f.name}</span>

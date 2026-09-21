@@ -3,6 +3,7 @@ import { Comment } from '../types';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { useT, useLocale } from '../i18n';
 
 interface Props {
   comments: Comment[];
@@ -56,12 +57,14 @@ function FoldedReplies({ root, currentUserId, isAdmin, onDelete, onStartReply, n
   needLogin: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const t = useT();
+  const { dateLocale } = useLocale();
   const items = collectDescendants(root);
   if (items.length === 0) return null;
   return (
     <div className="comment-fold">
       <button className="comment-fold-btn" onClick={() => setOpen((o) => !o)}>
-        {open ? '收起折叠回复' : `+ ${items.length} 条回复`}
+        {open ? t('comment.hideReplies') : t('comment.replies', { n: items.length })}
       </button>
       {open && (
         <div className="comment-fold-list">
@@ -70,17 +73,17 @@ function FoldedReplies({ root, currentUserId, isAdmin, onDelete, onStartReply, n
             return (
               <div className="comment-reply-row" key={n.c.id}>
                 <div className="comment-head">
-                  <Link to={n.c.userId ? '/profile?userId=' + n.c.userId : '/'} className="comment-avatar" title="查看个人主页">
-                    {n.c.avatar ? <img src={n.c.avatar} alt="头像" loading="lazy" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (n.c.name.trim().charAt(0) || '访')}
+                  <Link to={n.c.userId ? '/profile?userId=' + n.c.userId : '/'} className="comment-avatar" title={t('comment.viewProfile')}>
+                    {n.c.avatar ? <img src={n.c.avatar} alt={t('comment.avatar')} loading="lazy" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (n.c.name.trim().charAt(0) || t('comment.avatarFallback'))}
                   </Link>
                   <span className="comment-name-label">{n.c.parentName ? <em>{n.c.parentName}</em> : null} {n.c.name}</span>
-                  <span className="comment-date">{new Date(n.c.date).toLocaleString()}</span>
+                  <span className="comment-date">{new Date(n.c.date).toLocaleString(dateLocale)}</span>
                   {!needLogin && (
-                    <button className="comment-reply" onClick={() => onStartReply({ ...n.c })}>回复</button>
+                    <button className="comment-reply" onClick={() => onStartReply({ ...n.c })}>{t('common.reply')}</button>
                   )}
                   {mine && (
-                    <button className="comment-delete" onClick={() => { if (window.confirm('确定删除这条留言吗？')) onDelete!(n.c.id); }}>
-                      删除
+                    <button className="comment-delete" onClick={() => { if (window.confirm(t('comment.deleteConfirm'))) onDelete!(n.c.id); }}>
+                      {t('common.delete')}
                     </button>
                   )}
                 </div>
@@ -104,22 +107,24 @@ function CommentRow({ node, depth, currentUserId, isAdmin, onDelete, onStartRepl
   needLogin: boolean;
 }) {
   const { c, children } = node;
+  const t = useT();
+  const { dateLocale } = useLocale();
   const mine = !!onDelete && (isAdmin || (!!currentUserId && c.userId === currentUserId));
   const rowCls = depth === 0 ? 'comment-item' : 'comment-reply-row';
   return (
     <div className={rowCls}>
       <div className="comment-head">
-        <Link to={c.userId ? '/profile?userId=' + c.userId : '/'} className="comment-avatar" title="查看个人主页">
-          {c.avatar ? <img src={c.avatar} alt="头像" loading="lazy" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (c.name.trim().charAt(0) || '访')}
+        <Link to={c.userId ? '/profile?userId=' + c.userId : '/'} className="comment-avatar" title={t('comment.viewProfile')}>
+          {c.avatar ? <img src={c.avatar} alt={t('comment.avatar')} loading="lazy" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (c.name.trim().charAt(0) || t('comment.avatarFallback'))}
         </Link>
         <span className="comment-name-label">{c.parentName ? <em>{c.parentName}</em> : null} {c.name}</span>
-        <span className="comment-date">{new Date(c.date).toLocaleString()}</span>
+        <span className="comment-date">{new Date(c.date).toLocaleString(dateLocale)}</span>
         {!needLogin && (
-          <button className="comment-reply" onClick={() => onStartReply({ ...c })}>回复</button>
+          <button className="comment-reply" onClick={() => onStartReply({ ...c })}>{t('common.reply')}</button>
         )}
         {mine && (
-          <button className="comment-delete" onClick={() => { if (window.confirm('确定删除这条留言吗？')) onDelete!(c.id); }}>
-            删除
+          <button className="comment-delete" onClick={() => { if (window.confirm(t('comment.deleteConfirm'))) onDelete!(c.id); }}>
+            {t('common.delete')}
           </button>
         )}
       </div>
@@ -159,6 +164,7 @@ export default function CommentSection({ comments, onAdd, currentUserId, onDelet
   const [content, setContent] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
+  const t = useT();
 
   const { isAdmin } = useAuth();
   const { myProfile } = useProfile();
@@ -170,7 +176,7 @@ export default function CommentSection({ comments, onAdd, currentUserId, onDelet
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!content.trim()) return;
-    onAdd(loginName || '匿名路人', content.trim(), replyingTo?.id, replyingTo?.name, loginAvatar);
+    onAdd(loginName || t('comment.anonymous'), content.trim(), replyingTo?.id, replyingTo?.name, loginAvatar);
     setContent('');
     setReplyingTo(null);
     setSubmitted(true);
@@ -181,31 +187,31 @@ export default function CommentSection({ comments, onAdd, currentUserId, onDelet
 
   return (
     <div className="comment-section">
-      <h3 className="comment-title">留言（{comments.length}）</h3>
+      <h3 className="comment-title">{t('comment.title', { n: comments.length })}</h3>
 
       {needLogin ? (
-        <div className="comment-login-tip">登录后才能留言或评论哦～</div>
+        <div className="comment-login-tip">{t('comment.signInTip')}</div>
       ) : (
         <form className="comment-form" onSubmit={handleSubmit}>
           {replyingTo && (
             <div className="reply-target">
-              回复 @{replyingTo.name} · <button type="button" className="reply-cancel" onClick={() => setReplyingTo(null)}>取消回复</button>
+              {t('comment.replyingTo', { name: replyingTo.name })}<button type="button" className="reply-cancel" onClick={() => setReplyingTo(null)}>{t('comment.cancelReply')}</button>
             </div>
           )}
           <textarea
             className="comment-content"
-            placeholder="说说你的想法吧…"
+            placeholder={t('comment.saySomething')}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={3}
           />
-          <button type="submit" className="btn btn-primary">发表</button>
-          {submitted && <span className="submit-ok">已发表</span>}
+          <button type="submit" className="btn btn-primary">{t('comment.post')}</button>
+          {submitted && <span className="submit-ok">{t('comment.posted')}</span>}
         </form>
       )}
 
       <div className="comment-list">
-        {tree.length === 0 && <p className="empty-tip">还没有留言，来抢沙发吧～</p>}
+        {tree.length === 0 && <p className="empty-tip">{t('comment.empty')}</p>}
         {tree.map((node) => (
           <CommentRow
             key={node.c.id}

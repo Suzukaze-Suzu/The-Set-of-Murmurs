@@ -1,12 +1,15 @@
 import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { initialAbout, rememberAbout } from '../lib/siteCache';
+import { useLocale } from '../i18n';
 
 export interface AboutVersion {
   id: string;
   content: string;
   date: string;
   created_by?: string;
+  /** 版本语言（2026-09-21 P3 新增列）：中文版＝zh，英文版＝en，各自独立版本史 */
+  locale?: string;
 }
 
 export const aboutInitial = `## 关于「呓语集」
@@ -23,6 +26,8 @@ const AboutContext = createContext<{
   versions: AboutVersion[];
   loading: boolean;
   saving: boolean;
+  /** 当前语言是否有自己的关于页正文（英文页没写过英文版时为 false → 页面显示中文原文＋提示） */
+  hasOwnVersion: boolean;
   refresh: () => void;
   save: (content: string) => Promise<void>;
   loadVersion: (id: string) => void;
@@ -37,6 +42,9 @@ export function AboutProvider({ children }: { children: ReactNode }) {
   const [versions, setVersions] = useState<AboutVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [hasOwnVersion, setHasOwnVersion] = useState(true);
+  // 关于页正文分语言存版本（P3 起）：/about 读 zh 版本，/en/about 读 en 版本
+  const { locale } = useLocale();
 
   const load = async () => {
     setLoading(true);
@@ -50,24 +58,35 @@ export function AboutProvider({ children }: { children: ReactNode }) {
         console.warn('[about] 关于页正文读取失败，沿用缓存/快照正文：', error.message);
         return;
       }
-      if (data && data.length) {
-        const mapped = data.map((r) => ({
-          id: r.id, content: r.content, date: r.date,
-          created_by: r.created_by || undefined,
-        }));
-        setVersions(mapped);
-        setCurrent(mapped[0].content);
-        rememberAbout(mapped[0].content);   // 写回本机缓存，下次首屏直接用
+      const rows = (data || []).map((r) => ({
+        id: r.id, content: r.content, date: r.date,
+        created_by: r.created_by || undefined,
+        locale: r.locale || 'zh',
+      }));
+      // 按当前语言挑：本语言有版本就用本语言，没有就回退中文原文（英文页会另加一行提示）
+      const own = rows.filter((r) => r.locale === locale);
+      const fallback = rows.filter((r) => r.locale === 'zh');
+      const useRows = own.length ? own : fallback;
+      if (own.length) {
+        setVersions(own);
+        setCurrent(own[0].content);
+        if (locale === 'zh') rememberAbout(own[0].content); // 本机缓存只存中文正文（首屏用）
+        setHasOwnVersion(true);
+      } else if (useRows.length) {
+        setVersions(useRows);
+        setCurrent(useRows[0].content);
+        setHasOwnVersion(false);
       } else {
         setVersions([]);
         setCurrent(aboutInitial);
+        setHasOwnVersion(false);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [locale]);
 
   const save = async (content: string) => {
     setSaving(true);
@@ -75,6 +94,7 @@ export function AboutProvider({ children }: { children: ReactNode }) {
       id: 'av_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
       content: content,
       date: new Date().toISOString(),
+      locale, // 保存到当前语言的那条线（/en/about 上写的进 en 版本史）
     };
     const { error } = await supabase.from('about_versions').insert(row);
     setSaving(false);
@@ -99,7 +119,7 @@ export function AboutProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AboutContext.Provider value={{ current, versions, loading, saving, refresh: load, save, loadVersion, rollback, reset }}>
+    <AboutContext.Provider value={{ current, versions, loading, saving, hasOwnVersion, refresh: load, save, loadVersion, rollback, reset }}>
       {children}
     </AboutContext.Provider>
   );

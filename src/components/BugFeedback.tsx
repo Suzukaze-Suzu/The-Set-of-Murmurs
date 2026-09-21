@@ -3,10 +3,13 @@ import { BugReport, BUG_CATEGORIES } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
+import { useT, useLocale } from '../i18n';
 
 export default function BugFeedback() {
   const { user, isAdmin } = useAuth();
   const { myProfile } = useProfile();
+  const t = useT();
+  const { dateLocale } = useLocale();
   const [reports, setReports] = useState<BugReport[]>([]);
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('bug');
@@ -21,16 +24,16 @@ export default function BugFeedback() {
       .order('date', { ascending: false })
       .then(({ data }) => {
         if (!mounted) return;
-        if (data) setReports(data.map((r) => ({ id: r.id, userId: r.user_id || undefined, nickname: r.nickname || '匿名', category: r.category || 'other', content: r.content, status: r.status || '待处理', date: r.date })));
+        if (data) setReports(data.map((r) => ({ id: r.id, userId: r.user_id || undefined, nickname: r.nickname || t('bug.anonymous'), category: r.category || 'other', content: r.content, status: r.status || t('bug.statusOpen'), date: r.date })));
       });
     return () => { mounted = false; };
   }, []);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) { setError('请填写问题描述'); return; }
+    if (!content.trim()) { setError(t('bug.needContent')); return; }
     setError('');
-    const nickname = (myProfile && myProfile.nickname ? myProfile.nickname : '').trim() || '匿名用户';
+    const nickname = (myProfile && myProfile.nickname ? myProfile.nickname : '').trim() || t('bug.anonymous');
     const id = 'bug_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     const date = new Date().toISOString();
     const row: Record<string, unknown> = {
@@ -46,7 +49,7 @@ export default function BugFeedback() {
       .from('bug_reports')
       .insert(row)
       .then(({ error: err }) => {
-        if (err) { setError('提交失败：' + err.message); return; }
+        if (err) { setError(t('bug.submitFailed') + err.message); return; }
         const newRep: BugReport = { id: id, userId: (user && user.id) || undefined, nickname: nickname, category: category, content: content.trim(), status: '待处理', date: date };
         setReports((prev) => [newRep, ...prev]);
         setContent('');
@@ -69,7 +72,7 @@ export default function BugFeedback() {
       .then(({ error: err }) => {
         if (err) {
           setReports((prev) => prev.map((r) => (r.id === rep.id ? { ...r, status: rep.status } : r)));
-          setError('状态更新失败：' + err.message);
+          setError(t('bug.statusFailed') + err.message);
         } else {
           setError('');
         }
@@ -83,27 +86,27 @@ export default function BugFeedback() {
   return (
     <div className="card bug-feedback">
       <div className="bug-feedback-head">
-        <h2 className="section-title">Bug 反馈 / 报错</h2>
-        <p className="bug-feedback-desc">遇到问题？把 bug、界面异常或功能建议填在这里反馈给我。</p>
+        <h2 className="section-title">{t('bug.heading')}</h2>
+        <p className="bug-feedback-desc">{t('bug.desc')}</p>
       </div>
 
       {!userCanSubmit ? (
-        <div className="comment-login-tip">登录后才能提交反馈哦～</div>
+        <div className="comment-login-tip">{t('bug.needLogin')}</div>
       ) : (
         <form className="comment-form" onSubmit={submit}>
           <select className="bug-category" value={category} onChange={(e) => setCategory(e.target.value)}>
-            {BUG_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            {BUG_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{t(`cat.${c.value}` as 'cat.bug')}</option>)}
           </select>
           <textarea
             className="comment-content"
-            placeholder="请描述你遇到的问题或报错…"
+            placeholder={t('bug.placeholder')}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={3}
           />
           <div className="bug-actions">
-            <button type="submit" className="btn btn-primary">提交反馈</button>
-            {ok && <span className="submit-ok">已提交，谢谢反馈！</span>}
+            <button type="submit" className="btn btn-primary">{t('bug.submit')}</button>
+            {ok && <span className="submit-ok">{t('bug.submitted')}</span>}
           </div>
           {error && <p className="gallery-error">{error}</p>}
         </form>
@@ -111,7 +114,7 @@ export default function BugFeedback() {
 
       <div className="bug-list">
         {reports.length === 0 ? (
-          <p className="empty-tip">还没有反馈，一切安好～</p>
+          <p className="empty-tip">{t('bug.empty')}</p>
         ) : (
           reports.map((rep) => {
             const cat = BUG_CATEGORIES.find((c) => c.value === rep.category);
@@ -122,15 +125,15 @@ export default function BugFeedback() {
                 <div className="bug-item-head">
                   {/* 2026-09-14 第2f步：分类标签的底是「颜色」，只用色卡色（珊瑚粉 / 灰蓝浅底）；
                       第2j步：字改成**同色系墨色**（粉底 → 珊瑚墨色，灰蓝浅底 → 灰墨），不再用黑字。 */}
-                  <span className="bug-cat-tag" style={{ background: cat ? 'var(--coral-solid)' : 'color-mix(in srgb,var(--slate-blue) 33%,transparent)', color: cat ? 'var(--coral-ink)' : 'var(--slate-ink)' }}>{cat ? cat.label : rep.category}</span>
-                  <span className={stCls}>{rep.status}</span>
-                  <span className="comment-date">{new Date(rep.date).toLocaleString()}</span>
+                  <span className="bug-cat-tag" style={{ background: cat ? 'var(--coral-solid)' : 'color-mix(in srgb,var(--slate-blue) 33%,transparent)', color: cat ? 'var(--coral-ink)' : 'var(--slate-ink)' }}>{cat ? t(`cat.${cat.value}` as 'cat.bug') : rep.category}</span>
+                  <span className={stCls}>{done ? t('bug.statusDone') : t('bug.statusOpen')}</span>
+                  <span className="comment-date">{new Date(rep.date).toLocaleString(dateLocale)}</span>
                   {canEdit(rep) && (
                     <button
                       className="bug-toggle"
                       onClick={() => toggleStatus(rep)}
                     >
-                      {done ? '恢复待处理' : '标记已处理'}
+                      {done ? t('bug.markOpen') : t('bug.markDone')}
                     </button>
                   )}
                 </div>

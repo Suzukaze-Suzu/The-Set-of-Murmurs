@@ -7,16 +7,19 @@ import ProfileCard from '../components/ProfileCard';
 import AvatarCropModal from '../components/AvatarCropModal';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useT, useLocale } from '../i18n';
 
-function fmt(iso: string) {
-  try { return new Date(iso).toLocaleString(); } catch { return iso; }
+function fmt(iso: string, dateLocale: string) {
+  try { return new Date(iso).toLocaleString(dateLocale); } catch { return iso; }
 }
 
 export default function About() {
-  usePageTitle('关于');
+  const t = useT();
+  const { dateLocale, locale } = useLocale();
+  usePageTitle(t('about.title'));
   const { profile, setProfile } = useProfile();
   const { isAdmin } = useAuth();
-  const { current, versions, loading, saving, save, loadVersion, rollback, reset } = useAbout();
+  const { current, versions, loading, saving, hasOwnVersion, save, loadVersion, rollback, reset } = useAbout();
   const { footer, saving: savingFooter, saveFooter, histories } = useFooter();
   const [footerEdit, setFooterEdit] = useState(false);
   const [fSlogan, setFSlogan] = useState(footer.slogan);
@@ -79,7 +82,7 @@ export default function About() {
 
   return (
     <div className="page about-page">
-      <h1 className="page-title">关于本站</h1>
+      <h1 className="page-title">{t('about.heading')}</h1>
 
       <div className="about-grid">
         <ProfileCard />
@@ -88,7 +91,7 @@ export default function About() {
           {editMode ? (
             <>
               <div className="about-edit-head">
-                <h2>编辑本站简介</h2>
+                <h2>{locale === 'en' ? '编辑英文简介' : '编辑本站简介'}</h2>
                 <div className="about-preview-tabs">
                   <button className={'tab-btn ' + (previewing ? '' : 'active')} onClick={() => setPreviewing(false)}>编辑</button>
                   <button className={'tab-btn ' + (previewing ? 'active' : '')} onClick={() => setPreviewing(true)}>预览</button>
@@ -107,15 +110,19 @@ export default function About() {
           ) : (
             <>
               <div className="about-content-head">
-                <h2>本站简介</h2>
+                <h2>{t('about.introTitle')}</h2>
                 {!loading && isAdmin && (
                 <div className="about-head-actions">
-                  <button className="btn btn-light btn-sm" onClick={() => { setPreviewVersion(null); setShowHistory(true); }}>历史版本({versions.length})</button>
-                  <button className="btn btn-primary btn-sm" onClick={openEdit}>编辑简介</button>
+                  <button className="btn btn-light btn-sm" onClick={() => { setPreviewVersion(null); setShowHistory(true); }}>{t('about.history', { n: versions.length })}</button>
+                  <button className="btn btn-primary btn-sm" onClick={openEdit}>{locale === 'en' ? '编辑英文简介' : '编辑简介'}</button>
                 </div>
                 )}
               </div>
-              <div className="about-render">{loading ? <div className="about-loading"><span className="about-loading-spin"/><p>正在加载简介…</p></div> : <MarkdownRenderer content={current} />}</div>
+              {/* 英文页还没写过英文版关于页：显示中文原文（上面 current 已回退），此行点明原因 */}
+              {locale === 'en' && !loading && !hasOwnVersion && (
+                <p className="detail-i18n-notice">{t('about.zhOnly')}</p>
+              )}
+              <div className="about-render">{loading ? <div className="about-loading"><span className="about-loading-spin"/><p>{t('about.loading')}</p></div> : <MarkdownRenderer content={current} />}</div>
             </>
           )}
 
@@ -123,10 +130,10 @@ export default function About() {
 
           {/* 配色装饰（固定）：只列「主题灵感」里凉风凉身上的那四色，别的色相不进站 */}
           <div className="color-palette">
-            <span style={{ background: '#5BA8D8' }} title="天空蓝 · 开衫" />
-            <span style={{ background: '#E8C9A0' }} title="蜜金 · 长发" />
-            <span style={{ background: '#E89B8A' }} title="珊瑚粉 · 长发" />
-            <span style={{ background: '#4A9BB8' }} title="青蓝 · 眼睛" />
+            <span style={{ background: '#5BA8D8' }} title={t('about.skyBlue')} />
+            <span style={{ background: '#E8C9A0' }} title={t('about.honeyGold')} />
+            <span style={{ background: '#E89B8A' }} title={t('about.coralPink')} />
+            <span style={{ background: '#4A9BB8' }} title={t('about.aqua')} />
           </div>
         </div>
       </div>
@@ -176,7 +183,7 @@ export default function About() {
                   <div key={v.id} className="history-item">
                     <div className="history-item-info">
                       <span className="history-badge">{i === 0 ? '当前' : '版本 ' + (i + 1)}</span>
-                      <span className="history-date">{fmt(v.date)}</span>
+                      <span className="history-date">{fmt(v.date, dateLocale)}</span>
                     </div>
                     <div className="history-actions">
                       <button className="btn btn-light btn-sm" onClick={() => setPreviewVersion(v)}>预览</button>
@@ -190,7 +197,7 @@ export default function About() {
               <div className="history-preview">
                 <div className="history-preview-head">
                   <strong>正在预览版本</strong>
-                  <span className="history-date">{fmt(previewVersion.date)}</span>
+                  <span className="history-date">{fmt(previewVersion.date, dateLocale)}</span>
                   <button className="btn btn-light btn-sm" onClick={() => setPreviewVersion(null)}>收起</button>
                 </div>
                 <div className="history-preview-body"><MarkdownRenderer content={previewVersion.content} /></div>

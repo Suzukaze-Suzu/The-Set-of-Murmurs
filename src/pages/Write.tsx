@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect, ChangeEvent } from 'react';
+import { useState, useRef, useEffect, useMemo, ChangeEvent } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { CATEGORIES, CATEGORY_META, Article, ArticleAttachment, Category, NovelChapter, NovelStatus } from '../types';
 import { NOVEL_STATUS_META } from '../types';
 import { uid, storageKey } from '../context/ArticleContext';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import NovelComposer from '../components/NovelComposer';
-import { useNavigate, useParams } from 'react-router-dom';
+import TranslationWorkbench from '../components/TranslationWorkbench';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase, SUPABASE_URL } from '../lib/supabase';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -67,6 +68,11 @@ export default function Write() {
   const [favorite, setFavorite] = useState(savedDraft?.favorite ?? editing?.favorite ?? false);
   const [composer, setComposer] = useState<'article' | 'novel'>(savedDraft?.composer ?? (editing?.novel ? 'novel' : 'article'));
   const [previewing, setPreviewing] = useState(false);
+  /* P3 翻译工作台：只在「编辑已有文章/小说」时可开（新文章还没 id，译文表按 id 存）。
+     v2：支持 ?en=1 深链直接进英文工作台（翻译进度总览的「打开工作台」用它）。 */
+  const [enOpen, setEnOpen] = useState(
+    () => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('en') === '1',
+  );
   // 小说（chapter）编辑状态（仅 category=reading 使用）
   const [author, setAuthor] = useState(savedDraft?.author ?? editing?.novel?.author ?? '');
   const [cover, setCover] = useState(savedDraft?.cover ?? editing?.novel?.cover ?? '');
@@ -116,9 +122,39 @@ export default function Write() {
     return () => clearTimeout(timer);
   }, [id, title, content, category, tags, favorite, composer, author, cover, nstatus, synopsis, chapters, attachments]);
 
+  /**
+   * ★ 2026-09-21 修的老 bug ★
+   * 直接打开或刷新 `/write/<id>` 时，articles 是**异步**到的：上面那一串 useState 的
+   * 初值只在首帧取一次，而首帧里 `editing` 还是 undefined —— 于是编辑器整个是空的，
+   * 只有「从站内点进来」（文章数据已在内存里）才正常。
+   * 翻译工作台 v2 是拿**编辑器里的中文**当对照源的，这个 bug 会直接把工作台掏空，
+   * 所以在这里补一次水：文章到达后填一次，且**只填一次**、只在他还没动手时填。
+   */
+  const hydratedIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!id || !editing || hydratedIdRef.current === id) return;
+    hydratedIdRef.current = id;
+    const untouched =
+      !title.trim() && !content.trim() && !synopsis.trim() && chapters.length === 0;
+    if (!untouched) return;
+    setTitle(editing.title || '');
+    setContent(editing.content || '');
+    setCategory(editing.category);
+    setTags(editing.tags.join(', '));
+    setFavorite(editing.favorite);
+    setComposer(editing.novel ? 'novel' : 'article');
+    setAuthor(editing.novel?.author || '');
+    setCover(editing.novel?.cover || '');
+    setNstatus(editing.novel?.status || 'serializing');
+    setSynopsis(editing.novel?.synopsis || '');
+    setChapters(editing.novel?.chapters?.slice() || []);
+    setAttachments(editing.attachments || []);
+    // 依赖只有 id/editing：这是「文章到达」的时机，不跟着他打字跑
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, editing]);
+
   // 清除草稿：清空本地存储与当前编辑内容
-  const clearDraft = () => {
-    if (!window.confirm('确定清除草稿吗？\n\n当前未发布的内容会被清空，且无法恢复。')) return;
+  const clearDraft = () => {    if (!window.confirm('确定清除草稿吗？\n\n当前未发布的内容会被清空，且无法恢复。')) return;
     clearDraftStorage();
     setTitle('');
     setContent('');
@@ -342,10 +378,11 @@ export default function Write() {
     reader.readAsText(file);
   };
 
-  const save = () => {
+  /** 从当前编辑器状态拼出要发布的 Article（save 与工作台的「先保存中文」共用） */
+  const buildArticle = () => {
     if (!title.trim()) {
       alert('请填写标题');
-      return;
+      return null;
     }
     const tagsArr = tags.split(/[,，]/).map((t) => t.trim()).filter(Boolean);
     // 小说模式：整理有效章节（标题为空时自动补编号）
@@ -359,7 +396,7 @@ export default function Write() {
       }));
     if (isReading && validChapters.length === 0) {
       alert('作为小说发布需要至少一个章节。\n\n请在“章节”区域点「＋ 新增章节」并填写正文，\n或直接「导入 txt 自动分章」。');
-      return;
+      return null;
     }
     const isNovelMode = isReading && validChapters.length > 0;
     let novelObj: Article['novel'];
@@ -388,22 +425,58 @@ export default function Write() {
       summary: isNovelMode ? novelSummary : content.replace(/[#>*`$\\[\]()]/g, '').replace(/\n/g, ' ').slice(0, 120),
       novel: isNovelMode ? novelObj : undefined,
     };
-    // 发布前确认：清晰展示即将发布的内容
     const confirmMsg = isNovelMode
       ? '即将发布小说《' + article.title + '》\n作者：' + (novelObj?.author || '（未填写）') + '\n章节数：' + validChapters.length + ' 章\n总字数：' + (novelObj?.wordCount || 0) + ' 字\n\n点击「确定」即可发布到小说书架。'
       : '即将发布文章《' + article.title + '》\n\n点击「确定」即可发布。';
-    if (!window.confirm(confirmMsg)) {
-      return;
-    }
+    return { article, confirmMsg };
+  };
+
+  const save = () => {
+    const built = buildArticle();
+    if (!built) return;
+    if (!window.confirm(built.confirmMsg)) return;
     if (editing) {
-      updateArticle(article);
+      updateArticle(built.article);
     } else {
-      addArticle(article);
+      addArticle(built.article);
     }
     // 已发布，草稿使命完成，清掉本地草稿
     clearDraftStorage();
-    navigate(`/article/${article.id}`);
+    navigate(`/article/${built.article.id}`);
   };
+
+  /**
+   * 翻译工作台里的「先保存中文」（v2 新增，2026-09-21）：
+   * 不弹发布确认、也不跳转——他的语境只是「让对照源与数据库一致」。
+   */
+  const saveZhFromWorkbench = () => {
+    const built = buildArticle();
+    if (!built || !editing) return;
+    updateArticle(built.article);
+  };
+
+  /**
+   * 翻译工作台用（v2）：编辑器里的中文是否与数据库那份不一致。
+   * 只在工作台打开时才算；比较的是**归一化后的签名**（章节标题会补编号、
+   * 空章节会被过滤），否则保存完还会一直显示「未保存」。
+   * deps 里都是中文状态——在工作台右侧英文框里打字不会触发它重算。
+   */
+  const zhDirty = useMemo(() => {
+    if (!enOpen || !editing) return false;
+    const sig = (t: string, c: string, s: string, list: NovelChapter[]) =>
+      JSON.stringify([
+        t,
+        c,
+        s,
+        list
+          .filter((ch) => ch.title.trim() || ch.content.trim())
+          .map((ch, i) => [ch.id, ch.title.trim() || '第' + (i + 1) + '章', ch.content, i]),
+      ]);
+    if (editing.novel) {
+      return sig(title, '', synopsis, chapters) !== sig(editing.title, '', editing.novel.synopsis || '', editing.novel.chapters || []);
+    }
+    return sig(title, content, '', []) !== sig(editing.title, editing.content || '', '', []);
+  }, [enOpen, editing, title, content, synopsis, chapters]);
 
   const exportAs = () => {
     const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
@@ -436,6 +509,23 @@ export default function Write() {
   if (composer === 'novel') {
     // 编辑已有小说：进入章节级编辑界面（点选某章修改，或增删章节/调整顺序/改书籍信息）
     if (editing?.novel) {
+      // P3：整本书的英文译文工作台（逐章翻译）
+      if (enOpen) {
+        return (
+          <div className="page write-page">
+            <TranslationWorkbench
+            article={editing}
+            zhTitle={title}
+            zhContent={content}
+            zhSynopsis={synopsis}
+            zhChapters={chapters}
+            zhDirty={zhDirty}
+            onSaveZh={saveZhFromWorkbench}
+            onClose={() => setEnOpen(false)}
+          />
+          </div>
+        );
+      }
       const editingCh = chapters.find((c) => c.id === editChId);
       return (
         <div className="page write-page">
@@ -541,6 +631,8 @@ export default function Write() {
 
           <div className="write-actions">
             <button className="btn btn-primary" onClick={save}>保存修改</button>
+            <button className="btn btn-light" onClick={() => setEnOpen(true)}>English 译文</button>
+            <Link className="btn btn-light" to="/write/translations#tags">翻译进度 / 标签词典</Link>
           </div>
         </div>
       );
@@ -577,6 +669,8 @@ export default function Write() {
         <button className="btn btn-light" onClick={() => setPanel('music')}>插入音乐</button>
         <button className="btn btn-light" onClick={() => setPanel('attachment')}>添加附件</button>
         <button className="btn btn-light" onClick={clearAll}>重置数据</button>
+        {/* P5：翻译进度 / 标签词典的入口（这两个页面只有博主能进，藏在 URL 里没人找得到） */}
+        <Link className="btn btn-light" to="/write/translations#tags">翻译进度 / 标签词典</Link>
       </div>
 
 
@@ -689,15 +783,32 @@ export default function Write() {
         </div>
 
         <div className="editor-tabs">
-          <button className={`tab-btn ${!previewing ? 'active' : ''}`} onClick={() => setPreviewing(false)}>
+          <button className={`tab-btn ${!previewing && !enOpen ? 'active' : ''}`} onClick={() => { setPreviewing(false); setEnOpen(false); }}>
             编辑
           </button>
-          <button className={`tab-btn ${previewing ? 'active' : ''}`} onClick={() => setPreviewing(true)}>
+          <button className={`tab-btn ${previewing && !enOpen ? 'active' : ''}`} onClick={() => { setPreviewing(true); setEnOpen(false); }}>
             预览
           </button>
+          {/* P3：英文译文工作台（仅编辑已有文章时出现——新文章还没有 id） */}
+          {editing && (
+            <button className={`tab-btn ${enOpen ? 'active' : ''}`} onClick={() => setEnOpen(true)}>
+              English 译文
+            </button>
+          )}
         </div>
 
-        {previewing ? (
+        {enOpen && editing ? (
+          <TranslationWorkbench
+            article={editing}
+            zhTitle={title}
+            zhContent={content}
+            zhSynopsis={synopsis}
+            zhChapters={chapters}
+            zhDirty={zhDirty}
+            onSaveZh={saveZhFromWorkbench}
+            onClose={() => setEnOpen(false)}
+          />
+        ) : previewing ? (
           <div className="editor-preview">
             <MarkdownRenderer content={content} />
           </div>

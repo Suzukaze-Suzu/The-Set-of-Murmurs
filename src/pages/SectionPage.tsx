@@ -8,6 +8,8 @@ import NovelCard from '../components/NovelCard';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useInfiniteList } from '../hooks/useInfiniteList';
+import { useT } from '../i18n';
+import { catKey } from '../i18n/dict';
 
 const PAGE_SIZE = 12;
 
@@ -15,10 +17,11 @@ export default function SectionPage() {
   const { category } = useParams();
   const { articles } = useArticles();
   const { isAdmin } = useAuth();
+  const t = useT();
 
   const cat = (category as Category) in CATEGORY_META ? (category as Category) : 'anime';
   const meta = CATEGORY_META[cat];
-  usePageTitle(meta.label);
+  usePageTitle(t(catKey(cat)));
 
   const list = useMemo(
     () => articles.filter((a) => a.category === cat).sort((a, b) => b.date.localeCompare(a.date)),
@@ -35,18 +38,18 @@ export default function SectionPage() {
     <div className="page">
       {/* 第2f步：左竖条是「颜色」，改用色卡色本身（原来用 ink 墨色） */}
       <div className="cat-header" style={{ '--cat-tint': meta.color, '--cat-accent': meta.color } as CSSProperties}>
-        <Link to="/articles" className="back-link">‹ 全部文章</Link>
+        <Link to="/articles" className="back-link">{t('article.backToAll')}</Link>
         <h1 className="page-title light">
-          {meta.label}
+          {t(catKey(cat))}
         </h1>
-        <p className="cat-count">共 {list.length} 篇</p>
+        <p className="cat-count">{t('count.posts', { n: list.length })}</p>
       </div>
 
       {list.length === 0 ? (
         <div className="empty-state">
           <span className="empty-icon empty-icon-ghost" />
-          <p>这个分类还没有文章</p>
-          {isAdmin && <Link to="/write" className="btn btn-primary">去写一篇</Link>}
+          <p>{t('article.noneInCategory')}</p>
+          {isAdmin && <Link to="/write" className="btn btn-primary">{t('article.writeOne')}</Link>}
         </div>
       ) : (
         <>
@@ -60,9 +63,9 @@ export default function SectionPage() {
             )}
           </div>
           {hasMore ? (
-            <div ref={sentinelRef} className="list-loading">滚动加载更多…</div>
+            <div ref={sentinelRef} className="list-loading">{t('count.loadingMore')}</div>
           ) : (
-            <p className="list-end">已加载全部 {total} 篇</p>
+            <p className="list-end">{t('count.allLoaded', { n: total })}</p>
           )}
         </>
       )}

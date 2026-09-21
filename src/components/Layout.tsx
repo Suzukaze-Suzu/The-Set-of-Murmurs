@@ -5,6 +5,7 @@ import BackToTop from './BackToTop';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useFooter } from '../context/SiteTextContext';
+import { useT, useLocale } from '../i18n';
 
 interface OutletCtx {
   query: string;
@@ -15,6 +16,8 @@ export default function Layout() {
   const { theme } = useTheme();
   const { isAdmin } = useAuth();
   const { footer } = useFooter();
+  const t = useT();
+  const { locale } = useLocale();
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -37,10 +40,18 @@ export default function Layout() {
 
       <footer className="footer">
         <div className="footer-inner">
-          <p className="footer-slogan">{footer.slogan}</p>
-          {footer.caption && <p className="footer-caption">{footer.caption}</p>}
+          {/* ★ 英文版（2026-09-21）：页脚标语/副标题在英文页用字典里的定稿英文
+                 （The Set of Murmurs / Dreams half-known, words unaccounted for），
+                 中文页**继续用站长在关于页可编辑的线上文案**（Supabase site_texts），
+                 中文线的行为一字未改。版权行与语言无关，两边都用线上值。 */}
+          <p className="footer-slogan">{locale === 'en' ? t('brand.full') : footer.slogan}</p>
+          {(locale === 'en' ? t('brand.footerCaption') : footer.caption) && (
+            <p className="footer-caption">
+              {locale === 'en' ? t('brand.footerCaption') : footer.caption}
+            </p>
+          )}
           <p className="footer-links">
-            <Link to="/about">关于</Link> · <Link to="/guestbook">留言板</Link> · <Link to="/friends">友链</Link> · <a href="/rss.xml" target="_blank" rel="noopener">RSS</a>{isAdmin && <> · <Link to="/write">写作</Link></>}
+            <Link to="/about">{t('nav.about')}</Link> · <Link to="/guestbook">{t('nav.footerGuestbook')}</Link> · <Link to="/friends">{t('nav.footerLinks')}</Link> · <a href="/rss.xml" target="_blank" rel="noopener">RSS</a>{isAdmin && <> · <Link to="/write">{t('nav.write')}</Link></>}
           </p>
           <p className="footer-copy">{footer.copyright.replace('{year}', String(new Date().getFullYear()))}</p>
 
@@ -57,9 +68,9 @@ export default function Layout() {
               href="https://www.travellings.cn/go.html"
               target="_blank"
               rel="noopener noreferrer"
-              title="开往-友链接力"
+              title={t('nav.travellingsTitle')}
             >
-              <img src="/travellings/b.png" alt="开往-友链接力" className="tj-badge tj-badge-light" width={120} height={30} />
+              <img src="/travellings/b.png" alt={t('nav.travellings')} className="tj-badge tj-badge-light" width={120} height={30} />
               <img src="/travellings/w.png" alt="" aria-hidden="true" className="tj-badge tj-badge-dark" width={120} height={30} />
             </a>
           </p>

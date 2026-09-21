@@ -1,14 +1,17 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { useComments } from '../context/CommentContext';
 import { useAuth } from '../context/AuthContext';
+import { useTranslations } from '../context/TranslationContext';
 import { CATEGORY_META } from '../types';
 import MarkdownRenderer, { Heading } from '../components/MarkdownRenderer';
 import CommentSection from '../components/CommentSection';
 import NovelReader from '../components/NovelReader';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useT, useLocale } from '../i18n';
+import { catKey } from '../i18n/dict';
 
 export default function ArticleDetail() {
   const { id } = useParams();
@@ -16,8 +19,17 @@ export default function ArticleDetail() {
   const { isAdmin, user } = useAuth();
   const { getById, toggleFavorite, deleteArticle } = useArticles();
   const { articleComments, addArticleComment, deleteComment } = useComments();
+  const { localize } = useTranslations();
+  const { locale } = useLocale();
+  const t = useT();
 
-  const article = getById(id || '');
+  // 英文页：把已审校的译文套到中文原文上（缺译的字段逐项回退中文，见 lib/translations.ts）
+  const rawArticle = getById(id || '');
+  const localized = useMemo(
+    () => (rawArticle ? localize(rawArticle) : null),
+    [rawArticle, localize],
+  );
+  const article = localized?.article;
 
   usePageTitle(article?.title);
 
@@ -34,8 +46,8 @@ export default function ArticleDetail() {
     return (
       <div className="page empty-state">
         <span className="empty-icon empty-icon-ghost" />
-        <p>文章不存在或被删除了</p>
-        <Link to="/" className="btn btn-primary">返回首页</Link>
+        <p>{t('article.notFound')}</p>
+        <Link to="/" className="btn btn-primary">{t('article.backHome')}</Link>
       </div>
     );
   }
@@ -46,7 +58,7 @@ export default function ArticleDetail() {
 
   // 导出为 .md 文件
   const exportMarkdown = () => {
-    const header = `# ${article.title}\n\n> ${article.summary || ''}\n\n**日期：** ${article.date}\n**分类：** ${meta.label}\n**标签：** ${article.tags.join(', ')}\n\n---\n\n`;
+    const header = `# ${article.title}\n\n> ${article.summary || ''}\n\n**${t('article.mdDate')}** ${article.date}\n**${t('article.mdCategory')}** ${t(catKey(article.category))}\n**${t('article.mdTags')}** ${article.tags.join(', ')}\n\n---\n\n`;
     const content = header + article.content;
     const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -71,10 +83,10 @@ export default function ArticleDetail() {
         <div className="detail-cats">
           {/* 第2g步：分类小签＝该分类色卡色实底（亮色），字色由 --cat-on 给；暗色见 index.css 还原块 */}
           <Link to={`/category/${article.category}`} className="detail-cat" style={{ '--cat-color': meta.color, '--cat-ink': meta.ink, '--cat-on': meta.onFill } as CSSProperties}>
-            {meta.label}
+            {t(catKey(article.category))}
           </Link>
-          {article.tags.map((t) => (
-            <span key={t} className="detail-tag">#{t}</span>
+          {article.tags.map((tag) => (
+            <span key={tag} className="detail-tag">#{tag}</span>
           ))}
         </div>
         <h1 className="detail-title">{article.title}</h1>
@@ -83,16 +95,24 @@ export default function ArticleDetail() {
           <span>{article.date}</span>
           {isAdmin && (
           <button className={`meta-btn ${article.favorite ? 'meta-fav-on' : ''}`} onClick={() => toggleFavorite(article.id)}>
-            {article.favorite ? '★ 已收藏' : '☆ 收藏'}
+            {article.favorite ? t('article.savedStar') : t('article.saveStar')}
           </button>
           )}
           {isAdmin && (
           <button className="meta-btn" onClick={exportMarkdown}>
-            导出 .md
+            {t('article.exportMd')}
           </button>
           )}
       </div>
       </div>
+
+      {/* 英文页的缺译提示（P3）：整篇没英文＝一行提示；小说只有部分章节有英文＝另一行 */}
+      {locale === 'en' && localized && !localized.translated && (
+        <p className="detail-i18n-notice">{t('article.zhOnly')}</p>
+      )}
+      {locale === 'en' && localized?.translated && localized.chapterFallback && (
+        <p className="detail-i18n-notice">{t('article.partialZh')}</p>
+      )}
 
       {isNovel ? (
         <NovelReader
@@ -106,7 +126,7 @@ export default function ArticleDetail() {
         <>
           {headings.length > 1 && (
             <details className="toc card">
-              <summary className="toc-toggle">📑 目录</summary>
+              <summary className="toc-toggle">{t('article.contents')}</summary>
               <nav className="toc-list">
                 {headings.map((h) => (
                   <a
@@ -132,7 +152,7 @@ export default function ArticleDetail() {
 
       {article.attachments && article.attachments.length > 0 && (
       <div className="detail-attachments card">
-        <h3 className="detail-att-ttl">附件（{article.attachments.length}）</h3>
+        <h3 className="detail-att-ttl">{t('article.attachments', { n: article.attachments.length })}</h3>
         <div className="detail-att-list">
           {article.attachments.map((att, i) => (
             <a key={i} href={att.url} target="_blank" rel="noreferrer" className="detail-att-item">
