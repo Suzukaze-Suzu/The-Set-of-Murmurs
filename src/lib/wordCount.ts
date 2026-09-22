@@ -47,3 +47,82 @@ export function countWords(text: string | undefined | null, locale: Locale): num
 export function formatCount(n: number): string {
   return n.toLocaleString('en-US');
 }
+
+// ============================================================================
+// ★ 2026-09-22 追加：英文站的「字数 / 词数」口径（用户原话
+//   「英文站的中文文章能不能显示字数而不是词数，如果只翻译了部分段落就同时显示」）
+// ----------------------------------------------------------------------------
+// 规矩（英文页按**译文状态**说话，而不是按 locale 一刀切、也不靠猜正文语言）：
+//   · 整篇没有译文（页面显示的就是中文原文） → `6,765 characters`
+//     —— 数字 = 中文站同一篇的「字」数，**逐字相同**（同一个 countWords(text,'zh')）。
+//   · 整篇译完了                            → `447 words`
+//   · 只译了一部分段落（缺译段回退中文）      → `447 words · 6,765 characters`
+//     两边的数字各自来自各自的文本：英文段只贡献词数、中文回退段只贡献字数。
+//
+// ★ 为什么按「译文状态」而不按「正文里有没有英文」猜（2026-09-22 踩过）：
+//   中文数学文章里全是公式与字母、列表项又常常很短，用「这一段汉字少于 N 个就算英文段」
+//   这种启发式，会把公式段算成 words、还会把没译文的文章误显示成中英混排
+//   （实测：一篇 3,840 字的中文数学笔记在英文站被显示成「313 words · 278 characters」）。
+//   所以切分只在**译文层**做：哪几段真的换了英文，由 alignSegments 说了算。
+// ============================================================================
+
+export interface CountParts {
+  /** 已译部分（英文段）的词数 */
+  words: number;
+  /** 未译回退部分（中文段）的字数 */
+  chars: number;
+}
+
+/**
+ * 小说：把各章的切分加起来。
+ * 没有 `counts` 的章＝那一章还没译文（渲染出来就是中文）→ 按中文字数算，
+ * 于是整本没译的小说在英文站显示的就是中文站那个「字」数。
+ */
+export function sumChapterCounts(
+  chapters: { content?: string; counts?: CountParts | null }[],
+): CountParts {
+  let words = 0;
+  let chars = 0;
+  for (const ch of chapters) {
+    if (ch.counts) {
+      words += ch.counts.words;
+      chars += ch.counts.chars;
+    } else {
+      chars += countWords(ch.content, 'zh');
+    }
+  }
+  return { words, chars };
+}
+
+type CountT = (key: 'count.words' | 'count.chars', params: { n: string }) => string;
+
+/**
+ * 公开页统一用的一句「字数」——中英两站、文章与小说都走它。
+ *   parts：译文层算好的中英切分；**null ＝ 整篇没有译文**（英文页按字数说）。
+ *   text ：渲染出来的正文（中文站与「没有切分信息时」的兜底都用它）。
+ */
+export function formatCountLabel(
+  parts: CountParts | null | undefined,
+  text: string | undefined | null,
+  locale: Locale,
+  t: CountT,
+): string {
+  // 中文站：一字不改（仍是「{n} 字」，口径与改动前逐字一致）
+  if (locale !== 'en') {
+    const n = countWords(text, 'zh');
+    return n ? t('count.words', { n: formatCount(n) }) : '';
+  }
+  // 整篇没有译文 → 正文就是中文原文，按字数说，数字与中文站同一篇完全相同
+  if (!parts) {
+    const n = countWords(text, 'zh');
+    return n ? t('count.chars', { n: formatCount(n) }) : '';
+  }
+  const { words, chars } = parts;
+  if (words > 0 && chars > 0) {
+    return `${t('count.words', { n: formatCount(words) })} · ${t('count.chars', { n: formatCount(chars) })}`;
+  }
+  if (words > 0) return t('count.words', { n: formatCount(words) });
+  if (chars > 0) return t('count.chars', { n: formatCount(chars) });
+  const n = countWords(text, 'zh');
+  return n ? t('count.chars', { n: formatCount(n) }) : '';
+}

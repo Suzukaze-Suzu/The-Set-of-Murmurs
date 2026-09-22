@@ -2086,3 +2086,24 @@ html[lang='en'] .hero-sub{text-indent:.04em}
    回滚＝删掉这一整块。
    ========================================================================== */
 html{font-variant-numeric:lining-nums}
+/* ============================================================================
+   ★ 2026-09-22 第三轮：文章字数（用户原话「我想把每一篇文章都加上字数」）★
+   ----------------------------------------------------------------------------
+   口径与小说线**完全一致**（见 src/lib/wordCount.ts）：
+     中文＝去空白字数（历史口径，与小说卡上的「共 N 章 · M 字」同一个算法）；
+     英文＝真词数（先剥 Markdown/代码/公式，再按 [\p{L}\p{N}]+ 分词）。
+     数字一律走 formatCount 带千位分隔，与书籍卡同款。
+   落点三处（都由 React 侧算好字数再渲染，这一块只管那三个新 span 的样式）：
+     ① 文章卡脚注 `.card-words`（首页卡片 / 全部文章 / 分类页 / 搜索结果共用 ArticleCard）
+     ② 首页「最新更新」右栏小清单 `.latest-item-words`
+     ③ 文章详情页日期行 `.detail-meta-words`
+   小说**不在详情页重复报**——NovelReader 书头已经写了「共 N 章 · M 字」。
+   这一块是**纯追加**：数字本身继承各处的既有字号与字色（.card-date / .latest-item-meta /
+   .detail-meta 的 --text-secondary），**不新造颜色、不新造字号档**，只加一个分隔点。
+   回滚＝直接删掉这一整段（三个 span 里的文字也会随组件一起删）。
+   ========================================================================== */
+.card-meta-sep,.detail-meta-sep{opacity:.5;margin:0 2px}
+.card-words,.detail-meta-words,.latest-item-words{white-space:nowrap}
+/* 窄屏（他会在 iPhone 上验收）：详情页那行原本 flex-wrap:nowrap（见上方「修复一行变两行」），
+   多加一段字数后在 390px 会挤出去 —— 手机上放开换行，比横向溢出好。 */
+@media (max-width:640px){.detail-meta{flex-wrap:wrap}}

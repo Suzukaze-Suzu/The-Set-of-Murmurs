@@ -4,7 +4,7 @@ import { NOVEL_STATUS_META } from '../types';
 import { useLocalizedArticle } from '../context/TranslationContext';
 import { useT, useLocale } from '../i18n';
 import { novelStatusKey } from '../i18n/dict';
-import { countWords, formatCount } from '../lib/wordCount';
+import { formatCountLabel, sumChapterCounts, formatCount } from '../lib/wordCount';
 
 interface Props {
   article: Article;
@@ -20,10 +20,14 @@ export default function NovelCard({ article: raw }: Props) {
   const status = novel?.status;
   const statusMeta = status ? NOVEL_STATUS_META[status] : null;
 
-  /* ★ 数字口径（2026-09-21）：按当前语言实时算——中文＝去空白字数（与历史数字一致），
-     英文＝真词数；novel.wordCount 只在内容缺失时兜底。 */
-  const words =
-    countWords(chapters.map((ch) => ch.content || '').join('\n'), locale) || novel?.wordCount || 0;
+  /* ★ 数字口径（2026-09-22）：整句走 formatCountLabel —— 中文站＝`707 字`（与改动前逐字相同），
+     英文站按**译文状态**：整本没译＝`6,765 characters`、译完＝`707 words`、
+     只译了一部分＝`447 words · 6,765 characters`（见 lib/wordCount.ts）。
+     章节正文缺失时才退回 novel.wordCount 那个存下来的旧数字。 */
+  const body = chapters.map((ch) => ch.content || '').join('\n');
+  const wordsLabel =
+    formatCountLabel(sumChapterCounts(chapters), body, locale, t) ||
+    t('count.words', { n: formatCount(novel?.wordCount || 0) });
 
   return (
     <div className="novel-card">
@@ -52,7 +56,7 @@ export default function NovelCard({ article: raw }: Props) {
         <div className="novel-stats">
           <span>{t('count.chapters', { n: chapters.length })}</span>
           <span>·</span>
-          <span>{words ? t('count.words', { n: formatCount(words) }) : ''}</span>
+          <span>{wordsLabel}</span>
         </div>
 
         <Link to={`/article/${article.id}`} className="read-more">{t('shelf.startReading')}</Link>

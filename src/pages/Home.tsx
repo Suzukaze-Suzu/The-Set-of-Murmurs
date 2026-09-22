@@ -14,7 +14,7 @@ import { useInfiniteList } from '../hooks/useInfiniteList';
 import { searchArticles } from '../lib/search';
 import { useT, useLocale, formatDate } from '../i18n';
 import { catKey } from '../i18n/dict';
-import { countWords, formatCount } from '../lib/wordCount';
+import { formatCountLabel, sumChapterCounts, formatCount } from '../lib/wordCount';
 
 /* 空数组常量：useInfiniteList 依赖 items 引用稳定，别在渲染里现造 [] */
 const NO_RESULTS: Article[] = [];
@@ -211,7 +211,17 @@ export default function Home({ query }: Props) {
               <ul className="latest-list">
                 {latestSmall.map((a) => {
                   const meta = CATEGORY_META[a.category];
-                  const li = localize(a).article; // 英文页换成译文标题
+                  const loc = localize(a); // 英文页换成译文（标题/正文）
+                  const li = loc.article;
+                  /* ★ 字数（2026-09-22）：右侧小清单也报字数，口径走 formatCountLabel；
+                     小说这一行把所有章节的切分加起来（与书籍卡同一套），其余用文章正文的切分。 */
+                  const liChapters = li.novel?.chapters || [];
+                  const liLabel = formatCountLabel(
+                    liChapters.length ? sumChapterCounts(liChapters) : loc.counts,
+                    liChapters.length ? liChapters.map((ch) => ch.content || '').join('\n') : li.content,
+                    locale,
+                    t,
+                  );
                   return (
                     <li key={a.id} className="latest-item">
                       {/* 小圆点＝该分类的色卡色本身（分类的 ink 只给文字用，不当颜色） */}
@@ -220,6 +230,12 @@ export default function Home({ query }: Props) {
                         <Link to={`/article/${a.id}`} className="latest-item-title">{li.title}</Link>
                         <span className="latest-item-meta">
                           {t(catKey(a.category))} · {formatDate(a.date, locale)}
+                          {liLabel && (
+                            <>
+                              <span className="card-meta-sep" aria-hidden="true">·</span>
+                              <span className="latest-item-words">{liLabel}</span>
+                            </>
+                          )}
                         </span>
                       </div>
                       <span className="latest-arrow" aria-hidden="true">›</span>
@@ -261,7 +277,8 @@ export default function Home({ query }: Props) {
           </div>
           <div className="book-grid">
             {bookCards.map((raw) => {
-              const a = localize(raw).article; // 英文页：书名/章节名换成译文
+              const loc = localize(raw); // 英文页：书名/章节名换成译文
+              const a = loc.article;
               const novel = a.novel;
               const chapters = (novel?.chapters || []).slice().sort((x, y) => x.order - y.order);
               const latestCh = chapters[chapters.length - 1]; // 不用 .at(-1)：tsconfig 的 lib 只到 ES2020
@@ -284,16 +301,19 @@ export default function Home({ query }: Props) {
                           {novel?.status ? t(`cat.${novel.status}` as 'cat.serializing') : statusMeta.label}
                         </span>
                       )}
-                      {/* ★ 数字口径（2026-09-21）：按当前语言**实时算**——
-                          中文＝去空白字数（与历史数字完全一致），英文＝真词数。
-                          novel.wordCount 只在内容缺失时兜底，不再当英文页的词数。 */}
+                      {/* ★ 数字口径（2026-09-22）：{m} 现在由 formatCountLabel 算好整句再喂进来 ——
+                          中文站＝`707 字`（与改动前逐字相同），英文站可能是 `707 words` /
+                          `6,765 characters` / `447 words · 6,765 characters`（见 lib/wordCount.ts）。
+                          章节正文缺失时才退回 novel.wordCount 那个存下来的旧数字。 */}
                       <span className="book-meta-text">
                         {(() => {
                           const body = chapters.map((ch) => ch.content || '').join('\n');
-                          const n = countWords(body, locale) || novel?.wordCount || 0;
+                          const label =
+                            formatCountLabel(sumChapterCounts(chapters), body, locale, t) ||
+                            t('count.words', { n: formatCount(novel?.wordCount || 0) });
                           return t('count.chaptersWords', {
                             n: chapters.length,
-                            m: formatCount(n),
+                            m: label,
                           });
                         })()}
                       </span>

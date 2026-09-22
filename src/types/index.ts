@@ -105,6 +105,12 @@ export interface NovelChapter {
   order: number;     // 章节顺序
   part?: string;     // 所属部分名（可选），该部分首章渲染为 # 大标题
   wordCount?: number; // 该章字数
+  /**
+   * ★ 2026-09-22：本地化后带出来的「已译/未译」切分（只有英文页换过译文的章才有）。
+   * 供 lib/wordCount.ts 的 formatCountLabel 决定说什么：words / characters / 两者并排。
+   * 中文页不使用它（中文页一律按正文算「字」）。
+   */
+  counts?: { words: number; chars: number } | null;
 }
 
 export type NovelStatus = 'serializing' | 'completed' | 'paused';

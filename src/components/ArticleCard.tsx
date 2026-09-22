@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLocalizedArticle } from '../context/TranslationContext';
 import { useT, useLocale, formatDate } from '../i18n';
 import { catKey } from '../i18n/dict';
+import { formatCountLabel } from '../lib/wordCount';
 
 interface Props {
   article: Article;
@@ -16,8 +17,12 @@ export default function ArticleCard({ article: raw, onToggleFavorite }: Props) {
   const t = useT();
   const { locale } = useLocale();
   // 英文页：标题/摘要换成已审校的译文（没有译文就原样显示中文）
-  const { article } = useLocalizedArticle(raw);
+  const { article, counts } = useLocalizedArticle(raw);
   const meta = CATEGORY_META[article.category];
+  /* ★ 字数（2026-09-22）：口径走 lib/wordCount.ts 的 formatCountLabel ——
+     中文站＝`801 字`；英文站按**译文状态**说话：整篇没译＝`6,765 characters`、
+     整篇译完＝`447 words`、只译了一部分＝`447 words · 6,765 characters`。 */
+  const label = formatCountLabel(counts, article.content, locale, t);
   return (
     <div
       className="article-card"
@@ -61,7 +66,15 @@ export default function ArticleCard({ article: raw, onToggleFavorite }: Props) {
       </div>
 
       <div className="card-foot">
-        <span className="card-date">{formatDate(article.date, locale)}</span>
+        <span className="card-date">
+          {formatDate(article.date, locale)}
+          {label && (
+            <>
+              <span className="card-meta-sep" aria-hidden="true">·</span>
+              <span className="card-words">{label}</span>
+            </>
+          )}
+        </span>
         <Link to={`/article/${article.id}`} className="read-more">{t('article.read')}</Link>
       </div>
     </div>

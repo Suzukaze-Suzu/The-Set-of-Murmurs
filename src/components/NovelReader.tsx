@@ -6,7 +6,7 @@ import MarkdownRenderer from './MarkdownRenderer';
 import CommentSection from './CommentSection';
 import { useT, useLocale } from '../i18n';
 import { novelStatusKey } from '../i18n/dict';
-import { countWords, formatCount } from '../lib/wordCount';
+import { formatCountLabel, sumChapterCounts, formatCount } from '../lib/wordCount';
 
 interface Props {
   article: Article;
@@ -158,13 +158,14 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
               )}
               <div className="nreader-book-meta">
                 <span>{t('count.chapters', { n: total })}</span>
-                {/* ★ 数字口径（2026-09-21）：按当前语言实时算，见 lib/wordCount.ts */}
+                {/* ★ 数字口径（2026-09-22）：整句走 formatCountLabel，中英各自按译文状态说话，
+                    见 lib/wordCount.ts。 */}
                 {(() => {
-                  const words =
-                    countWords(chapters.map((ch) => ch.content || '').join('\n'), locale) ||
-                    novel?.wordCount ||
-                    0;
-                  return words ? <span>· {t('count.words', { n: formatCount(words) })}</span> : null;
+                  const body = chapters.map((ch) => ch.content || '').join('\n');
+                  const label =
+                    formatCountLabel(sumChapterCounts(chapters), body, locale, t) ||
+                    t('count.words', { n: formatCount(novel?.wordCount || 0) });
+                  return label ? <span>· {label}</span> : null;
                 })()}
                 {readPct > 0 ? <span>{t('shelf.readPct', { p: readPct })}</span> : null}
               </div>
@@ -299,8 +300,12 @@ export default function NovelReader({ article, allComments, onAddComment, onDele
                       <span className="nreader-toc-no">{ix + 1}</span>
                       <span className="nreader-toc-name">{ch.title}</span>
                       {(() => {
-                        const n = countWords(ch.content, locale) || ch.wordCount || 0;
-                        return n ? <span className="nreader-toc-wc">{t('count.words', { n: formatCount(n) })}</span> : null;
+                        /* ★ 2026-09-22：逐章也走 formatCountLabel —— 哪一章译完了就说 words、
+                            还是中文就说 characters、只译了一半就两者并排。 */
+                        const label =
+                          formatCountLabel(ch.counts, ch.content, locale, t) ||
+                          t('count.words', { n: formatCount(ch.wordCount || 0) });
+                        return label ? <span className="nreader-toc-wc">{label}</span> : null;
                       })()}
                     </button>
                   </Fragment>

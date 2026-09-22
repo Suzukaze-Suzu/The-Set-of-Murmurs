@@ -12,6 +12,7 @@ import NovelReader from '../components/NovelReader';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useT, useLocale, formatDate } from '../i18n';
 import { catKey } from '../i18n/dict';
+import { formatCountLabel } from '../lib/wordCount';
 
 export default function ArticleDetail() {
   const { id } = useParams();
@@ -56,6 +57,11 @@ export default function ArticleDetail() {
 
   const isNovel = article.category === 'reading' && !!(article.novel?.chapters?.length);
 
+  /* ★ 字数（2026-09-22）：普通文章在日期行显示字数，口径走 formatCountLabel
+     （中文站＝`801 字`；英文站：整篇没译＝`N characters`、译完＝`N words`、只译了一部分＝两者并排）；
+     小说不在这里显示——NovelReader 的书头已经报了「共 N 章 · M 字/词」。 */
+  const wordsLabel = isNovel ? '' : formatCountLabel(localized?.counts, article.content, locale, t);
+
   // 导出为 .md 文件
   const exportMarkdown = () => {
     const header = `# ${article.title}\n\n> ${article.summary || ''}\n\n**${t('article.mdDate')}** ${formatDate(article.date, locale)}\n**${t('article.mdCategory')}** ${t(catKey(article.category))}\n**${t('article.mdTags')}** ${article.tags.join(', ')}\n\n---\n\n`;
@@ -93,6 +99,12 @@ export default function ArticleDetail() {
         <div className="detail-meta">
           <span className="detail-meta-icon">▪</span>
           <span>{formatDate(article.date, locale)}</span>
+          {wordsLabel && (
+            <>
+              <span className="detail-meta-sep" aria-hidden="true">·</span>
+              <span className="detail-meta-words">{wordsLabel}</span>
+            </>
+          )}
           {isAdmin && (
           <button className={`meta-btn ${article.favorite ? 'meta-fav-on' : ''}`} onClick={() => toggleFavorite(article.id)}>
             {article.favorite ? t('article.savedStar') : t('article.saveStar')}

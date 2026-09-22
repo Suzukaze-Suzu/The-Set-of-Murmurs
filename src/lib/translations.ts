@@ -35,6 +35,19 @@ import {
   splitSegments,
   hashText,
 } from './segments';
+import { countWords, type CountParts } from './wordCount';
+
+/**
+ * ★ 2026-09-22：把对齐后的段落切成「已译部分 / 中文回退部分」两侧分别统计。
+ * 英文页的字数显示据此说话：两侧都有 → `447 words · 6,765 characters`。
+ * （切分只认译文状态，不猜正文语言 —— 中文数学文章的公式段不会被算成 words。）
+ */
+function partsOfAligned(aligned: AlignedSegment[]): CountParts {
+  const en: string[] = [];
+  const zh: string[] = [];
+  for (const a of aligned) (a.en.trim() ? en : zh).push(a.en.trim() ? a.en : a.zh);
+  return { words: countWords(en.join('\n\n'), 'en'), chars: countWords(zh.join('\n\n'), 'zh') };
+}
 
 export type TranslationStatus = 'draft' | 'reviewed';
 
@@ -517,6 +530,13 @@ export interface LocalizedArticle {
   chapterFallback: boolean;
   /** 中文原稿在译文之后改过（只给工作台/总览提示，公开页不提示） */
   stale: boolean;
+  /**
+   * ★ 2026-09-22 给「字数」显示用：正文里**已译部分 / 中文回退部分**各自的量。
+   *   null ＝ 这篇还没有任何译文（英文页据此显示中文字数：N characters，
+   *   数字与中文站同一篇完全相同）。见 lib/wordCount.ts 的 formatCountLabel。
+   *   小说另见每章的 `chapter.counts`。
+   */
+  counts: CountParts | null;
 }
 
 /**
@@ -546,6 +566,7 @@ export function localizeArticle(
       hasTitle: false,
       chapterFallback: false,
       stale: false,
+      counts: null,
     };
   }
   const hasTitle = !!tr.title.trim();
@@ -555,10 +576,14 @@ export function localizeArticle(
 
   // 非小说：段落模式优先
   let content = article.content;
+  let counts: CountParts | null = null;
   if (tr.segments?.length) {
-    content = mergeContent(alignSegments(splitSegments(article.content), tr.segments));
+    const aligned = alignSegments(splitSegments(article.content), tr.segments);
+    content = mergeContent(aligned);
+    counts = partsOfAligned(aligned);
   } else if (hasContent) {
     content = tr.content;
+    counts = { words: countWords(tr.content, 'en'), chars: 0 };
   }
 
   let novel = article.novel;
@@ -569,15 +594,23 @@ export function localizeArticle(
       const en = byId.get(zh.id);
       if (!en || (!en.content?.trim() && !en.title?.trim() && !en.segments?.length)) {
         if (en === undefined) chapterFallback = true;
-        return zh;
+        return zh; // 这一章整章没译 → 不带 counts，英文页按中文字数说
       }
-      const body = en.segments?.length
-        ? mergeContent(alignSegments(splitSegments(zh.content), en.segments))
-        : (en.content.trim() ? en.content : zh.content);
+      let body = zh.content;
+      let chCounts: CountParts | null = null;
+      if (en.segments?.length) {
+        const aligned = alignSegments(splitSegments(zh.content), en.segments);
+        body = mergeContent(aligned);
+        chCounts = partsOfAligned(aligned);
+      } else if (en.content.trim()) {
+        body = en.content;
+        chCounts = { words: countWords(en.content, 'en'), chars: 0 };
+      }
       return {
         ...zh,
         title: en.title.trim() ? en.title : zh.title,
         content: body,
+        counts: chCounts,
       };
     });
     novel = {
@@ -600,6 +633,7 @@ export function localizeArticle(
     hasTitle,
     chapterFallback,
     stale,
+    counts,
   };
 }
 

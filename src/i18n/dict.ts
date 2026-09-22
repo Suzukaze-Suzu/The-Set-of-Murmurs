@@ -117,8 +117,13 @@ export const dict: Dict = {
   // ---- 数字与计数（多个页面共用） ----
   'count.posts': { zh: '{n} 篇', en: { one: '{n} post', other: '{n} posts' } },
   'count.chapters': { zh: '共 {n} 章', en: { one: '{n} chapter', other: '{n} chapters' } },
-  'count.chaptersWords': { zh: '共 {n} 章 · {m} 字', en: '{n:chapter|chapters} · {m:word|words}' },
+  'count.chaptersWords': { zh: '共 {n} 章 · {m}', en: '{n:chapter|chapters} · {m}' },
   'count.words': { zh: '{n} 字', en: { one: '{n} word', other: '{n} words' } },
+  /* ★ 2026-09-22：「{m} 字」里的 {m} 改成由 lib/wordCount.ts 的 countLabel() 先算好
+     （中文站＝`707 字`，所以输出与改动前逐字相同；英文站可能是 `707 words` /
+     `6,765 characters` / `447 words · 6,765 characters` 三种，见那里的说明）。
+     下面 count.chars 是英文站「中文正文按字数说」时的单位（character / characters）。 */
+  'count.chars': { zh: '{n} 字', en: { one: '{n} character', other: '{n} characters' } },
   'count.booksChapters': { zh: '共 {n} 本 · {m} 章', en: '{n:book|books} · {m:chapter|chapters}' },
   'count.loadingMore': { zh: '滚动加载更多…', en: 'Loading more…' },
   'count.allLoaded': { zh: '已加载全部 {n} 篇', en: 'All {n} posts loaded' },
