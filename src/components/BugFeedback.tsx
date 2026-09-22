@@ -3,13 +3,13 @@ import { BugReport, BUG_CATEGORIES } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
-import { useT, useLocale } from '../i18n';
+import { useT, useLocale, formatDate } from '../i18n';
 
 export default function BugFeedback() {
   const { user, isAdmin } = useAuth();
   const { myProfile } = useProfile();
   const t = useT();
-  const { dateLocale } = useLocale();
+  const { locale } = useLocale();
   const [reports, setReports] = useState<BugReport[]>([]);
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('bug');
@@ -127,7 +127,7 @@ export default function BugFeedback() {
                       第2j步：字改成**同色系墨色**（粉底 → 珊瑚墨色，灰蓝浅底 → 灰墨），不再用黑字。 */}
                   <span className="bug-cat-tag" style={{ background: cat ? 'var(--coral-solid)' : 'color-mix(in srgb,var(--slate-blue) 33%,transparent)', color: cat ? 'var(--coral-ink)' : 'var(--slate-ink)' }}>{cat ? t(`cat.${cat.value}` as 'cat.bug') : rep.category}</span>
                   <span className={stCls}>{done ? t('bug.statusDone') : t('bug.statusOpen')}</span>
-                  <span className="comment-date">{new Date(rep.date).toLocaleString(dateLocale)}</span>
+                    <span className="comment-date">{formatDate(rep.date, locale)}</span>
                   {canEdit(rep) && (
                     <button
                       className="bug-toggle"

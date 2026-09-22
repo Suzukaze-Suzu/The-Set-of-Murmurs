@@ -81,10 +81,21 @@
      后面的成员只是「分片没加载出来时」的兜底：本机思源宋 SC → macOS 宋体-简 → 华文宋体 → generic serif。
      中文衬线栈里**故意不放 SimSun（中易宋体）**——用户上一轮就否过它（原话「不要用宋体，太诡异了」，
      Windows 上 SimSun 大字号发虚、字重只有一档）。末尾必须落在 serif 上，保证任何平台最后兜底都是衬线。 */
-  --font-serif: 'Noto Serif TC','Source Han Serif TC','Noto Serif CJK TC','Noto Serif SC','Source Han Serif SC','Songti SC','STSong','Noto Serif',serif;
+  /* ★ 2026-09-22 字体落地（用户拍板）：拉丁字形改走自托管的 murmurs-latin（见
+     public/fonts/murmurs-latin/murmurs-latin.css，由 index.html 引入），汉字继续走上面这一串中文分片。
+     — 'Murmurs Body' = Sorts Mill Goudy（400） + Baskervville（500-900 粗体）的组合家族；
+       'Murmurs Title' = Cormorant Garamond 放大 8% 的变体。
+     — **两个语言用同一条栈**是有意的：英文字体文件里只有拉丁字形、不含汉字，所以
+       「中文站的英文用英文字体、英文站的中文用中文字体」是自动成立的（浏览器按字符挑字体），
+       这也正是用户 2026-09-22 第 3 条要求的效果（原话「英文站的中文不要换字体，用中文站的就可以了，
+       同理中文站的英文也是试一下用英文站的字体」）。
+     — 'Murmur UI Symbols' 是 ★☆ 那 1104 字节的小分片，放这里是为了不让一颗星去拉中文符号片。 */
+  --font-serif: 'Murmurs Body','Murmur UI Symbols','Noto Serif TC','Source Han Serif TC','Noto Serif CJK TC','Noto Serif SC','Source Han Serif SC','Songti SC','STSong','Noto Serif',serif;
   /* 2026-09-17 第3步（衬线收尾）：上面那个 --font-sans 现已无引用——输入框/文本域也一律走衬线了，
-     留着只为将来真需要「黑体小字」时有个现成变量；--font-display 与大标题仍走衬线 */
-  --font-display: var(--font-serif);
+     留着只为将来真需要「黑体小字」时有个现成变量 */
+  /* 2026-09-22：大标题与正文正式分家（原来 --font-display: var(--font-serif)）。
+     标题字体只有拉丁字形，汉字同样自动落到中文字体上。 */
+  --font-display: 'Murmurs Title','Murmur UI Symbols','Noto Serif TC','Source Han Serif TC','Noto Serif CJK TC','Noto Serif SC','Source Han Serif SC','Songti SC','STSong','Noto Serif',serif;
 }
 [data-theme='dark'] {
   --text-main:#eef3f7; --text-secondary:#a9b4be; --bg-page:#141b26;
@@ -1657,7 +1668,11 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
    ========================================================================== */
 
 html[lang='en']{
-  --font-serif:'Source Serif 4','Murmur UI Symbols',Georgia,'Times New Roman','Noto Serif TC','Noto Serif SC','Songti SC','STSong',serif;
+  /* 2026-09-22：英文页不再单独换字体栈 —— 中英两站共用同一条 --font-serif
+     （'Murmurs Body' 只有拉丁字形，汉字自动落到 Noto Serif TC）。
+     原来这里写的是 'Source Serif 4' 开头、中文字体垫底的那条，已随字体落地一并撤掉。 */
+  --font-serif: 'Murmurs Body','Murmur UI Symbols','Noto Serif TC','Source Han Serif TC','Noto Serif CJK TC','Noto Serif SC','Source Han Serif SC','Songti SC','STSong','Noto Serif',serif;
+  --font-display: 'Murmurs Title','Murmur UI Symbols','Noto Serif TC','Source Han Serif TC','Noto Serif CJK TC','Noto Serif SC','Source Han Serif SC','Songti SC','STSong','Noto Serif',serif;
 }
 
 /* 语言切换按钮：图标按钮的尺寸不变，只放两个字符（EN / 中文） */
@@ -2023,3 +2038,51 @@ html[lang='en'] .hero-desc{max-width:none}
 .tr-tag-reviewed .tr-tag-state{color:var(--aqua-ink)}
 .tr-tag-draft{border-color:color-mix(in srgb,var(--honey-gold) 55%,transparent)}
 .tr-tag-draft .tr-tag-state{color:var(--honey-ink)}
+
+/* ============================================================================
+   ★ 2026-09-22 字体落地块（用户连续五轮拍板后的执行）★
+   ----------------------------------------------------------------------------
+   这一块是**纯追加**，回滚＝直接删掉这一整段。
+   字体文件与 @font-face 在 public/fonts/murmurs-latin/（由 index.html 引入），
+   变量改动写在文件头的 :root 与 html[lang='en'] 两处。
+
+   ① 文章标题改走 --font-display（用户原话「让文章标题也用标题字体」）。
+      站点里这七个类原本都没有自己的 font-family、一律继承 body 的 --font-serif，
+      所以换标题字体时它们不跟着变 —— 这里把它们接到标题那一支。
+      ⚠️ 这几个类中英共用：中文侧的字形不受影响（标题字体里没有汉字，自动落到
+         Noto Serif TC），但**改完必须把中文站一起回归**（页脚「留言板」被串成
+         「留言」那类事故就是这么来的）。
+
+   ② hero 两句的字距统一（用户原话「This is The Set of Murmurs — … 太挤了，
+      Dreams half-known, words unaccounted for 太宽了，不统一」）。
+      .hero-sub 的 letter-spacing 是 .22em —— 那是按「两三个汉字」调的档，
+      英文标语挂 .22em 会散成一地；.hero-desc 则完全没有字距。两边统一到 .04em。
+      只改英文页：中文站那两句仍是 .22em/.16em（按汉字调的原值，不动）。
+   ========================================================================== */
+.card-title,.detail-title,.latest-item-title,.novel-title,
+.nreader-book-title,.nreader-chapter-title,.nreader-part-title{
+  font-family:var(--font-display);
+}
+html[lang='en'] .hero-sub,
+html[lang='en'] .hero-desc{letter-spacing:.04em}
+html[lang='en'] .hero-sub{text-indent:.04em}
+/* ============================================================================
+   ★ 2026-09-22 第二轮：数字改回「衬线数字」（lining figures）★
+   ----------------------------------------------------------------------------
+   起因：用户问「数字的字体确定对吗」。实测结论——
+     ① **归属是对的**：数字是拉丁码位，由拉丁字体画（正文 Sorts Mill Goudy、
+        标题 Cormorant Garamond），与「中文站的英文用英文字体」的口径一致。
+     ② **但这两支的默认数字是 old-style（旧体数字）**。实测（fontTools 直接读产物
+        woff2 的 glyf，upm=1000）：SMG 的 0/1/2 只有 0.42em 高，3/4/5/7/9 掉到
+        基线以下 0.18~0.21em；Cormorant 的 3/5/7/9 更下垂 0.276em。
+        而汉字墨高是 0.83em —— 数字只有一半高、还往基线下面掉，这才是"看着不对"。
+     ③ 换字体之前（Noto Serif TC）的数字是 lining：等高 0.71em、几乎不下垂。
+        所以这是本次字体落地**带进来的回退**，不是原设计。
+   修法：两支字体的子集里 GSUB 的 `lnum` 特性都还在（SMG 有 lnum/locl/kern/liga，
+   Cormorant 有 lnum/tnum/calt），打开即可 —— SMG 数字变 0.72~0.80em、Cormorant
+   0.63~0.67em，全部落回基线，观感回到换字体之前。
+   `font-variant-numeric` 是**继承属性**，写在 html 上全站生效；中文字体没有 lnum
+   特性，所以汉字与中文标点的排版一个字都不会变。
+   回滚＝删掉这一整块。
+   ========================================================================== */
+html{font-variant-numeric:lining-nums}

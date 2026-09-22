@@ -4,6 +4,8 @@
 // 设计：**一门语言一条目、两种语言并排**，键名共用。
 //   · 中英不会各写一份字典导致键漂移；一条中文文案对应哪句英文，就在同一行。
 //   · 英文的词数/复数变化用 { one, other } 形式，t() 按 {n} 自动选。
+//     一句话里**两个数字都要变形**时用内联形式 `{m:chapter|chapters}`（2026-09-22 追加，
+//     见 i18n/index.tsx 的 translate()）——{one,other} 只认 `n`，写不了「1 book · 2 chapters」。
 //   · 内容全部来自 blog/docs/i18n-strings.md（Saber 2026-09-21 定稿），
 //     改措辞请**先改词表再改这里**，两边保持一致。
 //   · ⚠️ 中文栏是**线上现役文案的原文**，不改一个字（改了＝静默回归中文站）。
@@ -115,9 +117,9 @@ export const dict: Dict = {
   // ---- 数字与计数（多个页面共用） ----
   'count.posts': { zh: '{n} 篇', en: { one: '{n} post', other: '{n} posts' } },
   'count.chapters': { zh: '共 {n} 章', en: { one: '{n} chapter', other: '{n} chapters' } },
-  'count.chaptersWords': { zh: '共 {n} 章 · {m} 字', en: '{n} chapters · {m} words' },
+  'count.chaptersWords': { zh: '共 {n} 章 · {m} 字', en: '{n:chapter|chapters} · {m:word|words}' },
   'count.words': { zh: '{n} 字', en: { one: '{n} word', other: '{n} words' } },
-  'count.booksChapters': { zh: '共 {n} 本 · {m} 章', en: '{n} books · {m} chapters' },
+  'count.booksChapters': { zh: '共 {n} 本 · {m} 章', en: '{n:book|books} · {m:chapter|chapters}' },
   'count.loadingMore': { zh: '滚动加载更多…', en: 'Loading more…' },
   'count.allLoaded': { zh: '已加载全部 {n} 篇', en: 'All {n} posts loaded' },
 
@@ -156,7 +158,7 @@ export const dict: Dict = {
 
   // ---- 书架 / 阅读器（词表 六） ----
   'shelf.title': { zh: '小说书架', en: 'Bookshelf' },
-  'shelf.summary': { zh: '共 {n} 本 · {m} 章', en: '{n} books · {m} chapters' },
+  'shelf.summary': { zh: '共 {n} 本 · {m} 章', en: '{n:book|books} · {m:chapter|chapters}' },
   'shelf.empty': { zh: '书架还是空的，快去写作页连载第一篇小说吧', en: 'The shelf is empty for now.' },
   'shelf.byAuthor': { zh: '作者：{name}', en: 'by {name}' },
   'shelf.chaptersCount': { zh: '共 {n} 章', en: { one: '{n} chapter', other: '{n} chapters' } },

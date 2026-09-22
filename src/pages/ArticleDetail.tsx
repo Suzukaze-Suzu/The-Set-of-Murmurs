@@ -10,7 +10,7 @@ import MarkdownRenderer, { Heading } from '../components/MarkdownRenderer';
 import CommentSection from '../components/CommentSection';
 import NovelReader from '../components/NovelReader';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { useT, useLocale } from '../i18n';
+import { useT, useLocale, formatDate } from '../i18n';
 import { catKey } from '../i18n/dict';
 
 export default function ArticleDetail() {
@@ -58,7 +58,7 @@ export default function ArticleDetail() {
 
   // 导出为 .md 文件
   const exportMarkdown = () => {
-    const header = `# ${article.title}\n\n> ${article.summary || ''}\n\n**${t('article.mdDate')}** ${article.date}\n**${t('article.mdCategory')}** ${t(catKey(article.category))}\n**${t('article.mdTags')}** ${article.tags.join(', ')}\n\n---\n\n`;
+    const header = `# ${article.title}\n\n> ${article.summary || ''}\n\n**${t('article.mdDate')}** ${formatDate(article.date, locale)}\n**${t('article.mdCategory')}** ${t(catKey(article.category))}\n**${t('article.mdTags')}** ${article.tags.join(', ')}\n\n---\n\n`;
     const content = header + article.content;
     const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -92,7 +92,7 @@ export default function ArticleDetail() {
         <h1 className="detail-title">{article.title}</h1>
         <div className="detail-meta">
           <span className="detail-meta-icon">▪</span>
-          <span>{article.date}</span>
+          <span>{formatDate(article.date, locale)}</span>
           {isAdmin && (
           <button className={`meta-btn ${article.favorite ? 'meta-fav-on' : ''}`} onClick={() => toggleFavorite(article.id)}>
             {article.favorite ? t('article.savedStar') : t('article.saveStar')}

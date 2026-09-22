@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import { Article, CATEGORY_META } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useLocalizedArticle } from '../context/TranslationContext';
-import { useT } from '../i18n';
+import { useT, useLocale, formatDate } from '../i18n';
 import { catKey } from '../i18n/dict';
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 export default function ArticleCard({ article: raw, onToggleFavorite }: Props) {
   const { isAdmin } = useAuth();
   const t = useT();
+  const { locale } = useLocale();
   // 英文页：标题/摘要换成已审校的译文（没有译文就原样显示中文）
   const { article } = useLocalizedArticle(raw);
   const meta = CATEGORY_META[article.category];
@@ -60,7 +61,7 @@ export default function ArticleCard({ article: raw, onToggleFavorite }: Props) {
       </div>
 
       <div className="card-foot">
-        <span className="card-date">{article.date}</span>
+        <span className="card-date">{formatDate(article.date, locale)}</span>
         <Link to={`/article/${article.id}`} className="read-more">{t('article.read')}</Link>
       </div>
     </div>

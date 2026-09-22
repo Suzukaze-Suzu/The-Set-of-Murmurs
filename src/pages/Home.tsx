@@ -12,7 +12,7 @@ import NovelCard from '../components/NovelCard';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useInfiniteList } from '../hooks/useInfiniteList';
 import { searchArticles } from '../lib/search';
-import { useT, useLocale } from '../i18n';
+import { useT, useLocale, formatDate } from '../i18n';
 import { catKey } from '../i18n/dict';
 import { countWords, formatCount } from '../lib/wordCount';
 
@@ -219,7 +219,7 @@ export default function Home({ query }: Props) {
                       <div className="latest-item-main">
                         <Link to={`/article/${a.id}`} className="latest-item-title">{li.title}</Link>
                         <span className="latest-item-meta">
-                          {t(catKey(a.category))} · {a.date}
+                          {t(catKey(a.category))} · {formatDate(a.date, locale)}
                         </span>
                       </div>
                       <span className="latest-arrow" aria-hidden="true">›</span>

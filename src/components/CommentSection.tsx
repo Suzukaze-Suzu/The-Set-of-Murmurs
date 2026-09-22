@@ -3,7 +3,7 @@ import { Comment } from '../types';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { useT, useLocale } from '../i18n';
+import { useT, useLocale, formatDate } from '../i18n';
 
 interface Props {
   comments: Comment[];
@@ -58,7 +58,7 @@ function FoldedReplies({ root, currentUserId, isAdmin, onDelete, onStartReply, n
 }) {
   const [open, setOpen] = useState(false);
   const t = useT();
-  const { dateLocale } = useLocale();
+  const { locale } = useLocale();
   const items = collectDescendants(root);
   if (items.length === 0) return null;
   return (
@@ -77,7 +77,7 @@ function FoldedReplies({ root, currentUserId, isAdmin, onDelete, onStartReply, n
                     {n.c.avatar ? <img src={n.c.avatar} alt={t('comment.avatar')} loading="lazy" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (n.c.name.trim().charAt(0) || t('comment.avatarFallback'))}
                   </Link>
                   <span className="comment-name-label">{n.c.parentName ? <em>{n.c.parentName}</em> : null} {n.c.name}</span>
-                  <span className="comment-date">{new Date(n.c.date).toLocaleString(dateLocale)}</span>
+                  <span className="comment-date">{formatDate(n.c.date, locale)}</span>
                   {!needLogin && (
                     <button className="comment-reply" onClick={() => onStartReply({ ...n.c })}>{t('common.reply')}</button>
                   )}
@@ -108,7 +108,7 @@ function CommentRow({ node, depth, currentUserId, isAdmin, onDelete, onStartRepl
 }) {
   const { c, children } = node;
   const t = useT();
-  const { dateLocale } = useLocale();
+  const { locale } = useLocale();
   const mine = !!onDelete && (isAdmin || (!!currentUserId && c.userId === currentUserId));
   const rowCls = depth === 0 ? 'comment-item' : 'comment-reply-row';
   return (
@@ -118,7 +118,7 @@ function CommentRow({ node, depth, currentUserId, isAdmin, onDelete, onStartRepl
           {c.avatar ? <img src={c.avatar} alt={t('comment.avatar')} loading="lazy" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (c.name.trim().charAt(0) || t('comment.avatarFallback'))}
         </Link>
         <span className="comment-name-label">{c.parentName ? <em>{c.parentName}</em> : null} {c.name}</span>
-        <span className="comment-date">{new Date(c.date).toLocaleString(dateLocale)}</span>
+        <span className="comment-date">{formatDate(c.date, locale)}</span>
         {!needLogin && (
           <button className="comment-reply" onClick={() => onStartReply({ ...c })}>{t('common.reply')}</button>
         )}

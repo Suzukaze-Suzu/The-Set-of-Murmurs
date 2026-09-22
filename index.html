@@ -44,6 +44,14 @@
          （CSS 与 woff2 用同一个号，见 public 里生成的 CSS 注释）。
          以后只要重切字体或改这份 CSS，就把 ?v= 往上加一。woff2 分片本身仍走一年长缓存。 -->
     <link rel="stylesheet" href="/fonts/noto-serif-tc/noto-serif-tc.css?v=4" />
+    <!-- 拉丁字形（2026-09-22 字体落地）：标题 Cormorant Garamond +8%、正文 Sorts Mill Goudy（400）
+         ＋粗体 Baskervville（500-900，因为 SMG 只有 400 一档而站点禁假粗）。
+         这一套文件里**只有拉丁字形**，汉字仍走上面那套中文分片 —— 于是中英各自按自己的
+         size-adjust 渲染，「中文站的英文用英文字体、英文站的中文用中文字体」自动成立。
+         详见 public/fonts/murmurs-latin/murmurs-latin.css 顶部注释。 -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/murmurs-latin/smg-latin-normal.woff2?v=1" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/murmurs-latin/cormorant-latin-normal.woff2?v=1" crossorigin />
+    <link rel="stylesheet" href="/fonts/murmurs-latin/murmurs-latin.css?v=1" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
     <style>
       html,body{margin:0;padding:0;height:100%;}

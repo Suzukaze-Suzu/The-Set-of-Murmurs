@@ -8,15 +8,11 @@ import ProfileCard from '../components/ProfileCard';
 import AvatarCropModal from '../components/AvatarCropModal';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { useT, useLocale } from '../i18n';
-
-function fmt(iso: string, dateLocale: string) {
-  try { return new Date(iso).toLocaleString(dateLocale); } catch { return iso; }
-}
+import { useT, useLocale, formatDate } from '../i18n';
 
 export default function About() {
   const t = useT();
-  const { dateLocale, locale } = useLocale();
+  const { locale } = useLocale();
   const location = useLocation();
   usePageTitle(t('about.title'));
   const { profile, setProfile } = useProfile();
@@ -132,7 +128,11 @@ export default function About() {
           ) : (
             <>
               <div className="about-content-head">
+                {/* 2026-09-22 用户要求：去掉这里原来的「本站简介 / About this site」标题
+                    （中英共用同一个组件，所以中英两侧都不再显示；标题键 about.introTitle 保留在字典里没删，
+                     要退回只需把下面这行注释打开）。
                 <h2>{t('about.introTitle')}</h2>
+                */}
                 {!loading && isAdmin && (
                 <div className="about-head-actions">
                   {versions.length > 0 && (
@@ -213,7 +213,7 @@ export default function About() {
                   <div key={v.id} className="history-item">
                     <div className="history-item-info">
                       <span className="history-badge">{i === 0 ? '当前' : '版本 ' + (i + 1)}</span>
-                      <span className="history-date">{fmt(v.date, dateLocale)}</span>
+                      <span className="history-date">{formatDate(v.date, locale)}</span>
                     </div>
                     <div className="history-actions">
                       <button className="btn btn-light btn-sm" onClick={() => setPreviewVersion(v)}>预览</button>
@@ -227,7 +227,7 @@ export default function About() {
               <div className="history-preview">
                 <div className="history-preview-head">
                   <strong>正在预览版本</strong>
-                  <span className="history-date">{fmt(previewVersion.date, dateLocale)}</span>
+                  <span className="history-date">{formatDate(previewVersion.date, locale)}</span>
                   <button className="btn btn-light btn-sm" onClick={() => setPreviewVersion(null)}>收起</button>
                 </div>
                 <div className="history-preview-body"><MarkdownRenderer content={previewVersion.content} /></div>

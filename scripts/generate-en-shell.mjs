@@ -64,7 +64,12 @@ swap(
   'content="The Set of Murmurs — a personal blog on anime, essays, reading notes and mathematics."',
 );
 
-// ---- 3. 字体：撤掉中文字体（preload × 3 + CSS），换拉丁字体 ----
+// ---- 3. 字体：只撤中文 preload，中文字体 CSS **保留** ----
+// 2026-09-22 用户第 3 条：「英文站的中文不要换字体，用中文站的就可以了」——
+// 英文页难免要显示还没译的汉字，所以 noto-serif-tc.css 必须留着，汉字才会落到站点
+// 自托管的那套思源宋上（而不是 iPhone 的 Songti SC / Windows 的 Noto Serif SC）。
+// 代价可控：@font-face 只在真有字符命中 unicode-range 时才下载，英文页没有汉字就不拉，
+// 首屏那 1.5MB 的中文分片依旧不会自动下载 —— 所以只撤 preload、不撤 CSS。
 const cjkPreloads = [
   '<link rel="preload" as="font" type="font/woff2" href="/fonts/noto-serif-tc/nstc-symbol1.woff2?v=4" crossorigin />',
   '<link rel="preload" as="font" type="font/woff2" href="/fonts/noto-serif-tc/nstc-common.woff2?v=4" crossorigin />',
@@ -74,26 +79,22 @@ for (const l of cjkPreloads) {
   const ok = swap('移除中文 preload', l + '\n    ', '', { optional: true });
   if (!ok) swap('移除中文 preload', l, '', { optional: true });
 }
-swap(
-  '移除中文字体 CSS',
-  '<link rel="stylesheet" href="/fonts/noto-serif-tc/noto-serif-tc.css?v=4" />',
-  '<link rel="stylesheet" href="/fonts/source-serif-4/source-serif-4.css?v=1" />\n    <link rel="preload" as="font" type="font/woff2" href="/fonts/source-serif-4/source-serif-4-latin-wght-normal.woff2?v=1" crossorigin />',
-);
 
 // ---- 3b. 清掉描述中文字体的 HTML 注释（在英文壳里是无关的中文维护说明） ----
 let droppedComments = 0;
 html = html.replace(/<!--[\s\S]*?-->/g, (c) => {
   if (c.includes('noto-serif-tc')) {
     droppedComments++;
-    return `<!-- 英文页字体：拉丁衬线 Source Serif 4（自托管，见 /fonts/source-serif-4/source-serif-4.css）
-         为什么是它：中文线用的 Noto Serif TC/SC（思源宋体）的拉丁部分本来就是 Source Serif 的骨架，
-         两边同源，中英混排不会有两套字感。首选 preload 只有一条 49.6KB 的拉丁正体。 -->`;
+    return `<!-- 英文页字体：拉丁＝自托管 murmurs-latin（标题 Cormorant Garamond +8%、
+         正文 Sorts Mill Goudy + 粗体 Baskervville），汉字＝中文线那套 Noto Serif TC 分片。
+         两套都按 unicode-range 按需下载：英文页没有汉字时不会拉中文分片，
+         只撤了中文的 preload（中文字体 CSS 必须留着，见 scripts/generate-en-shell.mjs 第 3 步）。 -->`;
   }
   return c;
 });
 
 // ---- 4. 过场 splash：文案与字体 ----
-swap('splash 字体', "'Noto Serif TC','Noto Serif SC'", "'Source Serif 4',Georgia");
+swap('splash 字体', "'Noto Serif TC','Noto Serif SC'", "'Murmurs Body','Murmurs Title'");
 swap('splash 站名', '<div class="logo">呓语集</div>', '<div class="logo">Murmurs</div>');
 swap('splash 加载中', '<div class="tip">加载中…</div>', '<div class="tip">Loading…</div>');
 swap('splash 超时提示', '加载失败或网络较慢', 'Loading failed or the network is slow');
@@ -115,8 +116,20 @@ if (missed.length) {
   process.exit(1);
 }
 
-// ---- 6. 自检：产物里不该再有中文字体引用 ----
-const leftovers = html.match(/noto-serif-tc/g) || [];
+// ---- 6. 自检 ----
+// ★ 2026-09-22 口径**反转**：以前是「英文页里 noto-serif-tc 必须为 0」，现在是
+//   「中文字体 CSS 必须**在**（英文站的中文要落到自托管思源宋，用户第 3 条要求），
+//     但中文 preload 必须**不在**（首屏那 1.5MB 分片不能预拉）」。
+const cjkCssLinks = (
+  html.match(/<link rel="stylesheet" href="\/fonts\/noto-serif-tc\/noto-serif-tc\.css\?v=\d+" \/>/g) || []
+).length;
+const cjkPreloadLeft = (
+  html.match(/<link rel="preload" as="font"[^>]*href="\/fonts\/noto-serif-tc\//g) || []
+).length;
+const latinCssLinks = (
+  html.match(/<link rel="stylesheet" href="\/fonts\/murmurs-latin\/murmurs-latin\.css\?v=\d+" \/>/g) || []
+).length;
+
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(OUT, html, 'utf8');
 
@@ -126,5 +139,10 @@ console.log('  · 大小        ', kb(Buffer.byteLength(html)));
 console.log('  · <html lang> ', (html.match(/<html lang="([^"]+)"/) || [])[1]);
 console.log('  · 标题        ', (html.match(/<title>([^<]*)<\/title>/) || [])[1]);
 console.log('  · 清掉的中文字体注释', droppedComments, '处');
-console.log('  · 残留 noto-serif-tc 引用次数', leftovers.length, leftovers.length ? '（应为 0！）' : '');
-if (leftovers.length) process.exit(1);
+console.log('  · 中文字体 CSS ', cjkCssLinks, '（应为 1：英文页的汉字要落到自托管思源宋）');
+console.log('  · 中文 preload ', cjkPreloadLeft, '（应为 0：首屏不预拉中文分片）');
+console.log('  · 拉丁字体 CSS ', latinCssLinks, '（应为 1）');
+if (cjkCssLinks !== 1 || cjkPreloadLeft !== 0 || latinCssLinks !== 1) {
+  console.error('[en-shell] 英文页的字体引用不符合预期，先看上面两行数字。');
+  process.exit(1);
+}

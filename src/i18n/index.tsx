@@ -62,9 +62,17 @@ export function translate(
     s = Number(params?.n) === 1 ? raw.one : raw.other;
   }
   if (!params) return s;
-  return s.replace(/\{(\w+)\}/g, (m, k) =>
+  s = s.replace(/\{(\w+)\}/g, (m, k) =>
     params[k] === undefined ? m : String(params[k]),
   );
+  /* 内联复数（2026-09-22 追加）：`{m:chapter|chapters}` —— 展开成「**数字 + 变形后的单位**」
+     （`{m:chapter|chapters}` + m=2 → `2 chapters`）。上面的 {one,other} 只按 `n` 选形态，
+     而「共 1 本 · 2 章」这种**一句话里两个数字**都要变形的（英文会出现 `1 books`），用它写。
+     注意数字本身由这里带出来，模板里不要再写一个 `{m}`。参数没传时整段原样留着，便于抓漏。 */
+  s = s.replace(/\{(\w+):([^{}]*)\|([^{}]*)\}/g, (m, k, one, other) =>
+    params[k] === undefined ? m : `${params[k]} ${Number(params[k]) === 1 ? one : other}`,
+  );
+  return s;
 }
 
 type LocaleCtx = {
@@ -79,6 +87,39 @@ type LocaleCtx = {
 
 /** 日期本地化标识（与英式拼写口径一致） */
 export const DATE_LOCALE: Record<Locale, string> = { zh: 'zh-CN', en: 'en-GB' };
+
+/** 英式月份缩写 —— 注意 September 在英国英语里是 **Sept**（四个字母），与美式的 Sep 不同 */
+const EN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * 日期显示（2026-09-22 用户指定）：
+ *   · 英文页 → `6 Sept. 2026`（用户原话「英文页面的日期使用 6 Sept. 2026 类似形式」）
+ *   · 中文页 → 行为一律不变：纯日期字符串（articles.date 就是这么存的）原样显示，
+ *     其余（评论/历史那种时间戳）仍走 `toLocaleString('zh-CN')`，与改动前逐字一致。
+ *
+ * ★ 两类值必须分开走（2026-09-22 第二轮修正，用户「检查一下数字」查出）：
+ *   ① **纯日期串**（`articles.date`，恰好 10 字符 `YYYY-MM-DD`）：走正则取年月日，
+ *      不过 `new Date()` —— 否则时区会把日期挪掉一天。
+ *   ② **时间戳**（评论/留言的 `date`，ISO 带时区，如 `2026-08-16T16:52:30Z`）：
+ *      必须和中文页看的是**同一个瞬间**，所以同样走 `new Date(value)` 取**本地**年月日。
+ *      上一版对 ② 也走了 ①，直接切 ISO 串的 UTC 日期 → 英文页比中文页**早一天**
+ *      （实测：中文 `2026/8/17 00:52:30` ↔ 英文 `16 Aug. 2026`；`2026/8/10 02:14:49` ↔ `9 Aug. 2026`）。
+ */
+export function formatDate(value: string | number | Date, locale: Locale): string {
+  const s = typeof value === 'string' ? value : '';
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  /* 只有「恰好 10 个字符」才算纯日期串：带 T/时间的都是时间戳，得走本地时区 */
+  const plainDate = !!iso && s.length === 10;
+  if (locale === 'en') {
+    if (plainDate) return `${Number(iso![3])} ${EN_MONTHS[Number(iso![2]) - 1]}. ${iso![1]}`;
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return `${d.getDate()} ${EN_MONTHS[d.getMonth()]}. ${d.getFullYear()}`;
+  }
+  if (plainDate) return s; // 中文页：纯日期原样（改前就是这么显示的）
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString('zh-CN');
+}
 
 const Ctx = createContext<LocaleCtx | null>(null);
 
