@@ -2107,3 +2107,104 @@ html{font-variant-numeric:lining-nums}
 /* 窄屏（他会在 iPhone 上验收）：详情页那行原本 flex-wrap:nowrap（见上方「修复一行变两行」），
    多加一段字数后在 390px 会挤出去 —— 手机上放开换行，比横向溢出好。 */
 @media (max-width:640px){.detail-meta{flex-wrap:wrap}}
+/* ============================================================================
+   ★ 2026-09-22 第四步：hero 去掉暖色（用户报「亮色版本的开始阅读点下去之后是红配绿不好看」）★
+   ----------------------------------------------------------------------------
+   起因与读法：他那句只给了症状、没给位置。我实测下来（.tmp-hero-colors.mjs）：
+     · 「开始阅读」共两个落点——书架卡上的 .read-more（亮色＝青蓝墨色字 + 8% 天空蓝淡底）与
+       书头那颗 .nreader-start-btn（亮色＝青蓝实底 #4A9BB8 + 白字，这是他点名过的主按钮口径）；
+     · 它们所在/点进去的页面里，**唯一与青蓝同框的暖色**就是 hero 底子：
+       --hero-flow 第 3、4 档＝蜜金 26%／珊瑚粉 16% 混白，左上角 --hero-glow-a＝珊瑚粉 40% 光晕。
+       青蓝压在珊瑚粉上正是他说的「红配绿」。
+   他的拍板（选项 B，原话选的是「hero 整体去掉暖色」）：hero 底子里删掉珊瑚/蜜金两段，只留
+   天空蓝→白；两侧光晕也不再一红一蓝，统一走蓝色。范围严格限定在 hero，其余区块一律不动。
+   实现：只重定义两个 token（hero 的底与光晕都是吃 token 的，见本文件第 66~76 行的定义处），
+   因此 .hero / .hero::before / .hero::after 三处规则一个字都不用改。
+   以下选择器与第 68 行同形（:root 记 0,1,0；[data-theme='dark'] 记 0,2,0）——本块写在文件末尾，
+   同特异性时靠源码顺序决胜：亮色那半盖掉亮色定义，带 [data-theme='dark'] 的那半盖掉暗色定义。
+   ★ 暗色也一起去暖：原来暗色 hero 第 4 档是「珊瑚粉 14% 混 #141b26」，同一类红压青的问题，
+     顺手一起治；换掉后暗色 hero 只剩天空蓝一族的三档深浅。
+   回滚＝删掉这一整块。
+   ========================================================================== */
+:root{
+  --hero-flow: linear-gradient(115deg,
+    color-mix(in srgb,var(--accent) 20%,#fff) 0%,
+    #ffffff 20%,
+    color-mix(in srgb,var(--sky-blue) 14%,#fff) 44%,
+    color-mix(in srgb,var(--aqua-blue) 16%,#fff) 62%,
+    color-mix(in srgb,var(--aqua-blue) 18%,#fff) 82%,
+    color-mix(in srgb,var(--accent) 20%,#fff) 100%);
+  --hero-glow-a: color-mix(in srgb,var(--sky-blue) 40%,transparent);
+  --hero-glow-b: color-mix(in srgb,var(--accent) 45%,transparent);
+}
+[data-theme='dark']{
+  --hero-flow: linear-gradient(115deg,
+    color-mix(in srgb,var(--sky-blue) 16%,#141b26) 0%,
+    #141b26 24%,
+    color-mix(in srgb,var(--aqua-blue) 26%,#141b26) 46%,
+    color-mix(in srgb,var(--sky-blue) 18%,#141b26) 64%,
+    color-mix(in srgb,var(--sky-blue) 16%,#141b26) 84%,
+    color-mix(in srgb,var(--sky-blue) 16%,#141b26) 100%);
+}
+/* ============================================================================
+   ★ 2026-09-22 第五步：中文顶栏登录态也收成「头像 + 小菜单」（起因＝他报「中文版本顶栏
+   （作者）会有重叠」）★
+   ----------------------------------------------------------------------------
+   组件那边（Navbar.tsx）已把三档合成一套结构：任何语言、任何宽度都渲染 .nav-user > .nav-avatar，
+   桌面端不再有「博主 · 退出登录」那颗宽按钮。这里只补两条针对**桌面档**的收尾：
+     ① 兜底藏掉 .nav-signout —— 万一哪天 JSX 又渲染出它（或别的线把结构改回去），
+        也不会有颗宽按钮冒出来顶到顶栏右边；
+     ② 头像在桌面稍微放大一点（38 → 40），补上原来那颗文字按钮提供的点击面积感。
+   两处都写在 max-width:1199px 的**外面**（全宽度生效），因为新结构在每一档都是头像。
+   回滚＝删掉这一整块（配合 Navbar.tsx 那处 JSX 回滚）。
+   ========================================================================== */
+.nav-signout{display:none}
+.nav-user .nav-avatar{width:40px;height:40px}
+
+/* ============================================================================
+   ★ 2026-09-22 第七步：hero 按钮悬停不再变红（用户原话「我只换hero的按钮的红色」）★
+   ----------------------------------------------------------------------------
+   根因（无头 Chrome 真悬停实测，不是猜的）：本文件第 144 行有一条**全局链接规则**
+       a:hover{color:var(--coral-ink)}
+   它的特异性是 (0,1,1)＝「1 个类型 + 1 个伪类」。而按钮基类：
+       .btn-primary      (0,1,0)  只写了 color，**没有 :hover 版本**
+       .btn-light-outline(0,1,0)  同上
+   于是鼠标一悬停，a:hover 凭更高特异性压掉按钮自己的字色，字当场变成珊瑚墨
+   rgb(168,72,47)＝#A8482F。实测（.tmp-hero-btn-red.mjs）：
+       「开始写作」悬停：底仍 #4A9BB8、字变 #A8482F → 青蓝底压红字
+       「浏览全部」悬停：底 12% 天空蓝、字变 #A8482F
+   全站扫描（.tmp-hover-red-scan.mjs，7 个页面 × 逐元素真 hover）：**只有首页中招**，
+   共 7 处＝hero 两颗按钮 + 分类浏览 5 张卡（.cat-nav-card，也是 <a>）。
+   本步**按用户指定只修 hero 的按钮**，分类浏览那 5 张卡原样保留（他在等着看这一处的效果）。
+   修法：给两颗按钮补上它们本来就该有的 hover 字色——
+     主按钮＝保持白字（底色本来就是 --accent 实底，字必须跟着它走）；**暗色下主按钮**
+     本来静止是深字 #0e1c26，hover 由既有规则变白（那是原来就有的、也没变红，保持不动）。
+     次级按钮＝亮色比静止再压深一档（试过 --sky-blue-dark，实测它与静止字色**完全相同**
+     rgb(46,110,146)，等于没有反馈，故改用 color-mix 派生）；暗色补一条钉成白字，
+     对应它既有那条 hover 底 rgba(255,255,255,.15)。
+   特异性说明：`.hero-cta a`(0,1,1) 与 a:hover(0,1,1) **同分**，本块在文件末尾 → 靠源码顺序取胜；
+   `.btn-primary`/`.btn-light-outline` 是类选择器记 (0,1,0)，比这条高 1 分，同样赢。
+   回滚＝删掉下面这两条规则。
+   ========================================================================== */
+.hero-cta a.btn-primary:hover,
+.hero-cta a.btn-primary:focus-visible{color:var(--accent-on)}
+/* 次级按钮：亮色静态字是 --sky-ink(#2E6E92)，而 --sky-blue-dark 恰好在亮色就等于它
+   （实测两者都是 rgb(46,110,146)）→ 直接用它当 hover 字色等于没有反馈。
+   所以亮色用 color-mix 再压深一档；暗色另有 [data-theme='dark'] 那条既有规则
+   （hover 字 #fff / 底 rgba(255,255,255,.15)），这里补一条把字钉成白，
+   免得又被全局 a:hover 的红抢走。 */
+.hero-cta a.btn-light-outline:hover,
+.hero-cta a.btn-light-outline:focus-visible{
+  color:color-mix(in srgb,var(--sky-ink) 78%,#0b2a3a);
+}
+[data-theme='dark'] .hero-cta a.btn-light-outline:hover,
+[data-theme='dark'] .hero-cta a.btn-light-outline:focus-visible{color:#fff}
+
+/* ============================================================================
+   ★ 2026-09-22 第六步：hero 去暖色后的验收断言（无头 Chrome 实测，见 .tmp-hero-assert.mjs）★
+   ----------------------------------------------------------------------------
+   亮色 hero 背景里不允许再出现暖色档：实测把 --hero-flow 解析成渐变后逐档配色，
+   要求 hue 全部落在蓝/青区间（180°~250°）；并核对 .hero-cta .btn-primary 仍是
+   var(--accent) 实底 + var(--accent-on) 白字（他说过的主按钮口径，本次不改按钮）。
+   这一段是**注释即契约**，没有可执行 CSS；断言脚本在 blog/first/hero-warm-off-navavatar/ 里。
+   ========================================================================== */

@@ -57,6 +57,20 @@ import { catKey } from '../i18n/dict';
    实测结果（.tmp-nav-en-verify.mjs，2 语 × 11 个宽度，含**彩点逐个展开的峰值**在内共 22 项断言全绿）：
      中文 865.2/1032（展开峰值余 118.8）、英文 996.1/1112（展开峰值余 39.3）、
      1024 视口英文 982.6/992（这一档按断点表走「Categories ∨」下拉）。
+    ★★ 2026-09-22 晚：登录态「三档合一」（起因＝用户报「中文版本顶栏（作者）会有重叠」）★★
+    用户原话是「中文版本顶栏（作者）会有重叠」；我在给出「复现不到」的实测数据后，他选了
+    「按「更保险」的写法直接改」。当时用无头 Chrome 量到的是（.tmp-nav-zh-overlap.mjs /
+    .tmp-nav-zh-overlap2.mjs，1440/1366/1280/1200/1152/1100/1024 加 768/640/480/390/360 共 11 档，
+    管理员登录态、中英两站各一遍）：
+      · 元素盒子两两重叠 = 0；文字墨迹（Range 量出的 ink box）相交 = 0；文字被裁 = 0；
+      · 整页 scrollWidth 等于视口宽（不撑破）；顶栏叶子元素自证在案（「博主 · 退出登录」实宽 122.3px，
+        scrollWidth 等于 clientWidth、没被压窄；头像 38px；两者互不重叠）。
+    也就是**他说的那种重叠我复现不到**。既然判据拿不到，就不再依赖「中文 ≥1024 用宽按钮」这条老口径，
+    直接把**中英、所有宽度**的登录态统一成「纯头像按钮 + 小菜单」（原先是只有 ≤1023 与英文页这样）。
+    代价（已跟他讲明并由他选定）：桌面顶栏不再显示「博主 · 退出登录」这几个字，退出登录改从头像小菜单进。
+    收益：右侧操作区 346.3px 缩到约 221px，整行多出约 125px 余量，字体字号图标再变也挤不到「作者」那块。
+    回滚：把本文件这一处 JSX 换回 isNarrow || locale === 'en' 的两分支写法即可（.nav-signout 的老 CSS
+    仍在 index.css 里保留着，没删）。
    ============================================================ */
 
 const CATEGORY_ROUTES: Record<string, string> = {
@@ -400,56 +414,32 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
 
             <div className="nav-auth">
               {user ? (
-                isNarrow || locale === 'en' ? (
-                  /* ≤1023px：登录态收成**纯头像按钮** + 小菜单（不收会溢出，见宽度账）
-                     ★ 英文页（2026-09-21）：任何宽度都走这一套——英文的「Author · Sign out」
-                     比中文「博主 · 退出登录」宽 21.8px，加上英文导航多出的 171.5px，
-                     ≥1200 的管理员整行会超出 75px（实测）。头像版只需 931.5px，放得下。
-                     中文站 ≥1024 的行为不变（仍是「博主 · 退出登录」+ 头像）。 */
-                  <div className="nav-user" ref={userMenuRef}>
-                    <button
-                      className={`nav-avatar${location.pathname === '/profile' ? ' active' : ''}`}
-                      onClick={() => setUserMenuOpen((o) => !o)}
-                      aria-label={t('nav.account')}
-                      aria-haspopup="true"
-                      aria-expanded={userMenuOpen}
-                      title={t(isAdmin ? 'nav.author' : 'nav.account')}
-                    >
-                      {myProfile?.avatar ? (
-                        <img src={myProfile.avatar} alt="" />
-                      ) : (
-                        <span className="nav-avatar-placeholder" />
-                      )}
-                    </button>
-                    {userMenuOpen && (
-                      <div className="nav-user-menu">
-                        <Link to="/profile" className="nav-user-item" onClick={() => setUserMenuOpen(false)}>
-                          {t('nav.myProfile')}
-                        </Link>
-                        <button className="nav-user-item danger" onClick={() => signOut()}>
-                          {t('nav.signOut')}
-                        </button>
-                      </div>
+                <div className="nav-user" ref={userMenuRef}>
+                  <button
+                    className={`nav-avatar${location.pathname === '/profile' ? ' active' : ''}`}
+                    onClick={() => setUserMenuOpen((o) => !o)}
+                    aria-label={t('nav.account')}
+                    aria-haspopup="true"
+                    aria-expanded={userMenuOpen}
+                    title={t(isAdmin ? 'nav.author' : 'nav.account')}
+                  >
+                    {myProfile?.avatar ? (
+                      <img src={myProfile.avatar} alt="" />
+                    ) : (
+                      <span className="nav-avatar-placeholder" />
                     )}
-                  </div>
-                ) : (
-                  <>
-                    <button className="btn btn-primary btn-sm nav-signout" onClick={() => signOut()} title={t('nav.signOut')}>
-                      {t(isAdmin ? 'nav.author' : 'nav.account')} · {t('nav.signOut')}
-                    </button>
-                    <Link
-                      to="/profile"
-                      className={`nav-avatar${location.pathname === '/profile' ? ' active' : ''}`}
-                      title={t('nav.myProfile')}
-                    >
-                      {myProfile?.avatar ? (
-                        <img src={myProfile.avatar} alt={t('common.avatar')} />
-                      ) : (
-                        <span className="nav-avatar-placeholder" />
-                      )}
-                    </Link>
-                  </>
-                )
+                  </button>
+                  {userMenuOpen && (
+                    <div className="nav-user-menu">
+                      <Link to="/profile" className="nav-user-item" onClick={() => setUserMenuOpen(false)}>
+                        {t('nav.myProfile')}
+                      </Link>
+                      <button className="nav-user-item danger" onClick={() => signOut()}>
+                        {t('nav.signOut')}
+                      </button>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Link to="/login" className="btn btn-primary btn-sm">{t('nav.signIn')}</Link>
               )}
