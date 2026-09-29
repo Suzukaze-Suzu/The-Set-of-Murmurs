@@ -48,6 +48,13 @@ function clearDraftStorage() {
   try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
 }
 
+// 站外要用的静态图（放在 public/ 根目录，随 main 一起部署）。
+// 链接写死成线上绝对地址：写作页在 /en/ 下也能拿到不带前缀的正确链接；贴到别处长期有效。
+const ASSET_FILES = [
+  { key: 'avatar', name: '头像原图（方形）', meta: '1444×1444 PNG', url: 'https://www.the-set-of-murmurs.me/avatar-original.png' },
+  { key: 'home', name: '首页截图', meta: '2497×1469 PNG', url: 'https://www.the-set-of-murmurs.me/home-screenshot.png' },
+];
+
 export default function Write() {
   const { isAdmin } = useAuth();
   const { id } = useParams();
@@ -81,7 +88,26 @@ export default function Write() {
   const [chapters, setChapters] = useState<NovelChapter[]>(savedDraft?.chapters ?? editing?.novel?.chapters?.slice() ?? []);
   const fileInput = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
-  const [panel, setPanel] = useState<'image' | 'music' | 'attachment' | null>(null);
+  const [panel, setPanel] = useState<'image' | 'music' | 'attachment' | 'assets' | null>(null);
+  // 外链素材面板：点一下就把链接复制到剪贴板（贴到别处用）
+  const [copiedAsset, setCopiedAsset] = useState<string | null>(null);
+  const copyAsset = async (url: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // 剪贴板 API 不可用时（http / 旧浏览器）退回 execCommand
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    setCopiedAsset(key);
+    window.setTimeout(() => setCopiedAsset(null), 1800);
+  };
   const [imgUploading, setImgUploading] = useState(false);
     const [musicInfo, setMusicInfo] = useState('');
   const [imgDragging, setImgDragging] = useState(false);
@@ -671,6 +697,8 @@ export default function Write() {
         <button className="btn btn-light" onClick={clearAll}>重置数据</button>
         {/* P5：翻译进度 / 标签词典的入口（这两个页面只有博主能进，藏在 URL 里没人找得到） */}
         <Link className="btn btn-light" to="/write/translations#tags">翻译进度 / 标签词典</Link>
+        {/* 外链素材：头像原图 / 首页截图，点一下复制链接 */}
+        <button className="btn btn-light" onClick={() => setPanel('assets')}>外链素材</button>
       </div>
 
 
@@ -745,6 +773,31 @@ export default function Write() {
             </div>
           )}
           <button className="btn btn-light" onClick={() => setPanel(null)}>关闭</button>
+        </div>
+      )}
+
+      {panel === 'assets' && (
+        <div className="media-panel card">
+          <h4>外链素材</h4>
+          <p className="media-panel-desc">站点根目录下的两张静态图，给别人填「头像链接 / 首页截图链接」时用。点「复制链接」直接粘走；这两个文件名可能已被外部引用，改名前先确认。</p>
+          <div className="attach-preview-list">
+            {ASSET_FILES.map((a) => (
+              <div key={a.key} className="attach-preview-item">
+                <span className="attach-preview-name">
+                  {a.name} · {a.meta}
+                  <br />
+                  <code>{a.url}</code>
+                </span>
+                <button className="btn btn-primary btn-sm" onClick={() => copyAsset(a.url, a.key)}>
+                  {copiedAsset === a.key ? '已复制 ✓' : '复制链接'}
+                </button>
+                <a className="btn btn-light btn-sm" href={a.url} target="_blank" rel="noreferrer">打开</a>
+              </div>
+            ))}
+          </div>
+          <div className="media-actions">
+            <button className="btn btn-light" onClick={() => setPanel(null)}>关闭</button>
+          </div>
         </div>
       )}
       <div className="write-form card">
