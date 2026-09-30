@@ -16,6 +16,14 @@ Thumbs.db
 .vercel
 .netlify
 
+# 临时调试文件 / 快照（不入库）
+.tmp*
+.tmp-*
+first/
+.tmp-esbuild/
+scripts/__pycache__/
+docs/开往-友链接力入口.md
+
 # 注：vercel.json 曾因 source 写成 "/((?!api/).*)" 这种负向断言被 Vercel 判为
 # "Invalid vercel.json"，当时靠把它加进 .gitignore 绕过去了——但那样 Vercel 侧
 # 等于没有任何 rewrite 配置，深路径全部 404。现已改回合法写法 "/(.*)" 并重新纳入版本控制。

@@ -8,7 +8,7 @@ import NovelCard from '../components/NovelCard';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useInfiniteList } from '../hooks/useInfiniteList';
 import { searchArticles } from '../lib/search';
-import { useT } from '../i18n';
+import { useT, useLocale } from '../i18n';
 import { catKey } from '../i18n/dict';
 
 interface Props {
@@ -19,6 +19,7 @@ const PAGE_SIZE = 12;
 
 export default function Articles({ query }: Props) {
   const t = useT();
+  const { locale } = useLocale();
   usePageTitle(t('article.all'));
   const { articles } = useArticles();
   const [catFilter, setCatFilter] = useState<string>('all');
@@ -37,7 +38,7 @@ export default function Articles({ query }: Props) {
     let cancelled = false;
     setSearching(true);
     const timer = setTimeout(() => {
-      searchArticles(q).then((res) => {
+      searchArticles(q, locale).then((res) => {
         if (!cancelled) {
           setSearchResults(res);
           setSearching(false);

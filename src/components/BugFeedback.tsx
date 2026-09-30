@@ -5,6 +5,10 @@ import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import { useT, useLocale, formatDate } from '../i18n';
 
+// 数据库状态常量（与既有数据兼容，不随语言切换）
+const STATUS_OPEN = '待处理';
+const STATUS_DONE = '已处理';
+
 export default function BugFeedback() {
   const { user, isAdmin } = useAuth();
   const { myProfile } = useProfile();
@@ -40,7 +44,7 @@ export default function BugFeedback() {
       id: id,
       content: content.trim(),
       category: category,
-      status: '待处理',
+      status: STATUS_OPEN,
       date: date,
       nickname: nickname
     };
@@ -50,7 +54,7 @@ export default function BugFeedback() {
       .insert(row)
       .then(({ error: err }) => {
         if (err) { setError(t('bug.submitFailed') + err.message); return; }
-        const newRep: BugReport = { id: id, userId: (user && user.id) || undefined, nickname: nickname, category: category, content: content.trim(), status: '待处理', date: date };
+        const newRep: BugReport = { id: id, userId: (user && user.id) || undefined, nickname: nickname, category: category, content: content.trim(), status: STATUS_OPEN, date: date };
         setReports((prev) => [newRep, ...prev]);
         setContent('');
         setCategory('bug');
@@ -61,7 +65,7 @@ export default function BugFeedback() {
 
   // 切换状态：待处理 <-> 已处理。博主可改任何，普通用户可改自己的。
   const toggleStatus = (rep: BugReport) => {
-    const nextStatus = rep.status === '待处理' ? '已处理' : '待处理';
+    const nextStatus = rep.status === STATUS_OPEN ? STATUS_DONE : STATUS_OPEN;
     // 乐观更新 UI
     setReports((prev) => prev.map((r) => (r.id === rep.id ? { ...r, status: nextStatus } : r)));
     // 写入数据库；失败则回滚并提示，避免出现"假成功"（前端已改但数据库没写入）
@@ -118,7 +122,7 @@ export default function BugFeedback() {
         ) : (
           reports.map((rep) => {
             const cat = BUG_CATEGORIES.find((c) => c.value === rep.category);
-            const done = rep.status !== '待处理';
+            const done = rep.status !== STATUS_OPEN;
             const stCls = done ? 'bug-status bug-status-done' : 'bug-status';
             return (
               <div key={rep.id} className="bug-item">

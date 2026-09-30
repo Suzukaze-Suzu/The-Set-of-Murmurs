@@ -73,7 +73,15 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         setTags(tagMap);
         setReady(true);
       },
-    );
+    ).catch((err) => {
+      // 任一请求 reject 也标记就绪，避免英文站永久卡在 loading；降级为显示中文原文
+      console.warn('译文/标签词典加载失败，降级为中文原文', err);
+      if (mounted) {
+        setMap({});
+        setTags({});
+        setReady(true);
+      }
+    });
     return () => {
       mounted = false;
     };

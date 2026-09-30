@@ -420,6 +420,14 @@ export const dict: Dict = {
   // 值刻意做得极短：顶栏图标按钮只有 36×36，装不下 "English"。
   'locale.switch': { zh: 'EN', en: '中文' },
   'locale.switchTitle': { zh: 'Read in English', en: '用中文阅读' },
+
+  // ---- 404 页（全新页面，中文起草后等用户确认） ----
+  'notFound.title': { zh: '找不到这个页面', en: 'Page not found' },
+  'notFound.desc': {
+    zh: '你访问的页面不存在，或者已经搬走了。',
+    en: "The page you're looking for doesn't exist or has moved.",
+  },
+  'notFound.home': { zh: '回首页', en: 'Back home' },
 };
 
 export type DictKey = keyof typeof dict;

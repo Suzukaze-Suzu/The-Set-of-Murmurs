@@ -5,9 +5,21 @@ import { useAuth } from './AuthContext';
 import { ArticleContext, uid } from './ArticleContext';
 import { rowToArticle } from '../lib/articleRow';
 
+// 预渲染注入的文章数据（scripts/prerender.mjs 写入 window.__PRERENDERED_ARTICLE__）
+function getPrerenderedArticle(): Article | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    const data = (window as any).__PRERENDERED_ARTICLE__;
+    if (data && typeof data === 'object' && data.id) return data as Article;
+  } catch { /* ignore */ }
+  return null;
+}
+
 export function ArticleProvider({ children }: { children: ReactNode }) {
   const { isAdmin } = useAuth();
-  const [articles, setArticlesState] = useState<Article[]>([]);
+  // 预渲染页面：用注入的文章作为首屏数据，避免二次请求 Supabase
+  const prerendered = getPrerenderedArticle();
+  const [articles, setArticlesState] = useState<Article[]>(prerendered ? [prerendered] : []);
   const [loaded, setLoaded] = useState(false);
   const [version, setVersion] = useState(0); // 用于刷新
 

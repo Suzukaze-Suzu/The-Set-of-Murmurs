@@ -36,6 +36,7 @@ const Gallery = lazy(() => import('./pages/Gallery'));
 const Friends = lazy(() => import('./pages/Friends'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // 使用 Outlet context 传递搜索词
 function LayoutRoute() {
@@ -97,7 +98,7 @@ export default function App() {
                                   <Route path="/profile" element={<ProfilePage />} />
                                   <Route path="/guestbook" element={<Guestbook />} />
                                   <Route path="/friends" element={<Friends />} />
-                                  <Route path="*" element={<HomeRoute />} />
+                                  <Route path="*" element={<NotFound />} />
                                 </Route>
                               </Routes>
                             </Suspense>

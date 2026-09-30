@@ -2,7 +2,20 @@
   "rewrites": [
     { "source": "/en", "destination": "/en/index.html" },
     { "source": "/en/(.*)", "destination": "/en/index.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/login", "destination": "/index.html" },
+    { "source": "/articles", "destination": "/index.html" },
+    { "source": "/gallery", "destination": "/index.html" },
+    { "source": "/novels", "destination": "/index.html" },
+    { "source": "/category/(.*)", "destination": "/index.html" },
+    { "source": "/article/(.*)", "destination": "/index.html" },
+    { "source": "/write/translations", "destination": "/index.html" },
+    { "source": "/write", "destination": "/index.html" },
+    { "source": "/write/(.*)", "destination": "/index.html" },
+    { "source": "/about", "destination": "/index.html" },
+    { "source": "/profile", "destination": "/index.html" },
+    { "source": "/guestbook", "destination": "/index.html" },
+    { "source": "/friends", "destination": "/index.html" }
   ],
   "headers": [
     {

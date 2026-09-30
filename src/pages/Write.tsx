@@ -10,6 +10,13 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase, SUPABASE_URL } from '../lib/supabase';
 import { usePageTitle } from '../hooks/usePageTitle';
+import {
+  readChapterDraft,
+  writeChapterDraft,
+  clearChapterDraft,
+  listStaleChapterDrafts,
+  ChapterDraft,
+} from '../lib/draft';
 
 // ── 草稿自动保存 ──────────────────────────────────────────────
 // 写新文章 / 新小说时，把标题、正文、分类、标签、章节等实时存到 localStorage，
@@ -122,6 +129,11 @@ export default function Write() {
   const [chDraftContent, setChDraftContent] = useState('');
   const [chPreview, setChPreview] = useState(false);
   const [chDraftPart, setChDraftPart] = useState('');
+  // 章节草稿恢复提示：进入某章时检测到未保存的草稿
+  const [chapterDraftPrompt, setChapterDraftPrompt] = useState<{
+    chapterId: string;
+    draft: ChapterDraft;
+  } | null>(null);
   const coverInput = useRef<HTMLInputElement>(null);
   const chapterFileInput = useRef<HTMLInputElement>(null);
 
@@ -147,6 +159,75 @@ export default function Write() {
     }, 600);
     return () => clearTimeout(timer);
   }, [id, title, content, category, tags, favorite, composer, author, cover, nstatus, synopsis, chapters, attachments]);
+
+  // ★ 第 3 批：章节级草稿（编辑已有小说时）★
+  // 进入某章：检测草稿 → 有则提示恢复/丢弃；切换章节时由下方 effect 自动存上一章
+  const selectChapterWithDraft = (chId: string) => {
+    // 切换章节时清掉上一章的恢复提示
+    if (chapterDraftPrompt && chapterDraftPrompt.chapterId !== chId) {
+      setChapterDraftPrompt(null);
+    }
+    const ch = chapters.find((c) => c.id === chId);
+    if (!ch) return;
+    setEditChId(chId);
+    setChDraftTitle(ch.title);
+    setChDraftContent(ch.content);
+    setChDraftPart(ch.part || '');
+    setChPreview(false);
+    // 编辑已有文章时检查章节草稿
+    if (id) {
+      const draft = readChapterDraft(id, chId);
+      if (draft) setChapterDraftPrompt({ chapterId: chId, draft });
+    }
+  };
+
+  // 编辑已有小说时，章节改动 600ms 防抖写入章节级草稿
+  useEffect(() => {
+    if (!id || !editChId) return;
+    const ch = chapters.find((c) => c.id === editChId);
+    if (!ch) return;
+    const timer = setTimeout(() => {
+      const draft: ChapterDraft = {
+        title: ch.title,
+        content: ch.content,
+        part: ch.part || '',
+        savedAt: new Date().toISOString(),
+      };
+      writeChapterDraft(id, editChId, draft);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [id, editChId, chapters]);
+
+  /** 恢复章节草稿 */
+  const restoreChapterDraft = () => {
+    if (!chapterDraftPrompt) return;
+    const { chapterId, draft } = chapterDraftPrompt;
+    updateChapter(chapterId, { title: draft.title, content: draft.content, part: draft.part });
+    setChDraftTitle(draft.title);
+    setChDraftContent(draft.content);
+    setChDraftPart(draft.part);
+    setChapterDraftPrompt(null);
+  };
+
+  /** 丢弃章节草稿 */
+  const discardChapterDraft = () => {
+    if (id && chapterDraftPrompt) clearChapterDraft(id, chapterDraftPrompt.chapterId);
+    setChapterDraftPrompt(null);
+  };
+
+  /** 清掉一篇文章下所有章节草稿 */
+  const clearAllChapterDrafts = (articleId: string) => {
+    const prefix = `yiyuji_write_ch_draft:${articleId}:`;
+    try {
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefix)) keys.push(k);
+      }
+      keys.forEach((k) => localStorage.removeItem(k));
+    } catch { /* ignore */
+    }
+  };
 
   /**
    * ★ 2026-09-21 修的老 bug ★
@@ -468,6 +549,8 @@ export default function Write() {
     }
     // 已发布，草稿使命完成，清掉本地草稿
     clearDraftStorage();
+    // 清掉该文章的所有章节级草稿
+    if (id) clearAllChapterDrafts(id);
     navigate(`/article/${built.article.id}`);
   };
 
@@ -596,7 +679,7 @@ export default function Write() {
                   <div className="novel-edit-chlist-head">
                     <span className="novel-edit-chlist-title">章节（{chapters.length}）</span>
                     <div className="novel-edit-chlist-actions">
-                      <button className="btn btn-light btn-sm" onClick={() => { const id = addChapter('', ''); setEditChId(id); setChDraftTitle(''); setChDraftContent(''); setChDraftPart(''); setChPreview(false); }}>＋ 新增章节</button>
+                      <button className="btn btn-light btn-sm" onClick={() => { const chId = addChapter('', ''); selectChapterWithDraft(chId); }}>＋ 新增章节</button>
                       <button className="btn btn-light btn-sm" onClick={() => chapterFileInput.current?.click()}>导入 txt 分章</button>
                       <input ref={chapterFileInput} type="file" accept=".txt,.md,.markdown" style={{ display: 'none' }} onChange={(e) => { importChapterFile(e, true); e.target.value = ''; }} />
                     </div>
@@ -609,7 +692,7 @@ export default function Write() {
                       <div key={ch.id} className={'novel-edit-chitem' + (editChId === ch.id ? ' active' : '')}>
                         <button
                           className="novel-edit-chname"
-                          onClick={() => { setEditChId(ch.id); setChDraftTitle(ch.title); setChDraftContent(ch.content); setChDraftPart(ch.part || ''); setChPreview(false); }}
+                          onClick={() => { selectChapterWithDraft(ch.id); }}
                         >
                           <span className="novel-edit-ch-order">{i + 1}</span>
                           <span className="novel-edit-ch-title-text">{ch.title || ('第' + (i + 1) + '章')}</span>
@@ -631,6 +714,16 @@ export default function Write() {
               <div className="novel-edit-right">
                 {editingCh ? (
                   <div className="novel-chapter-editor card">
+                    {/* 章节草稿恢复提示 */}
+                    {chapterDraftPrompt && chapterDraftPrompt.chapterId === editChId && (
+                      <div className="chapter-draft-banner">
+                        <span className="chapter-draft-text">检测到未保存的草稿（{new Date(chapterDraftPrompt.draft.savedAt).toLocaleString()}）</span>
+                        <span className="chapter-draft-actions">
+                          <button className="btn btn-sm btn-primary" onClick={restoreChapterDraft}>恢复</button>
+                          <button className="btn btn-sm btn-light" onClick={discardChapterDraft}>丢弃</button>
+                        </span>
+                      </div>
+                    )}
                     <div className="novel-ch-ed-head">
                       <input className="novel-ch-title-input" placeholder="本章标题" value={chDraftTitle} onChange={(e) => { setChDraftTitle(e.target.value); updateChapter(editChId, { title: e.target.value, content: chDraftContent, part: chDraftPart }); }} />
                       <input className="novel-ch-part-input" placeholder="所属部分（选填，如：第一卷 校园篇）" value={chDraftPart} onChange={(e) => { setChDraftPart(e.target.value); updateChapter(editChId, { title: chDraftTitle, content: chDraftContent, part: e.target.value }); }} />

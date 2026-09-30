@@ -1037,6 +1037,10 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-cover-hint{color:var(--text-secondary);font-size:.8rem;margin:0}
 .novel-book-tip{color:var(--text-secondary);font-size:.9rem;line-height:1.7;margin:0;padding:10px 12px;background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:8px}
 .novel-chapter-editor{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:14px;border:1px solid color-mix(in srgb,var(--accent) 12%,transparent)}
+/* === 章节草稿恢复横幅（第 3 批）=== */
+.chapter-draft-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;border-radius:8px;background:color-mix(in srgb,var(--honey-gold) 18%,transparent);border:1px solid color-mix(in srgb,var(--honey-gold) 40%,transparent);font-size:.85rem}
+.chapter-draft-text{color:var(--text-main)}
+.chapter-draft-actions{display:flex;gap:6px;flex-shrink:0}
 .novel-ch-ed-head{display:flex;flex-direction:column;gap:6px}
 .novel-ch-ed-head .novel-ch-title-input{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-size:1rem;font-weight:600}
 .novel-ch-ed-head .novel-ch-title-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
@@ -1312,6 +1316,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 [data-theme='dark'] .novel-chapter-editor .btn-light:hover,
 [data-theme='dark'] .novel-ch-tools .btn-light:hover,
 [data-theme='dark'] .media-panel .btn-light:hover{background:var(--sky-fill);color:#fff;border-color:var(--sky-ink)}
+[data-theme='dark'] .chapter-draft-banner{background:color-mix(in srgb,var(--honey-gold) 14%,#1c2433);border-color:color-mix(in srgb,var(--honey-gold) 30%,transparent)}
 
 /* ============================================================
    第2f步「字用墨色 / 颜色不用墨色」的暗色还原块（2026-09-14）
@@ -2208,3 +2213,81 @@ html{font-variant-numeric:lining-nums}
    var(--accent) 实底 + var(--accent-on) 白字（他说过的主按钮口径，本次不改按钮）。
    这一段是**注释即契约**，没有可执行 CSS；断言脚本在 blog/first/hero-warm-off-navavatar/ 里。
    ========================================================================== */
+
+/* ============================================================================
+   ★ 2026-09-29 第 8 步：试做 1、4（分类浏览悬停去红 + 暗色筛选激活态字色统一）★
+   ----------------------------------------------------------------------------
+   1. 分类浏览 5 张卡悬停去红
+      根因：.cat-nav-card 本身是 <a>，全局 a:hover{color:var(--coral-ink)} 会把它自身
+      的字色抢走；其内部 .cat-nav-name/.cat-nav-count 虽有自己的 color，但 <a> 自身
+      若出现直接文本或某些边界情况仍会泛红。补一条 hover/focus-visible 字色钉死。
+      亮色用该分类墨色 --sec-ink；暗色用该分类色卡色本身 --sec-color（与既有暗色口径一致）。
+
+   4. 暗色激活态字色统一（本轮收窄到筛选按钮）
+      现状：.filter-chip.active 暗色下是「分类色卡实底 + --cat-ink」，部分分类的墨档
+      在暗色实底上对比度偏低（如天空蓝墨 #2E6E92 压天空蓝实底）。
+      改法：暗色下 .filter-chip.active 改成「13% 分类色淡底 + 亮色版分类色卡字」，
+      与 .card-cat/.detail-cat 的暗色口径一致。
+   ========================================================================== */
+.cat-nav-card:hover,
+.cat-nav-card:focus-visible{color:var(--sec-ink,var(--text-main))}
+[data-theme='dark'] .cat-nav-card:hover,
+[data-theme='dark'] .cat-nav-card:focus-visible{color:var(--sec-color,var(--accent))}
+
+[data-theme='dark'] .filter-chip.active{
+  background: color-mix(in srgb, var(--cat-color, var(--sky-blue)) 13%, transparent);
+  color: var(--cat-color, var(--sky-blue));
+}
+
+/* ============================================================================
+   ★ 2026-09-29 第 9 步：NotFound（404）页样式 ★
+   ----------------------------------------------------------------------------
+   未知路径不再渲染首页，改出 404 页。纯追加，回滚＝删掉这一整块。
+   ========================================================================== */
+.not-found{
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+.not-found-inner{ max-width: 520px; }
+.not-found-code{
+  font-family: var(--font-title, 'Murmurs Title', Georgia, serif);
+  font-size: clamp(4rem, 15vw, 7rem);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg,var(--aqua-blue) 0%,var(--sky-blue) 50%,var(--coral-pink) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.not-found-title{
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+}
+.not-found-desc{
+  color: var(--text-secondary, #636e72);
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+}
+.not-found-links{ display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.not-found-btn{
+  display: inline-flex;
+  align-items: center;
+  padding: 0.7rem 1.4rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.not-found-btn-primary{
+  background: var(--aqua-blue);
+  color: #fff;
+}
+.not-found-btn-primary:hover{ background: var(--accent-deep); }
+[data-theme='dark'] .not-found-desc{ color: #a0a0a0; }

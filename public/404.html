@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>404 · 找不到这个页面 / Page not found</title>
+<link rel="stylesheet" href="/fonts/noto-serif-tc/noto-serif-tc.css">
+<link rel="stylesheet" href="/fonts/murmurs-latin/murmurs-latin.css">
+<style>
+  :root {
+    --sky-blue: #5BA8D8;
+    --honey-gold: #E8C9A0;
+    --coral-pink: #E89B8A;
+    --aqua-blue: #4A9BB8;
+    --aqua-deep: #2A6577;
+    --text-main: #2d3436;
+    --text-secondary: #636e72;
+    --bg: #f7f4ef;
+    --card-bg: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --sky-blue: #5BA8D8;
+      --honey-gold: #E8C9A0;
+      --coral-pink: #E89B8A;
+      --aqua-blue: #4A9BB8;
+      --aqua-deep: #7cbcd3;
+      --text-main: #e8e6e1;
+      --text-secondary: #a0a0a0;
+      --bg: #141b26;
+      --card-bg: #1c2433;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { font-size: 16px; }
+  body {
+    font-family: 'Noto Serif TC', 'Murmurs Title', 'Murmurs Body', 'Source Serif 4', Georgia, serif;
+    background: var(--bg);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    line-height: 1.7;
+  }
+  .wrap {
+    max-width: 520px;
+    text-align: center;
+  }
+  .code {
+    font-family: 'Murmurs Title', 'Noto Serif TC', Georgia, serif;
+    font-size: clamp(4rem, 15vw, 7rem);
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--aqua-blue) 0%, var(--sky-blue) 50%, var(--coral-pink) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .zh-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .en-title {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.8rem;
+  }
+  .divider {
+    width: 60px;
+    height: 3px;
+    background: var(--honey-gold);
+    margin: 0 auto 1.8rem;
+    border-radius: 2px;
+  }
+  .zh-desc { font-size: 0.95rem; margin-bottom: 0.5rem; }
+  .en-desc { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 2rem; }
+  .links { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.7rem 1.4rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: var(--aqua-blue);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--aqua-deep); }
+  .btn-outline {
+    background: transparent;
+    color: var(--aqua-blue);
+    border: 1.5px solid var(--aqua-blue);
+  }
+  .btn-outline:hover { background: color-mix(in srgb, var(--aqua-blue) 10%, transparent); }
+  .footer {
+    margin-top: 2.5rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+  .footer a { color: var(--aqua-blue); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="code">404</div>
+    <div class="zh-title">找不到这个页面</div>
+    <div class="en-title">Page not found</div>
+    <div class="divider"></div>
+    <p class="zh-desc">你访问的页面不存在，或者已经搬走了。</p>
+    <p class="en-desc">The page you're looking for doesn't exist or has moved.</p>
+    <div class="links">
+      <a class="btn btn-primary" href="/">回首页</a>
+      <a class="btn btn-outline" href="/en/">Back home</a>
+    </div>
+    <div class="footer">
+      <a href="/">呓语集</a> · The Set of Murmurs
+    </div>
+  </div>
+</body>
+</html>

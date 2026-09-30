@@ -73,7 +73,7 @@ export default function Home({ query }: Props) {
     let cancelled = false;
     setSearching(true);
     const timer = setTimeout(() => {
-      searchArticles(q).then((res) => {
+      searchArticles(q, locale).then((res) => {
         if (!cancelled) {
           setSearchResults(res);
           setSearching(false);
