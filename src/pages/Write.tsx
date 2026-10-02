@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, ChangeEvent } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback, ChangeEvent } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { CATEGORIES, CATEGORY_META, Article, ArticleAttachment, Category, NovelChapter, NovelStatus } from '../types';
 import { NOVEL_STATUS_META } from '../types';
@@ -57,6 +57,13 @@ function clearDraftStorage() {
 
 // 站外要用的静态图（放在 public/ 根目录，随 main 一起部署）。
 // 链接写死成线上绝对地址：写作页在 /en/ 下也能拿到不带前缀的正确链接；贴到别处长期有效。
+// ── IndexNow：主动把新文章推给 Bing 等搜索引擎 ──────────────────
+// 为什么：Bing 会「发现」URL，但抓取是它自己排队的；新站没有外链 → 优先级极低，
+// 后台会长期停在「已发现但未爬网」。IndexNow 是即时提交协议，POST 一下立刻进抓取队列。
+// 提交由 api/indexnow.mjs 在服务端发（密钥不经过前端），这里只负责拼 URL 和显示结果。
+const SITE_ORIGIN = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/+$/, '')
+  || 'https://www.the-set-of-murmurs.me';
+
 const ASSET_FILES = [
   { key: 'avatar', name: '头像原图（方形）', meta: '1444×1444 PNG', url: 'https://www.the-set-of-murmurs.me/avatar-original.png' },
   { key: 'home', name: '首页截图', meta: '2497×1469 PNG', url: 'https://www.the-set-of-murmurs.me/home-screenshot.png' },
@@ -95,7 +102,7 @@ export default function Write() {
   const [chapters, setChapters] = useState<NovelChapter[]>(savedDraft?.chapters ?? editing?.novel?.chapters?.slice() ?? []);
   const fileInput = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
-  const [panel, setPanel] = useState<'image' | 'music' | 'attachment' | 'assets' | null>(null);
+  const [panel, setPanel] = useState<'image' | 'music' | 'attachment' | 'assets' | 'indexnow' | null>(null);
   // 外链素材面板：点一下就把链接复制到剪贴板（贴到别处用）
   const [copiedAsset, setCopiedAsset] = useState<string | null>(null);
   const copyAsset = async (url: string, key: string) => {
@@ -538,6 +545,53 @@ export default function Write() {
     return { article, confirmMsg };
   };
 
+  /* ── IndexNow 推送（后台手动入口） ───────────────────────── */
+  const [pingBusy, setPingBusy] = useState(false);
+  const [pingResult, setPingResult] = useState<{ ok: boolean; text: string; urls: string[] } | null>(null);
+  const [pingUrlText, setPingUrlText] = useState('');
+
+  // 「当前这篇」两条 URL（中文 + 英文）。新文章还没 id → 无法拼 URL，返回空。
+  const pingArticleUrls = useMemo(() => {
+    if (!id) return [] as string[];
+    return [`${SITE_ORIGIN}/article/${id}`, `${SITE_ORIGIN}/en/article/${id}`];
+  }, [id]);
+
+  const ping = useCallback(async (payload: { mode: 'items' | 'all'; urls?: string[]; includeHome?: boolean }) => {
+    setPingBusy(true);
+    setPingResult(null);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        setPingResult({ ok: false, text: '没拿到登录凭证，请重新登录后再推。', urls: [] });
+        return;
+      }
+      const r = await fetch('/api/indexnow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      const j = await r.json().catch(() => null);
+      if (!r.ok || !j?.ok) {
+        setPingResult({
+          ok: false,
+          text: `失败（HTTP ${r.status}）：${j?.error || ''} ${j?.detail || (j?.attempts ? JSON.stringify(j.attempts) : '')}`.trim(),
+          urls: j?.urls || [],
+        });
+        return;
+      }
+      setPingResult({
+        ok: true,
+        text: `已提交 ${j.count} 条 · 引擎应答 ${j.indexnowStatus}（${j.endpoint}）`,
+        urls: j.urls || [],
+      });
+    } catch (err) {
+      setPingResult({ ok: false, text: `请求发不出去：${(err as Error).message}`, urls: [] });
+    } finally {
+      setPingBusy(false);
+    }
+  }, []);
+
   const save = () => {
     const built = buildArticle();
     if (!built) return;
@@ -792,6 +846,8 @@ export default function Write() {
         <Link className="btn btn-light" to="/write/translations#tags">翻译进度 / 标签词典</Link>
         {/* 外链素材：头像原图 / 首页截图，点一下复制链接 */}
         <button className="btn btn-light" onClick={() => setPanel('assets')}>外链素材</button>
+        {/* 推给 Bing：新文章不必等它自己排队来抓（IndexNow） */}
+        <button className="btn btn-light" onClick={() => setPanel('indexnow')}>推给 Bing</button>
       </div>
 
 
@@ -893,6 +949,75 @@ export default function Write() {
           </div>
         </div>
       )}
+      {panel === 'indexnow' && (
+        <div className="media-panel card">
+          <h4>推给 Bing（IndexNow）</h4>
+          <p className="media-panel-desc">
+            搜索引擎会「发现」网址，但抓取是它自己排队的——新站没外链，排在很后面，后台会一直显示「已发现但未爬网」。
+            这里点一下就是<strong>直接通知</strong> Bing 立刻来抓（同一条协议也覆盖 Yandex、Seznam、Naver）。
+            发布文章后推一次即可；改过老文章也可以重推。
+          </p>
+          <div className="media-actions">
+            <button
+              className="btn btn-primary"
+              disabled={pingBusy || pingArticleUrls.length === 0}
+              onClick={() => ping({ mode: 'items', urls: pingArticleUrls, includeHome: true })}
+            >
+              {pingBusy ? '推送中…' : '推当前这篇'}
+            </button>
+            <button className="btn btn-light" disabled={pingBusy} onClick={() => ping({ mode: 'all' })}>
+              {pingBusy ? '推送中…' : '推全站（读 sitemap）'}
+            </button>
+            {!id && <span className="media-panel-desc">当前是新建、还没发布，没有网址可推。</span>}
+          </div>
+          {id && (
+            <p className="media-panel-desc">
+              本次会推这两条：<br />
+              <code>{pingArticleUrls[0]}</code>
+              <br />
+              <code>{pingArticleUrls[1]}</code>
+            </p>
+          )}
+          <p className="media-panel-desc">
+            也可以手动贴要推的网址（一行一个，只能填本站域名下的）：
+          </p>
+          <textarea
+            rows={3}
+            placeholder={`${SITE_ORIGIN}/article/xxxxxx\n${SITE_ORIGIN}/about`}
+            value={pingUrlText}
+            onChange={(e) => setPingUrlText(e.target.value)}
+          />
+          <div className="media-actions">
+            <button
+              className="btn btn-light"
+              disabled={pingBusy || !pingUrlText.trim()}
+              onClick={() =>
+                ping({
+                  mode: 'items',
+                  urls: pingUrlText.split('\n').map((s) => s.trim()).filter(Boolean),
+                  includeHome: false,
+                })
+              }
+            >
+              推上面这些网址
+            </button>
+            <button className="btn btn-light" onClick={() => setPanel(null)}>关闭</button>
+          </div>
+          {pingResult && (
+            <p className="media-panel-desc">
+              {pingResult.ok ? '✅ ' : '❌ '}
+              {pingResult.text}
+              {pingResult.urls.length > 0 && (
+                <>
+                  <br />
+                  本次推的网址：{pingResult.urls.join('、')}
+                </>
+              )}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="write-form card">
         <input
           type="text"
