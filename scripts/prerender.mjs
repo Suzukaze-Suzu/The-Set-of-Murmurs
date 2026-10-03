@@ -144,6 +144,26 @@ function setDescription(html, desc) {
   return html.replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${escapeHtml(desc)}" />`);
 }
 
+// 本页在「正身域名」下的规范地址。
+// 2026-10-02：Bing 搜出来的是 the-set-of-murmurs.vercel.app——因为 Vercel 给每个项目
+// 的永久别名 `the-set-of-murmurs.vercel.app` 是公开可访问的镜像主机，而页面里**没有任何
+// canonical 声明正身**（sitemap/rss/robots/hreflang 只是「推荐抓这个」，不是「这份内容的
+// 正身是那个」）。同一内容挂在两个主机又无指向信号时，搜索引擎就按自己先认识的挑。
+// 所以：每个预渲染页都要自报正身；镜像主机（含 Vercel 的部署地址）上的页面也照报，等于
+// 从内容层把 vercel.app 那批 URL 收敛回 www。Vercel 侧另有 301 兜底，见 first/seo-domain-canonical/。
+function canonicalUrl(path, locale) {
+  const suffix = path || '/';
+  return `${SITE_URL}${locale === 'en' ? '/en' : ''}${suffix}`;
+}
+
+function setCanonical(html, path, locale) {
+  const url = canonicalUrl(path, locale);
+  // 先清旧值再插，保证「同一份产物重复构建」幂等（模板里本来就带 canonical 也不会叠加）
+  const stripped = html.replace(/[ \t]*<link rel="canonical"[^>]*>[ \t]*\r?\n?/g, '');
+  if (!/<\/title>/.test(stripped)) throw new Error('模板里找不到 </title>，插不了 canonical');
+  return stripped.replace(/<\/title>/, `</title>\n    <link rel="canonical" href="${url}" />`);
+}
+
 function setHreflang(html, path) {
   const suffix = path || '/';
   const zhUrl = `${SITE_URL}${suffix}`;
@@ -162,6 +182,7 @@ function buildPage({ template, locale, path, title, description, inner }) {
   let html = template;
   html = setTitle(html, title);
   html = setDescription(html, description);
+  html = setCanonical(html, path, locale);
   html = setHreflang(html, path);
   return injectIntoRoot(html, inner);
 }
@@ -342,7 +363,7 @@ function decodeEntities(s) {
 // 自检
 // ---------------------------------------------------------------------------
 const selfCheckFailures = [];
-function selfCheck(file, label) {
+function selfCheck(file, label, expectedCanonical) {
   const html = readFileSync(file, 'utf8');
   const h1Count = (html.match(/<h1[\s>]/g) || []).length;
   if (h1Count < 1) selfCheckFailures.push(`${label}: 没有 <h1>`);
@@ -355,7 +376,17 @@ function selfCheck(file, label) {
     selfCheckFailures.push(`${label}: 没有找到预渲染内容块`);
   }
   if (!/<link rel="alternate" hreflang="en"[^>]*>/.test(html)) selfCheckFailures.push(`${label}: 缺 hreflang`);
-  return { h1Count, bytes: Buffer.byteLength(html, 'utf8') };
+
+  // canonical：正身声明（2026-10-02 加）。缺了或取值不对 = 这页在搜索引擎眼里没有正身，
+  // 直接算构建失败，不许悄悄出产物。
+  const canAll = html.match(/<link rel="canonical"[^>]*>/g) || [];
+  const can = canAll.length ? (canAll[0].match(/href="([^"]*)"/) || [])[1] : null;
+  if (canAll.length !== 1) selfCheckFailures.push(`${label}: canonical 数量 = ${canAll.length}（必须恰好 1 条）`);
+  if (expectedCanonical && can !== expectedCanonical) {
+    selfCheckFailures.push(`${label}: canonical 取值不对（实际 ${can ?? '无'}，期望 ${expectedCanonical}）`);
+  }
+
+  return { h1Count, bytes: Buffer.byteLength(html, 'utf8'), canonical: can };
 }
 
 // ---------------------------------------------------------------------------
@@ -391,7 +422,7 @@ async function main() {
       mkdirSync(dir, { recursive: true });
       const file = join(dir, 'index.html');
       writeFileSync(file, page);
-      articleStats.push(selfCheck(file, `${locale}/article/${article.id}`));
+      articleStats.push(selfCheck(file, `${locale}/article/${article.id}`, canonicalUrl(`/article/${article.id}`, locale)));
     }
   }
   console.log(
@@ -431,7 +462,11 @@ async function main() {
       mkdirSync(dir, { recursive: true });
       const file = join(dir, 'index.html');
       writeFileSync(file, page);
-      staticStats.push({ ...selfCheck(file, `${locale}${route.path || '/'}`), path: route.path, locale });
+      staticStats.push({
+        ...selfCheck(file, `${locale}${route.path || '/'}`, canonicalUrl(route.path, locale)),
+        path: route.path,
+        locale,
+      });
     }
   }
   console.log(`[prerender] 静态路由页：${staticStats.length} 个（含 ${categories.length} 个分类页 ×2 语言）`);
@@ -447,6 +482,10 @@ async function main() {
       staticStats.every((s) => s.h1Count === 1) ? '通过' : '有页面 h1 ≠ 1'
     }`,
   );
+  const all = articleStats.concat(staticStats);
+  const canCount = all.filter((s) => s.canonical).length;
+  console.log(`[prerender] canonical 命中：${canCount}/${all.length} 个页面（全部指向 ${SITE_URL}）`);
+  if (canCount !== all.length) selfCheckFailures.push(`canonical 覆盖不全：${canCount}/${all.length}`);
   if (dictWarnings.length) {
     console.warn(`[prerender] 以下词典键没从 dict.ts 读到，用了内置副本或键名：${[...new Set(dictWarnings)].join(', ')}`);
   }
@@ -454,7 +493,7 @@ async function main() {
     console.error('[prerender] 自检失败：\n  - ' + selfCheckFailures.join('\n  - '));
     process.exit(1);
   }
-  console.log('[prerender] 自检通过（h1 / SPA 脚本 / 加载屏 / 预渲染块 / hreflang 全部命中）');
+  console.log('[prerender] 自检通过（h1 / SPA 脚本 / 加载屏 / 预渲染块 / hreflang / canonical 全部命中）');
 }
 
 main().catch((err) => {
