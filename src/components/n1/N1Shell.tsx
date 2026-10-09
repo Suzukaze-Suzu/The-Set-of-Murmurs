@@ -27,13 +27,21 @@ import { editionOf } from '../../lib/navItems';
 
 /* 导航顺序照样张（首页 · 文章 · 书架 · 图集 · 写作 · 留言 · 关于）——
    与站内 NAV_ITEMS 的次序不同（站内把「友链」排在「关于」前），这里以样张为准。
-   样张的「写作」不分是否登录都显示，这里照做（真站点点了是登录后的写作页）。 */
-const N1_NAV: { to: string; key: 'nav.home' | 'nav.articles' | 'nav.bookshelf' | 'nav.gallery' | 'nav.write' | 'nav.guestbook' | 'nav.about'; match: (p: string) => boolean }[] = [
+
+   ★ 2026-10-09 用户原话「让非博主身份的用户隐藏写作按钮」★
+   样张是一张静态图，它把「写作」画在导航里是不分登录的；真站点不照做这一条：
+   `/write` 只对博主开放（`Write.tsx` 里非博主打开会显示「无权访问写作页」），
+   所以入口本身也不该出现——否则访客点进去只能吃一页拒绝文案。
+   做法＝给这条打 `adminOnly` 标记，渲染时按 `isAdmin` 过滤（旧 Navbar／旧页脚／
+   分类页那三处「写作」入口本来就已经套着 `isAdmin`，全站口径就此统一）。
+   博主登录后这一条照常在位次第 5 位，与样张的次序一致。
+   回退＝把渲染处的 `.filter(...)` 去掉即可（标记留着不影响）。 */
+const N1_NAV: { to: string; key: 'nav.home' | 'nav.articles' | 'nav.bookshelf' | 'nav.gallery' | 'nav.write' | 'nav.guestbook' | 'nav.about'; match: (p: string) => boolean; adminOnly?: boolean }[] = [
   { to: '/', key: 'nav.home', match: (p) => p === '/' },
   { to: '/articles', key: 'nav.articles', match: (p) => p.startsWith('/articles') || p.startsWith('/article/') || p.startsWith('/category/') },
   { to: '/novels', key: 'nav.bookshelf', match: (p) => p.startsWith('/novels') },
   { to: '/gallery', key: 'nav.gallery', match: (p) => p.startsWith('/gallery') },
-  { to: '/write', key: 'nav.write', match: (p) => p.startsWith('/write') },
+  { to: '/write', key: 'nav.write', match: (p) => p.startsWith('/write'), adminOnly: true },
   { to: '/guestbook', key: 'nav.guestbook', match: (p) => p.startsWith('/guestbook') },
   { to: '/about', key: 'nav.about', match: (p) => p.startsWith('/about') },
 ];
@@ -139,7 +147,8 @@ export default function N1Shell({ children }: { children: ReactNode }) {
           )}
 
           <nav className="navlinks">
-            {N1_NAV.map((item) => (
+            {/* 非博主（含访客）不出「写作」——见 N1_NAV 上方那段注释。 */}
+            {N1_NAV.filter((item) => !item.adminOnly || isAdmin).map((item) => (
               <Link key={item.to} to={item.to} className={item.match(pathname) ? 'on' : undefined}>
                 {t(item.key)}
               </Link>
