@@ -16,6 +16,7 @@
 // ============================================================================
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { TranslationStatus } from '../lib/translations';
 import {
@@ -164,79 +165,100 @@ export default function TagGlossary() {
     await flush(todo, 'reviewed');
   };
 
+  /* ══════════════════════════════════════════════════════════════════════════════
+     页身（2026-10-09 随「翻译界面未统一风格」一起换到 N1 语汇）
+     ──────────────────────────────────────────────────────────────────────────────
+     这一块原来是自己一套 `.tag-gloss/.tg-head/.tg-row/.tg-input/.tr-mini-btn`，
+     现在接到 N1 上：区块＝`.sec` ＋ `.sec-head`（自动「第 N 版」），
+     输入＝`.gform input` 同款细下划线，小动作＝`.tbtn` 小字按钮，
+     只有「一行四格」这个网格样张里没有（`.tag-row`），落 `n1-app.css` 第⑤段。
+     取数、防抖自动保存、上线／转草稿／删除的逻辑**一行未改**。
+     ══════════════════════════════════════════════════════════════════════════════ */
   return (
-    <section className="tag-gloss" id="tags">
-      <div className="tg-head">
-        <h2 className="tg-title">标签词典（Tags）</h2>
-        <div className="tg-sum">
-          <span className="tg-chip">共 <b>{rows.length}</b> 个标签</span>
-          <span className="tg-chip tg-chip-done">已上线 <b>{sum.reviewed}</b></span>
-          <span className="tg-chip">草稿 <b>{sum.draft}</b></span>
-          <span className="tg-chip">未译 <b>{sum.none}</b></span>
-          {saving && <span className="tg-saving">保存中…</span>}
-        </div>
+    <section className="sec" id="tags">
+      <div className="sec-head">
+        <h2>标签词典（Tags）</h2>
+        <small>{rows.length} TAGS</small>
       </div>
 
-      <p className="tr-hint">
+      {/* 词典的汇总带：与上面文章那张同一件 `.tiles`，四色仍旧取站点色卡 */}
+      <div className="tiles">
+        <span className="tile" style={{ '--c': 'var(--sky)' } as CSSProperties}>
+          <b>共</b><span className="n">{rows.length}</span>
+        </span>
+        <span className="tile" style={{ '--c': 'var(--teal)' } as CSSProperties}>
+          <b>已上线</b><span className="n">{sum.reviewed}</span>
+        </span>
+        <span className="tile" style={{ '--c': 'var(--honey)' } as CSSProperties}>
+          <b>草稿</b><span className="n">{sum.draft}</span>
+        </span>
+        <span className="tile" style={{ '--c': 'var(--gray)' } as CSSProperties}>
+          <b>未译</b><span className="n">{sum.none}</span>
+        </span>
+        {saving && <span className="tile"><span className="n">保存中…</span></span>}
+      </div>
+
+      <p className="gnote">
         标签是<strong>全站共用</strong>的：一个中文标签只翻一次，所有文章上的它一起变。
         改完 1.5 秒自动存草稿，点<strong>「上线」</strong>英文站才显示；没翻的标签英文页照旧显示中文（不加标记）。
         清空输入框＝删掉这个词条。
       </p>
 
-      <div className="tg-tools">
-        <label className="tr-autosave">
+      <div className="tag-tools">
+        <label className="gnote">
           <input type="checkbox" checked={onlyTodo} onChange={(e) => setOnlyTodo(e.target.checked)} />
           只看还没上线的
         </label>
-        <button className="btn btn-light btn-sm" onClick={() => void publishAll()} disabled={saving}>
+        <button type="button" className="tbtn" onClick={() => void publishAll()} disabled={saving}>
           把已写好的都上线
         </button>
-        {msg && <span className="tr-msg">{msg}</span>}
+        {msg && <span className="gnote">{msg}</span>}
       </div>
 
       {!loaded ? (
-        <div className="tov-loading">正在读取标签词典…</div>
+        <p className="gnote">正在读取标签词典…</p>
       ) : !shown.length ? (
-        <div className="tov-loading">没有要处理的标签。</div>
+        <p className="gnote">没有要处理的标签。</p>
       ) : (
-        <div className="tg-list">
+        <div className="tag-list">
           {shown.map((r) => {
             const empty = !r.translation.trim();
             return (
-              <div className="tg-row" key={r.tag}>
-                <div className="tg-tag">
-                  <span className="tg-tag-cn">#{r.tag}</span>
-                  <span className="tg-count">{r.count} 篇</span>
-                  {empty && isAscii(r.tag) && <span className="tg-ascii">看起来已经是英文</span>}
-                </div>
+              <div className="tag-row" key={r.tag}>
+                <span className="tag-cn">
+                  #{r.tag}
+                  <i>{r.count} 篇</i>
+                  {empty && isAscii(r.tag) && <i className="tag-note">看起来已经是英文</i>}
+                </span>
                 <input
                   type="text"
-                  className="tg-input"
                   value={r.translation}
                   placeholder={r.tag}
+                  aria-label={`${r.tag} 的英文`}
                   onChange={(e) => patch(r.tag, { translation: e.target.value })}
                 />
-                <span className={'tg-state' + (empty ? '' : r.status === 'reviewed' ? ' on' : ' draft')}>
+                <span className={'tag-state' + (empty ? '' : r.status === 'reviewed' ? ' on' : ' draft')}>
                   {empty ? (r.stored ? '未译（已清空）' : '未译') : statusLabel(r.status)}
                 </span>
-                <div className="tg-actions">
+                <span className="tag-acts">
                   {!empty && r.status !== 'reviewed' && (
                     <button
-                      className="tr-mini-btn tg-btn-on"
+                      type="button"
+                      className="tbtn"
                       onClick={() => { patch(r.tag, { status: 'reviewed' }); void flush([r.tag], 'reviewed'); }}
                     >
                       上线
                     </button>
                   )}
                   {!empty && r.status === 'reviewed' && (
-                    <button className="tr-mini-btn" onClick={() => { patch(r.tag, { status: 'draft' }); void flush([r.tag], 'draft'); }}>
+                    <button type="button" className="tbtn" onClick={() => { patch(r.tag, { status: 'draft' }); void flush([r.tag], 'draft'); }}>
                       转草稿
                     </button>
                   )}
                   {r.stored && (
-                    <button className="tr-mini-btn tr-mini-danger" onClick={() => void remove(r.tag)}>删除</button>
+                    <button type="button" className="tbtn tag-del" onClick={() => void remove(r.tag)}>删除</button>
                   )}
-                </div>
+                </span>
               </div>
             );
           })}

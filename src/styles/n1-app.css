@@ -1,0 +1,958 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   n1-app.css —— N1 真前端「样张之外」的那一层（2026-10-08）
+   ──────────────────────────────────────────────────────────────────────────────
+   分两段，都只在 `.n1`（＝迁移到样张的页面）里生效，未迁移的页面一行不受影响：
+     ① 清场   —— 旧层同名类漏进来的属性（旧层和样张的类名撞车了）
+     ② 补齐   —— 样张里只是装饰、真前端要能点的零件（按钮/输入框/上传面板）
+   一律走 n1.css 的同一套 token，不新增颜色、不改色号。
+
+   ⚠️ 手写文件，与脚本生成的 n1.css 分开：n1.css 永远等于样张，这个文件是"样张之外"。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ① 清场：旧层同名类漏进来的属性（2026-10-08）
+   ──────────────────────────────────────────────────────────────────────────────
+   N1 这套样式是给**样张的类名**写的，而站上旧层（index.css / broadsheet.css / buttons.css）
+   也在给同名类写样式。n1.css 只覆盖它自己写到的属性，旧层里**N1 没写的属性会照样生效**——
+   实测漏进来的（清单见 first\n1-as-frontend\legacy-collisions.json，共 45 条同名规则）：
+     · `.hero`        ← index.css 首页那颗大圆角渐变盒子＋两个装饰伪元素（糊在报眼上，能看到淡蓝底）
+     · `.nav-inner`   ← index.css 旧顶栏的内层容器（与样张「内页报头」只是重名，会加 max-width/flex）
+     · `.btn`         ← index.css 的圆角/内边距＋::after 高光横扫（样张的按钮只有一条下划线）
+     · `.toolbar`     ← index.css 的 gap 与 margin-bottom（样张那排工具是挨着的）
+     · `.toc`         ← index.css 旧目录块的内边距
+     · `.book-cover` / `.book-meta` / `.book-latest` ← index.css 旧书籍卡的尺寸约束
+   下面逐条**只写「N1 没写、旧层写了」的那些属性**，值全部照 n1.css 的样张口径，
+   不新增颜色、不改版式。作用域仍在 .n1 里，旧页面一行不受影响。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.n1 .hero{
+  position:static;overflow:visible;border-radius:0;margin-bottom:0;background:none;
+  box-shadow:none;border:0;border-bottom:3px double var(--fg);text-align:initial;color:inherit;animation:none;
+}
+.n1 .hero::before,.n1 .hero::after{content:none;display:none}
+
+.n1 .nav.nav-inner{max-width:none;margin:0;padding:0;display:block;align-items:normal;flex-wrap:nowrap;gap:normal}
+
+.n1 .btn{
+  position:static;overflow:visible;border:0;border-bottom:1px solid var(--fg);border-radius:0;
+  padding:0 0 2px;background:none;box-shadow:none;transform:none;transition:none;
+  white-space:normal;font-weight:400;gap:normal;justify-content:normal;align-items:normal;
+}
+.n1 .btn::after{content:none;display:none}
+.n1 .btn.ghost{border-bottom-color:var(--hair)}
+.n1 .btn:disabled{color:var(--fg3);border-bottom-color:var(--hair);cursor:default}
+
+.n1 .toolbar{gap:0;margin-bottom:0}
+.n1 .toc{position:static;margin-bottom:0;padding:0;overflow:visible}
+.n1 .book-cover{width:auto;height:auto;min-height:0;align-self:auto;background:none}
+.n1 .book-meta,.n1 .book-latest{min-width:0}
+/* 旧层还给 .book-latest 压了 font-weight:500 与一条更紧的行高（样张那行是正常字重、继承正文行高） */
+.n1 .book-latest{font-weight:400;line-height:inherit}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ② 样张没给样式的零件（真前端要用）
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* —— 留言板（2026-10-08 夜用户点名的两处 ＋ 2026-10-09 空态折行）——
+   ① 回复挂到被回复的那条下面：样张的 `.msgs` 只画了平铺一层，这里补「一层回复」的列表规格
+      （缩进靠父级 `.msg` 的 36px 头像列天然给出，不再往下套第二层）；
+   ② 邮箱框按用户要求删掉后，`.grow` 只剩昵称一格 —— 让它铺满那一行，不留半格空。
+   ③ 空态与②是同一个雷：`.msgs > .msg` 也是「36px 头像列 + 文字列」两列网格（`n1.css` 的 `.n1 .msg`），
+      空态模板只有一枚 `.gnote`、没有头像元素，那枚字就被自动排进 36px 头像格，被硬折成两三字一行
+      （留言板空态、Bug 反馈空态、文章/小说评论空态三处同一模板）。同样让它铺满整行。 */
+.n1 .msgs-sub{list-style:none;margin:6px 0 0;padding:0}
+.n1 .msgs-sub .msg:last-child{border-bottom:0;padding-bottom:0}
+.n1 .gform .grow > :only-child{grid-column:1/-1}
+.n1 .msgs > .msg > .gnote{grid-column:1/-1}
+/* 窄屏（与样张同一档 860px）：50px 的缩进在 390px 上会把「名字＋回 @谁＋日期＋回复」挤折行，
+   所以回复层收一点边、头像缩到 26px（旧皮肤里回复行的头像也是 26px），正文能多出近 40px。 */
+@media (max-width:860px){
+  .n1 .msgs-sub{margin-left:-24px}
+  .n1 .msgs-sub .msg{grid-template-columns:26px 1fr;gap:10px}
+}
+.n1 .msgs-sub .mhead{flex-wrap:wrap;row-gap:4px}
+
+/* ④ 两个栏目签（留言区／Bug 反馈）＝样张 `novel.html` 505-507 那排分段键。
+   规格直接走上面 `n1-app.css` 的 `.n1 .seg button`（照 `.seg i` 复刻的那套），这里只补
+   「分段键 + `.gform`」这个样张没画的叠法留一条竖向余量；**不新增颜色**。
+   ★ 2026-10-09：这两个签原先挂着 `.chips`／`.chip`——那两个类名全站没有任何样式
+   （唯一一条 `.chip` 规则是下面英文页的字距覆盖，孤儿），页面上就是一行裸 <span>「留言区 0Bug 反馈」。 */
+.n1 .gb-tabs{margin:0 0 14px}
+@media (max-width:860px){
+  .n1 .gb-tabs{flex-wrap:wrap}
+}
+
+/* —— 写作台工具栏：样张里是 <i>，真前端是按钮 —— 复刻 .toolbar i 的规格 —— */
+.n1 .toolbar{flex-wrap:wrap}
+.n1 .toolbar button,
+.n1 .toolbar a{
+  font-style:normal;font-family:var(--body);font-size:11.5px;color:var(--fg2);
+  padding:6px 13px;border:0;border-right:1px solid var(--hair2);background:none;
+  cursor:pointer;text-decoration:none;
+}
+.n1 .toolbar button:last-child,
+.n1 .toolbar a:last-child{border-right:0}
+.n1 .toolbar button:hover,
+.n1 .toolbar a:hover{background:var(--fg);color:var(--bg)}
+.n1 .toolbar button:disabled{color:var(--fg3);cursor:default}
+.n1 .toolbar button:disabled:hover{background:none;color:var(--fg3)}
+
+/* 工具栏最左的模式切换（样张没有这一件，照 N1 的 .seg 分段按钮做） */
+.n1 .toolbar .seg{border-right:1px solid var(--hair2);padding-right:13px;display:flex;align-items:center}
+.n1 .toolbar .seg button{
+  border:1px solid var(--hair);border-right:0;margin-left:-1px;padding:3px 11px;
+  font-size:11.5px;color:var(--fg2);background:none;
+}
+.n1 .toolbar .seg button:last-child{border-right:1px solid var(--hair)}
+.n1 .toolbar .seg button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.n1 .toolbar .seg button:hover{background:var(--fg);color:var(--bg)}
+
+/* —— 写作台：标题 / 元信息 / 正文 —— */
+.n1 .title-input::placeholder{color:var(--fg3);letter-spacing:.1em}
+.n1 .bench-meta{flex-wrap:wrap;row-gap:6px}
+.n1 .msave{font-size:10.5px;color:var(--fg3)}
+
+/* 分类：样张是一枚分类色小签（.mchip），这里换成可改的下拉，外观照旧 */
+.n1 select.mchip{
+  appearance:none;-webkit-appearance:none;border:0;background:none;padding:0;margin:0;
+  font-family:var(--body);cursor:pointer;
+}
+/* 标签：样张是一排 .mtag，这里直接可编辑 */
+.n1 input.mtag-input{
+  border:0;border-bottom:1px solid var(--hair2);background:none;outline:none;
+  font-family:var(--body);min-width:130px;padding:0 0 1px;
+}
+.n1 input.mtag-input::placeholder{color:var(--fg3)}
+
+/* 摘要框（2026-10-09 用户点名「我希望中文也可以修改摘要」；样张没画这一件，
+   外观照正文框那套纸面排印：无边框、只有一条 hair 底线。文字取 --fg2（新增信息性小字档）。
+   ⚠️ 这一组**故意不带 `.n1` 前缀**：写作台有两副壳 —— 新建 `/write` 走 N1 外壳，
+   编辑既有文章 `/write/<id>` 仍走旧外壳（用户本轮没点名，见 lib\n1Routes.ts）。
+   旧外壳里 N1 token 不存在，`var()` 失效时按 CSS 规矩退回继承值（颜色/字体沿旧层），
+   不会串成裸 `<textarea>` 的浏览器默认外观。 */
+.bench-summary{padding:8px 0 0}
+.summary-input{
+  width:100%;border:0;border-bottom:1px solid var(--hair2);background:transparent;color:var(--fg);
+  outline:none;resize:vertical;border-radius:0;padding:0 0 6px;
+  font-family:var(--body);font-size:12.5px;line-height:1.85;
+}
+.summary-input::placeholder{color:var(--fg3)}
+.summary-input:focus{border-bottom-color:var(--fg)}
+.sum-hint{font-size:10.5px;color:var(--fg2);line-height:1.75;margin:6px 0 0}
+
+/* 正文输入框：样张的 .editor 是纸面排印（无边框、多栏），真前端的文本框照这个感觉走 */
+.n1 .editor-textarea{
+  width:100%;border:0;background:transparent;color:var(--fg);outline:none;resize:vertical;
+  font-family:var(--body);font-size:12.5px;line-height:1.85;padding:14px 0 0;
+  margin-top:0;border-radius:0;
+}
+.n1 .editor-textarea::placeholder{color:var(--fg3);line-height:1.9}
+.n1 .editor-preview{padding:14px 0 0}
+
+/* 编辑 / 预览 / English 译文 三个页签：照 N1 的 .seg 语汇 */
+.n1 .editor-tabs{display:flex;border-top:1px solid var(--hair2);border-bottom:1px solid var(--hair2);margin-top:12px}
+.n1 .editor-tabs .tab-btn{
+  font-family:var(--body);font-size:11.5px;color:var(--fg2);padding:6px 13px;border:0;
+  border-right:1px solid var(--hair2);background:none;cursor:pointer;
+}
+.n1 .editor-tabs .tab-btn.active{background:var(--fg);color:var(--bg)}
+
+/* 发布面板里的收藏开关（样张那行是静态「置顶　否」） */
+.n1 .side-row label{font-size:12px;color:var(--fg);font-weight:400;display:flex;align-items:center;gap:6px;cursor:pointer}
+.n1 .draft-clear{
+  border:0;background:none;padding:0;cursor:pointer;font-family:var(--body);font-size:10.5px;
+  color:var(--fg2);border-bottom:1px solid var(--hair);
+}
+
+/* —— 样张没画、但真前端要用的小面板（插图 / 音乐 / 附件 / 外链素材 / IndexNow）——
+      照 N1 的「细线方框 + 小字说明 + 下划线输入框」一整套来 */
+.n1 .media-panel{margin-top:14px;border:1px solid var(--hair);padding:14px 16px;background:var(--bg)}
+.n1 .media-panel h4{font-family:var(--disp);font-weight:600;font-size:15px;letter-spacing:.14em}
+.n1 .media-panel-desc{font-size:10.5px;color:var(--fg3);line-height:1.85;margin:8px 0}
+.n1 .media-panel input[type='text'],
+.n1 .media-panel textarea{
+  width:100%;border:0;border-bottom:1px solid var(--hair);background:transparent;color:var(--fg);
+  font-family:var(--body);font-size:12.5px;padding:8px 0;outline:none;resize:vertical;
+}
+.n1 .media-actions{display:flex;gap:14px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.n1 .media-panel code{font-family:'Consolas',monospace;font-size:11px;color:var(--fg2);word-break:break-all}
+.n1 .media-dropzone{border:1px dashed var(--hair);padding:18px;text-align:center;cursor:pointer}
+.n1 .media-dropzone input[type='file']{width:100%}
+.n1 .media-drop-icon{font-size:18px;color:var(--fg3)}
+.n1 .media-drop-text{font-size:11px;color:var(--fg2)}
+.n1 .media-uploading{font-size:10.5px;color:var(--fg3);margin-top:8px}
+.n1 .attach-preview-list{margin-top:10px}
+.n1 .attach-preview-item{
+  display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--hair2);
+  font-size:11.5px;color:var(--fg2);flex-wrap:wrap;
+}
+.n1 .attach-progress-item{display:flex;align-items:center;gap:10px;font-size:10.5px;color:var(--fg3);padding:4px 0}
+.n1 .attach-progress-bar{flex:1;height:3px;background:var(--hair2)}
+.n1 .attach-progress-fill{height:3px;background:var(--teal)}
+.n1 .attach-remove{border:0;background:none;color:var(--fg3);cursor:pointer;font-size:13px}
+
+/* —— 译文工作台 / 小说编辑器：样张里没有画，本轮只保证「在新外壳里不发飘」——
+      它们本体结构不动，这里只把最外面的方框与标题接上 N1 的线 */
+.n1 .card{border:1px solid var(--hair);background:var(--bg);padding:14px 16px;border-radius:0}
+.n1 .page-title{font-family:var(--disp);font-weight:600;color:var(--fg)}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ③ 文章档案 / 分类 / 阅读页（2026-10-09「文章界面与阅读界面迁入 N1」）
+   ──────────────────────────────────────────────────────────────────────────────
+   用户原话：「修改文章界面以及具体阅读界面，设计为与其他页面类似风格」。
+   样张里**没有**这三页，所以下面每一条都是「用样张已有的零件拼出来」的那一层：
+   能照样张的一律照样张（`.pagehead`/`.sec`/`.sec-head`/`.tiles`/`.list`/`.item`/`.toc`/
+   `.prose`/`.gform`/`.msgs`/`.book.big`/`.reader`），只有样张里**真的没有**的这几件写在这里：
+     · 页头搜索行（用户点名要）、可点的 `.tile`、条目的置顶/收藏签与阅读入口、页尾加载小注
+     · 阅读进度细线、页头署名条、可折叠 `.toc` 的开关行、附件清单、翻章条
+     · 正文 markdown 元素接到 N1 的线上（旧 `index.css` 的 `.markdown-body` 一套是旧皮肤口径）
+   token 一律走 n1.css 那一套（`--fg/--fg2/--fg3/--hair/--hair2/--teal/--disp/--body`），
+   **不新增颜色、不改色号**。回退＝删掉本段（从这里到文件末尾）。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* —— 页头搜索行（样张报头没有搜索框；旧顶栏那枚放大镜随旧外壳退场，搜索不能因此进不去）—— */
+.n1 .arch-search{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--hair2);padding:0 0 10px}
+.n1 .arch-search input{
+  flex:1;border:0;border-bottom:1px solid var(--hair);background:transparent;outline:none;border-radius:0;
+  font-family:var(--body);font-size:13px;letter-spacing:.06em;color:var(--fg);padding:6px 0;
+}
+.n1 .arch-search input::placeholder{color:var(--fg3);letter-spacing:.08em}
+.n1 .arch-search .arch-note{font-size:10.5px;letter-spacing:.14em;color:var(--fg3);white-space:nowrap}
+
+/* —— 分类索引带：样张那一套是 <a class="tile">，这里要能点（同一套外观，`--c` 仍取色卡色）—— */
+.n1 button.tile{background:none;border:0;border-right:1px solid var(--hair2);cursor:pointer;font:inherit;color:inherit}
+.n1 button.tile:last-child{border-right:0}
+.n1 button.tile:first-child{padding-left:0}
+.n1 .tile.on b{color:var(--teal)}
+.n1 .tile.on b::before{outline:1px solid var(--teal);outline-offset:3px}
+
+/* —— 条目 `.item` 里样张没有的几件：连载状态签、置顶/收藏签、阅读入口 ——
+   ⚠️ 作用域收在 `.list-archive`（档案页/分类页给 `.list` 多挂的那一枚类名）：
+      首页「最近更新」是 `.recent .item`、书架「同分类文章」是裸 `.list .item`，
+      两者都已经验收过、属于别的线，不能被我这一层顺带改到。 */
+.n1 .list-archive .item .meta{align-items:baseline;flex-wrap:wrap;row-gap:5px}
+.n1 .list-archive .item .meta .st{color:var(--teal)}
+.n1 .list-archive .item .meta .pin{color:var(--c);letter-spacing:.1em}
+.n1 .list-archive .item .meta .go{margin-left:auto;color:var(--fg3);white-space:nowrap}
+.n1 .list-archive .item:hover .meta .go{color:var(--teal)}
+.n1 .list-loading,.n1 .list-end{text-align:center;padding:18px 0 2px}
+
+/* —— 阅读进度细线：视口最上沿 2px 青蓝（N1 报头不是 sticky，所以不必再算顶栏高度）—— */
+.n1 .art-prog{position:fixed;top:0;left:0;right:0;height:2px;z-index:80;pointer-events:none}
+.n1 .art-prog i{display:block;height:2px;width:0;background:var(--teal)}
+
+/* —— 页头里的分类小签与 #标签（`.kicker` 样张只画了一行小字，这里要点得动）—— */
+.n1 .pagehead .kicker{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.n1 .pagehead .kicker .kick-cat::before{
+  content:"";display:inline-block;width:8px;height:8px;background:var(--c);margin-right:9px;
+}
+.n1 .pagehead .kicker a:hover{color:var(--teal)}
+.n1 .pagehead .kicker .kick-tag{color:var(--fg3)}
+
+/* —— 署名条（日期 · 字数 ＋ 收藏/导出/编辑/删除四枚下划线小按钮）：样张 `.pagehead` 里没有这一行 —— */
+.n1 .pagehead .meta{
+  justify-content:center;flex-wrap:wrap;gap:8px;row-gap:8px;
+  margin-top:14px;border-top:1px solid var(--hair2);padding-top:11px;
+}
+.n1 .pagehead .meta .btn{margin-left:8px;font-size:10.5px;letter-spacing:.14em}
+/* 英文页缺译提示（原来在旧皮肤里是一行提示条，这里降级成版外小注） */
+.n1 .art-note{margin-top:12px;text-align:center}
+
+/* —— 目录：样张 `.toc` 点线索引，套在可折叠的 <details> 里（桌面默认展开、手机折叠，逻辑未动）—— */
+.n1 .toc-toggle{
+  list-style:none;cursor:pointer;padding:9px 0;color:var(--fg2);
+  font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.2em;
+  border-top:3px double var(--fg);border-bottom:1px solid var(--fg);
+}
+.n1 .toc-toggle::-webkit-details-marker{display:none}
+.n1 .toc-details[open] .toc-toggle{color:var(--fg);border-bottom-color:var(--hair2)}
+.n1 .toc-details .toc{border-top:0}
+.n1 .toc li.toc-lv3{padding-left:28px}
+.n1 .toc li.toc-lv4{padding-left:56px}
+.n1 .toc .tt:hover{color:var(--teal)}
+
+/* —— 正文：用户口径「单栏，类似报纸大版，不变窄」——
+     `.prose` 在 n1.css（样张「关于」页）里是三栏，这里按你的口径收成单栏，版心仍占满整幅。
+     `--img-w`＝正文图的宽度上限（2026-10-09 用户拍板 760px ≈ 桌面版心 1152 的 2/3）。
+     背景：旧皮肤有 `--bs-reading-w` 限过正文宽，换 N1 后正文占满整幅，
+     图片跟着内联 `maxWidth:100%` 一路撑到 1152px，跟 12.5px 的正文小字比例失衡。
+     只限**图**、不限文字（他明确不要"整体变窄"）；手机端 `min(100%,…)` 保证仍自适应。 */
+.n1 .prose-read{column-count:1;column-rule:0;font-size:12.5px;line-height:1.85;--img-w:760px}
+/* 正文里的 markdown 元素接到 N1 的线上：旧层 `.markdown-body` 那一套是旧皮肤（圆角/珊瑚色/渐变），
+   这里逐条按 N1 口径覆盖（细线、青蓝、无圆角、墨色小字）。
+   ⚠️ `font-size/line-height` 一律 `inherit` —— 小说阅读页把字号/行距写在外层 `.prose-read`
+      的内联样式上，写死 px 会让「字号」那一栏失效。 */
+.n1 .prose-read .markdown-body{font-size:inherit;line-height:inherit;color:var(--fg2)}
+.n1 .prose-read .markdown-body p{font-size:inherit;line-height:inherit;margin:0 0 1.05em;text-align:justify}
+.n1 .prose-read .markdown-body h1,
+.n1 .prose-read .markdown-body h2{
+  font-family:var(--disp);font-weight:600;font-size:1.55em;letter-spacing:.1em;line-height:1.35;
+  color:var(--fg);margin:1.5em 0 .6em;border-bottom:1px solid var(--hair2);padding-bottom:.28em;
+  scroll-margin-top:18px;
+}
+.n1 .prose-read .markdown-body h3,
+.n1 .prose-read .markdown-body h4{
+  font-family:var(--disp);font-weight:600;font-size:1.22em;letter-spacing:.08em;line-height:1.4;
+  color:var(--fg);margin:1.3em 0 .5em;scroll-margin-top:18px;
+}
+.n1 .prose-read .markdown-body ul,
+.n1 .prose-read .markdown-body ol{padding-left:1.7em;margin:.8em 0}
+.n1 .prose-read .markdown-body li{margin:.28em 0}
+.n1 .prose-read .markdown-body blockquote{
+  border:0;border-left:3px solid var(--teal);border-radius:0;background:none;color:var(--fg2);
+  padding:0 0 0 16px;margin:1.1em 0;font-style:normal;
+}
+.n1 .prose-read .markdown-body code{
+  font-family:'Consolas',monospace;font-size:.9em;color:var(--fg2);
+  background:none;border:1px solid var(--hair2);border-radius:0;padding:1px 6px;
+}
+.n1 .prose-read .markdown-body pre.code-block{
+  background:var(--bg);border:1px solid var(--hair);border-radius:0;padding:14px 16px;margin:1.1em 0;
+  color:var(--fg);
+}
+.n1 .prose-read .markdown-body pre.code-block code{background:none;border:0;padding:0;color:inherit}
+.n1 .prose-read .markdown-body table{border-collapse:collapse;width:100%;margin:1.1em 0;font-size:.96em}
+.n1 .prose-read .markdown-body th,
+.n1 .prose-read .markdown-body td{border:1px solid var(--hair);padding:7px 11px;border-radius:0}
+.n1 .prose-read .markdown-body th{background:var(--fg);color:var(--bg);font-weight:600}
+.n1 .prose-read .markdown-body tr:nth-child(even){background:none}
+/* 图宽走 `--img-w`（见上面 `.prose-read` 一节的说明）；只限宽、不限高。
+   摆放＝**居中**（2026-10-09 用户「居中摆放试一下」；此前是左对齐）。
+   `display:block`＋左右 auto margin 即居中；图宽＝容器宽时（手机档）auto margin 无副作用。
+   回左对齐＝删掉本行的 `margin-left/right:auto`。 */
+.n1 .prose-read .markdown-body img{max-width:min(100%,var(--img-w,760px));margin-left:auto;margin-right:auto;border-radius:0;box-shadow:none;border:1px solid var(--hair2)}
+.n1 .prose-read .markdown-body hr{border:0;height:1px;background:none;border-top:1px solid var(--hair);margin:1.7em 0}
+.n1 .prose-read .markdown-body a{color:var(--teal);text-decoration:underline;text-underline-offset:3px}
+.n1 .prose-read .markdown-body .katex-display{
+  background:none;border:0;border-left:3px solid var(--teal);border-radius:0;padding:.6em .9em;
+}
+.n1 .prose-read .markdown-body a[href*="music.163.com"]{
+  border:1px solid var(--hair);border-radius:0;color:var(--fg2);background:none;
+}
+
+/* —— 附件清单（样张里没有这一件；照 N1 的「细线清单 ＋ 小字」一整套）—— */
+.n1 .att{list-style:none}
+.n1 .att li{border-bottom:1px solid var(--hair2)}
+.n1 .att .att-item{display:flex;align-items:baseline;gap:10px;padding:10px 0;font-size:12px;color:var(--fg2)}
+.n1 .att .att-item:hover{color:var(--teal)}
+.n1 .att .att-icon{font-size:11px;color:var(--fg3)}
+.n1 .att .att-size{margin-left:auto;font-size:10px;letter-spacing:.1em;color:var(--fg3)}
+
+/* —— 小说：样张 `.reader` 里的分段键是 <i>，真前端是 <button>（照 `.seg i` 的规格复刻）—— */
+.n1 .seg button{
+  font-style:normal;font-family:var(--body);font-size:11.5px;color:var(--fg2);cursor:pointer;
+  padding:3px 11px;border:1px solid var(--hair);border-right:0;margin-left:-1px;background:none;border-radius:0;
+}
+.n1 .seg button:last-child{border-right:1px solid var(--hair)}
+.n1 .seg button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.n1 .seg button:hover{background:var(--fg);color:var(--bg)}
+/* 书封缺图时的占位（与样张书封同尺寸，字用衬线首字） */
+.n1 .book .cover-ph{
+  width:104px;height:148px;border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-size:40px;color:var(--fg3);
+}
+.n1 .book.big .cover-ph{width:170px;height:240px;font-size:60px}
+/* 目录里的分卷题头与「当前章」标记（样张 `.toc` 只有章节行） */
+.n1 .toc li.toc-part{
+  display:block;border-bottom:0;padding:15px 0 3px;color:var(--fg3);
+  font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.26em;
+}
+.n1 .toc li.on .no,.n1 .toc li.on .tt{color:var(--teal)}
+/* 本章正文前的分卷题头（原来只在沉浸阅读页的正文顶部出现） */
+.n1 .chap-part{
+  margin:12px 0;padding:7px 0;text-align:center;color:var(--fg3);
+  font-size:11px;letter-spacing:.3em;border-top:1px solid var(--hair2);border-bottom:1px solid var(--hair2);
+}
+/* 翻章条（原来在沉浸阅读页底部） */
+.n1 .chnav{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin-top:20px;padding-top:12px;border-top:3px double var(--fg);
+}
+.n1 .chnav .btn{max-width:46%;text-align:left;font-size:10.5px;letter-spacing:.12em}
+.n1 .chnav .btn:last-child{text-align:right}
+.n1 .chnav .gnote{white-space:nowrap}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ④ 报头右上角工具排「登录 / 开往 ＋ 深浅切换」（2026-10-09）
+   ──────────────────────────────────────────────────────────────────────────────
+   用户原话：「在现在的顶栏上面加上登录，开往，这两个按钮」。
+   样张这一格只有深浅切换那一枚（`.dm`，绝对定位 right:0 / top:34px），所以这里做的是：
+     · 把三枚包进一个 `.navtools` 横排，仍贴版框右内缘（`.dm` 的位置因此一个像素不变）；
+     · 两枚新签按 `.dm` 的规格复刻（细线方框 / 10px / `--hair`+`--fg3`，悬停转 `--fg`）。
+   token 全走 n1.css，不新增颜色。回退＝删掉本段＋N1Shell.tsx 里那个 `.navtools` 包裹（两处）。
+   ══════════════════════════════════════════════════════════════════════════════ */
+.n1 .navtools{position:absolute;right:0;top:34px;display:flex;align-items:center;gap:6px}
+.n1 .navtools .dm{position:static;right:auto;top:auto}
+.n1 .navtools .nt{
+  border:1px solid var(--hair);background:transparent;color:var(--fg3);cursor:pointer;
+  font-family:var(--body);font-size:10px;letter-spacing:.16em;padding:2px 8px;line-height:1.6;
+  text-decoration:none;white-space:nowrap;
+}
+.n1 .navtools .nt:hover{border-color:var(--fg);color:var(--fg)}
+/* 内页（.nav-inner）的天头日期行在 top:18px，比首页低 9px —— 小签整排跟着下移到 40px，
+   否则日期行的字脚会与「登录」那枚的细框实测压上 1px（探针 probe-navtools.mjs 量的）。
+   这是本轮唯一一处偏离样张的位移（样张那一格是 34px），单独列在汇报里。 */
+.n1 .nav-inner .navtools{top:40px}
+
+/* 英文线 861–1260 这一段：英文刊名在居中报头里横得极宽，英文小签又宽
+   （「Sign in」49.7、「Travellings」69.3），绝对定位那一版实测压上刊名墨迹 ——
+   2026-10-09 加语言签前 1024 档就已经压（171.6px²）、861 档 1161.6px²；加完 1200/1101 档也压。
+   实测量到的分界：1280 档还留 15.7px 空隙（✓），1200 档就 -6.4px（✗）。中文线不受影响：
+   中文刊名短（「呓语集」三字），绝对定位一直用到 640 都不碰。
+   ★ 2026-10-09 晚更新（用户报「英文版主页大标题…还遮挡按钮」）：**首页**不再靠"整排落回文档流"
+     躲这一撞（那一版在小签会孤零零挂在导航行下面，实测 1200 档整排摊在左上、右侧空一大片），
+     改成给报眼留净空 —— 见①报头里的 `@media (min-width:861px)` 那段，首页恢复样张的
+     右上角绝对定位（工具排始终贴版框右内缘那一格）。本段只剩**内页**（.nav-inner）还用它：
+     内页刊名是小字（23px「Murmurs」），不撞，纯粹是保留原决定。回退＝删掉本段。 */
+@media (min-width:861px) and (max-width:1260px){
+  html[lang='en'] .n1 .nav-inner .navtools{position:static;justify-content:flex-start;margin-top:10px}
+}
+
+@media (max-width:860px){
+  /* 手机档 v2（2026-10-09，加语言签那一轮改）：**整排落回文档流**，跟在导航行下面。
+     ──────────────────────────────────────────────────────────────────────────
+     上一版把整排绝对定位到「日期行左半边」（那里只剩 117px）。三枚小签时中文 100.1px 刚好塞得下，
+     但 2026-10-09 补上第 4 枚语言签后实测：中文 133.4px、英文 189.3px —— 都越界，
+     压在日期行与刊名的墨迹上（探针 probe-navtools.mjs：中文 206.7/118.4px²，
+     英文 730.6/1060.3px²）。英文更没救：「Sign in」49.7 +「Travellings」69.3 两枚就 119px，
+     比整条缝还宽，缩字号也塞不下。
+     所以手机档不再抢那条缝：小签按**正常流**排在 `.navlinks` 之后（DOM 顺序本来就是
+     navlinks → navtools），整宽 330px 装得下中文 133.4 / 英文 189.3，与任何墨迹都不重叠。
+     代价＝手机档报头高约 +28px；桌面/平板档（>860px）版式一个字未动。
+     回退＝把本段换回原来的 `.n1 .navtools{left:0;right:auto;top:7px;gap:4px}` 与
+     `.n1 .nav-inner .navtools{left:auto;right:0;top:36px}`（同时撤掉语言签）。 */
+  .n1 .navtools{position:static;left:auto;right:auto;top:auto;justify-content:flex-start;margin-top:8px;gap:4px}
+  .n1 .nav-inner .navtools{left:auto;right:auto;top:auto}
+  .n1 .navtools .nt{font-size:9px;letter-spacing:.1em;padding:2px 6px}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ⑤ 登录 ／ 个人主页 ／ 翻译进度（2026-10-09）
+   ──────────────────────────────────────────────────────────────────────────────
+   用户原话：「登录，个人主页和翻译界面未统一风格」——这三页本轮进场（见
+   `src/lib/n1Routes.ts` 的 `N1_ROUTES_NAMED`）。页身能照样张的一律照样张
+   （`.pagehead`/`.sec`/`.sec-head`/`.gform`/`.grow`/`.gfoot`/`.gnote`/`.btn`/
+   `.tiles`/`.tile`/`.list`/`.item`/`.facts`/`.bar`/`.seg`），本节只放样张里
+   **真的没有**的那几件。token 一律走 n1.css 那一套（`--fg/--fg2/--fg3/--hair/
+   --hair2/--teal/--coral/--honey/--gray/--disp/--body`），**不新增颜色**，
+   派生一律 `color-mix()`。回退＝删掉本段（从这里到文件末尾）。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* —— 小字按钮（`.btn` 是一条下划线的主按钮，这枚是「显示密码／上线／删除」这类小动作）——
+   ⚠️ 取 `--fg2` 不取 `--fg3`：`--fg3` 在亮底只有 2.48:1（探针 2026-10-09 实算），
+   而这枚是**可点的控件**，不是 `.gnote` 那种装饰性小注；`--fg2` 实测 4.94:1。 */
+.n1 .tbtn{
+  border:0;background:none;padding:0;cursor:pointer;font-family:var(--body);
+  font-size:10.5px;letter-spacing:.12em;color:var(--fg2);
+}
+.n1 .tbtn:hover{color:var(--teal)}
+.n1 .tbtn:disabled{color:var(--hair);cursor:default}
+
+/* —— 提示条（登录页的「注册成功，请去邮箱验证」／错误行）——
+   样张里没有「提示条」这一件；这里不做色块，照 N1 的做法给一条细线和一行字。
+   错误色不是新色号：珊瑚色与墨色 mix 到能读的深度（亮底约 4.6:1，暗底自动转浅）。 */
+.n1 .note-box{
+  font-size:11.5px;line-height:1.75;color:var(--fg2);
+  border-left:2px solid var(--teal);padding:6px 0 6px 12px;margin-bottom:12px;
+}
+.n1 .note-box.note-err{
+  color:color-mix(in srgb,var(--coral) 55%,var(--fg));
+  border-left-color:var(--coral);
+}
+
+/* —— 登录页：验证码题面（左边那格算术题）—— */
+.n1 .cap-q{
+  font-family:var(--disp);font-weight:600;font-size:16px;letter-spacing:.22em;color:var(--fg);
+  border-bottom:1px dashed var(--hair);padding:8px 0;text-align:center;
+}
+/* 「记住登录」：复用旧类名 `.login-remember`，只把字号与颜色压回 N1 的小字档 */
+.n1 .login-remember{align-items:center;gap:7px;font-size:10.5px;letter-spacing:.1em;color:var(--fg3)}
+.n1 .login-remember input{width:13px;height:13px;accent-color:var(--teal);cursor:pointer}
+/* 分隔线：`.gform` 上方那条双线已经给了「报头感」，这里只给底部一行文字链一点余量 */
+.n1 .auth-switch{
+  display:flex;align-items:baseline;justify-content:center;gap:8px;
+  margin-top:14px;font-size:11px;color:var(--fg3);
+}
+
+/* —— 个人主页：头像格（样张没有这一件；圆＝细线，无投影、无渐变，与 `.gface` 同族）—— */
+.n1 .prof{display:grid;grid-template-columns:92px 1fr;gap:22px;align-items:start;
+  border-bottom:3px double var(--fg);padding-bottom:16px}
+.n1 .prof-face{
+  width:92px;height:92px;border-radius:50%;border:1px solid var(--hair);overflow:hidden;
+  display:flex;align-items:center;justify-content:center;background:none;
+}
+.n1 .prof-face img{width:100%;height:100%;object-fit:cover;display:block}
+.n1 .prof-face span{font-family:var(--disp);font-weight:600;font-size:34px;color:var(--fg2)}
+.n1 .prof-name{font-family:var(--disp);font-weight:600;font-size:30px;letter-spacing:.14em;line-height:1.2}
+.n1 .prof-sign{font-size:12.5px;color:var(--fg2);margin-top:7px;line-height:1.8}
+.n1 .prof-acts{margin-top:12px;display:flex;gap:16px;flex-wrap:wrap}
+.n1 .prof-bio{font-size:12.5px;line-height:1.85;color:var(--fg2);white-space:pre-wrap;text-align:justify;margin-top:10px}
+
+/* 头像上传格（原来是一枚 88px 虚线圆＋悬停放大；N1 口径＝细线方框、不动） */
+.n1 .avatar-upload-btn{
+  display:flex;align-items:center;justify-content:center;width:92px;height:92px;
+  border:1px solid var(--hair);border-radius:0;background:none;cursor:pointer;
+  padding:0;margin:0 0 14px;overflow:hidden;transform:none;transition:none;
+}
+.n1 .avatar-upload-btn:hover{border-color:var(--fg);transform:none}
+.n1 .avatar-upload-btn img{width:100%;height:100%;object-fit:cover;display:block}
+.n1 .avatar-upload-hint{
+  flex-direction:column;align-items:center;line-height:1.2;color:var(--fg3);font-size:20px;
+}
+.n1 .avatar-upload-hint small{font-size:10px;letter-spacing:.14em;color:var(--fg3);margin-top:4px}
+/* 个人介绍那一栏要比留言板那格高一点（留言板的 `.gform textarea` 是固定 78px = 3 行） */
+.n1 .gform textarea.tall{height:104px;resize:vertical}
+
+/* —— 翻译进度：条目流（`.list`/`.item` 是档案页那套，这里只补行内那几件）—— */
+.n1 .tov-back{display:flex;justify-content:flex-end;margin-top:12px}
+.n1 .tov-list .item .en{font-size:11px;color:var(--fg3);margin-top:4px;line-height:1.6}
+.n1 .tov-list .item .meta{margin-top:9px;align-items:baseline;flex-wrap:wrap;row-gap:4px}
+.n1 .tov-list .item .bar{display:block;margin-top:10px}
+/* 状态字取四色：青蓝＝已上线、珊瑚＝待复核、蜜金＝草稿、灰＝未译。
+   蜜金在亮底只有 1.5:1，所以两处暖色都与墨色 mix 到能读的深度。
+   「未译」用的是 `--fg2` 而不是 `--fg3`（后者亮底 2.48:1，见上面 `.tbtn` 那条）。 */
+.n1 .tov-list .item .st{color:var(--fg2)}
+.n1 .tov-list .tov-reviewed .st{color:var(--teal)}
+.n1 .tov-list .tov-stale .st{color:color-mix(in srgb,var(--coral) 55%,var(--fg))}
+.n1 .tov-list .tov-draft .st{color:color-mix(in srgb,var(--honey) 40%,var(--fg))}
+
+/* —— 标签词典：一行四格（标签 / 英文输入 / 状态 / 动作），样张里最接近的是 `.toc`，
+      但那一行只有「编号＋标题＋注＋跳转」，装不下一个可编辑输入框，所以单列一格 —— */
+.n1 .tag-tools{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:12px}
+.n1 .tag-tools label{display:flex;align-items:center;gap:7px;cursor:pointer}
+.n1 .tag-tools input[type='checkbox']{width:13px;height:13px;accent-color:var(--teal);cursor:pointer}
+.n1 .tag-list{margin-top:14px;border-top:1px solid var(--fg)}
+.n1 .tag-row{
+  display:grid;grid-template-columns:190px 1fr 96px auto;gap:16px;align-items:center;
+  padding:9px 0;border-bottom:1px solid var(--hair2);
+}
+.n1 .tag-cn{font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.06em;color:var(--fg)}
+.n1 .tag-cn i{font-style:normal;font-family:var(--body);font-weight:400;font-size:10px;
+  color:var(--fg3);letter-spacing:.1em;margin-left:9px}
+.n1 .tag-cn i.tag-note{margin-left:6px}
+.n1 .tag-row input[type='text']{
+  width:100%;border:0;border-bottom:1px solid var(--hair);background:transparent;outline:none;border-radius:0;
+  font-family:var(--body);font-size:12.5px;color:var(--fg);padding:6px 0;
+}
+.n1 .tag-row input[type='text']::placeholder{color:var(--fg3);letter-spacing:.06em}
+.n1 .tag-state{font-size:10px;letter-spacing:.14em;color:var(--fg2)}
+.n1 .tag-state.on{color:var(--teal)}
+.n1 .tag-state.draft{color:color-mix(in srgb,var(--honey) 40%,var(--fg))}
+.n1 .tag-acts{display:flex;gap:14px;justify-content:flex-end}
+.n1 .tag-del:hover{color:color-mix(in srgb,var(--coral) 55%,var(--fg))}
+
+/* 窄屏（与样张同一档 860px）：四格一列排不下 —— 收成两段（标签＋状态 / 输入＋动作） */
+@media (max-width:860px){
+  .n1 .prof{grid-template-columns:64px 1fr;gap:14px}
+  .n1 .prof-face{width:64px;height:64px}
+  .n1 .prof-face span{font-size:24px}
+  .n1 .prof-name{font-size:22px}
+  .n1 .tag-row{grid-template-columns:1fr auto;gap:8px 14px;padding:12px 0}
+  .n1 .tag-cn{grid-column:1}
+  .n1 .tag-state{grid-column:2;text-align:right}
+  .n1 .tag-row input[type='text']{grid-column:1}
+  .n1 .tag-acts{grid-column:2}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ⑥ 登录 ／ 个人主页「可读性」（2026-10-09）
+   ──────────────────────────────────────────────────────────────────────────────
+   用户原话：「登录页和个人主页可读性不强，给我一个方案（先问我），然后决定如何修改」。
+   六题问答拍板：① 只治这两页用到的零件（不动全站）；② 格子左上方加一行小字标签；
+   ③ 登录页表单收一栏、大标题收到 ~52px；④ 个人主页补一张 `.facts` 档案表、介绍放大去两端对齐；
+   ⑤ 未登录的 /profile 出一屏「先去登录」空态；⑥ 直接落地一版再看。
+
+   四个病根（改前浏览器实算）：
+     ① `.login-remember`（记住登录 10.5px）与 `.auth-switch`（没有账号？去注册 11px）
+        都用 `--fg3` ＝ 亮底 **2.48:1** → 提到 `--fg2`（4.94:1）
+     ② 表单**没有可见标签**，全靠 placeholder 记事，而 placeholder 一打字就消失；
+        且 `.gform` 的 placeholder 在 N1 里**从没定过色**（走浏览器默认灰）
+     ③ 个人介绍 12.5px ＋ `text-align:justify`（中文两端对齐拉出难看的字距）
+     ④ 登录页 `clamp(42px,5.4vw,68px)` 的大标题（样张给首页报头的档）压着两格并排表单
+
+   作用域＝本线新加的四个**修饰类**：`.gform-auth`／`.gform-prof`／`.pagehead-auth`／
+   `.pagehead-prof`。留言板那几个 `.gform`、其它页的 `.pagehead` 与 `.grow` 一行都不受影响
+   （所以这里不用 `.gform .grow` 这种会外溢的选择器）。
+   不改任何颜色 token、不新增色号、不动样张零件。
+   回退＝删掉本段（到下一节 `★ 英文页专属` 之前）＋ 两个页面里的四个修饰类即可。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* —— ① 两行小字提亮：`--fg3` 2.48:1 → `--fg2` 4.94:1（字号与字距仍是样张那档）—— */
+.n1 .login-remember{color:var(--fg2)}
+.n1 .auth-switch{color:var(--fg2)}
+
+/* —— ② 表单标签：格子左上方一行小字。打字后仍知道这格是什么，placeholder 退成「示例」—— */
+.n1 .gform .glabel{
+  display:block;font-size:10.5px;letter-spacing:.2em;color:var(--fg2);margin-bottom:4px;
+}
+.n1 .gform .fld{display:block}
+/* 登录页／个人主页的表单收成**单栏**（原来邮箱与密码并排，两格各只有半宽） */
+.n1 .gform-auth .grow,.n1 .gform-prof .grow{grid-template-columns:1fr;gap:15px}
+.n1 .gform-auth .grow + .grow,.n1 .gform-prof .grow + .grow{margin-top:15px}
+.n1 .gform-prof > .fld{margin-top:15px}
+.n1 .gform-prof .fld textarea{margin-top:0}
+/* 算术题那一格：标签跨两列，题面与答案格仍并排（题面给个下限，免得换题时跳宽） */
+.n1 .gform-auth .fld-cap{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+.n1 .gform-auth .fld-cap .glabel{grid-column:1/-1;margin-bottom:2px}
+.n1 .gform-auth .fld-cap .cap-q{padding:4px 0;min-width:112px}
+/* placeholder 定进样张小字档（原来走浏览器默认灰，且 `.gform` 从没定过色） */
+.n1 .gform-auth input::placeholder,
+.n1 .gform-prof input::placeholder,
+.n1 .gform-prof textarea::placeholder{color:var(--fg3);letter-spacing:.04em}
+
+/* —— ④ 大标题收到 ~52px：样张那档是给首页巨幅报头的，这两页头重脚轻 —— */
+.n1 .pagehead-auth h1,.n1 .pagehead-prof h1{font-size:clamp(36px,4.2vw,52px)}
+
+/* —— ③ 个人主页正文：介绍放大、取消两端对齐（中文 justify 会拉出难看的字距）—— */
+.n1 .prof-sign{font-size:13px}
+.n1 .prof-bio{font-size:13.5px;line-height:1.9;text-align:left}
+/* 档案表：与关于页同款 `.facts`，这里收成一栏（个人主页行少，两栏会空一半）。
+   ⚠️ 样张 `.facts dt` 是 `--fg3`（亮底 2.48:1）——关于页那边属既有的「已知取舍」，
+   但档案表是**本轮新加的信息**，栏名必须读得清，所以只把本页的 dt 提到 `--fg2`（4.94:1）。 */
+.n1 .prof-facts{grid-template-columns:1fr;margin-top:14px}
+.n1 .prof-facts dt{color:var(--fg2)}
+
+/* —— 窄屏（样张同一档 860px）：算术题那格改竖排，标题再收一档 —— */
+@media (max-width:860px){
+  .n1 .gform-auth .fld-cap{grid-template-columns:1fr;gap:10px}
+  .n1 .gform-auth .fld-cap .glabel{grid-column:1}
+  .n1 .gform-auth .fld-cap .cap-q{min-width:0}
+  .n1 .pagehead-auth h1,.n1 .pagehead-prof h1{font-size:34px}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ★ 英文页专属：拉丁排印档 ＋ 样张里那几处写死的中文 content（2026-10-09）★
+   ──────────────────────────────────────────────────────────────────────────────
+   用户原话「英文站点的字体排版精细化，还有部分地方存在中文应当修改」，
+   并就字距亲自裁决「全部按拉丁档」。
+
+   ① 为什么要覆盖字距：N1 的 .16–.42em 是按**两三个汉字**调的中文报纸字距，
+      拉丁文继承同一批值会散架。实测（无头 Chrome 1400 视口，就地改样式再量宽度）：
+        巨幅刊名 "Murmurs"   617px（.16em） → 545px（.06em）
+        报头标语整句         526px（.2em）  → 417px（.04em）
+        天头日期/期号行       470px         → 404px
+        报尾刊名 "Murmurs"    93px         → 77px
+        报尾标语             263px         → 221px
+      三档口径：
+        · 展示型大字（刊名/大标题/栏题/书名）→ .06–.1em
+        · 成句文本（标语/提要/天头/报尾/统计/按钮/小标签）→ .02–.06em
+        · **全大写小签**（拉丁刊名行、栏题右侧 small、引题 kicker、报头工具签）
+          → 保留宽字距：大写字母加宽字距本就是拉丁报刊的做法，不是中文残留。
+
+   ② 拉丁正文的断词：N1 的成段文字是 `text-align:justify` +
+      `text-justify:inter-ideograph`（汉字专用的两端对齐）。拉丁文两端对齐又不断词，
+      会拉出一行行「河」⇒ 英文页补 `hyphens:auto`（Chrome 按 html lang=en 断词）。
+
+   ③ 标题/段落换行：英文标题比中文长，末行容易孤字 ⇒ `text-wrap:balance`；
+      正文段落用 `text-wrap:pretty` 压掉末行孤字。
+
+   全部挂在 html[lang='en'] 下 —— 中文站（lang=zh-CN）一个字、一个像素都不受影响。
+   回退＝把本块整段删掉即可（只此一处，不动 n1.css 生成物）。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* —— ① 报头 —— */
+html[lang='en'] .n1 .np-zh{letter-spacing:.06em}
+html[lang='en'] .n1 .nav-inner .np-zh{letter-spacing:.1em}
+html[lang='en'] .n1 .npmotto{letter-spacing:.3em;text-indent:.3em}
+html[lang='en'] .n1 .npdeck b{letter-spacing:.04em}
+html[lang='en'] .n1 .npslogan{letter-spacing:.04em}
+html[lang='en'] .n1 .npslogan i{letter-spacing:.2em}
+html[lang='en'] .n1 .navmeta{letter-spacing:.1em}
+html[lang='en'] .n1 .navlinks a{letter-spacing:.06em}
+
+/* ★ 2026-10-09 用户报「英文版主页大标题很丑，还重复，还遮挡按钮」——「很丑 ＋ 遮挡按钮」两条的收口 ★
+   ──────────────────────────────────────────────────────────────────────────────────
+   病根（headless Chrome 实测，探针 `.tmp-en-hero-measure.mjs`，出图 `.tmp-before-en-*.png`）：
+     · 首页大刊名 `.np-zh` 在英文页是 **The Set of Murmurs**；.06em 字距下单行自然宽 ≈ 11.74 × 字号。
+       桌面档原始字号 clamp(54px,7.4vw,104px) 在 1280 档 = 94.72px ⇒ 单行要 1112px，
+       而版心留给它的只有 1078px（1144 − 46 符号 − 20 间隙）⇒ **被折成两行**（实测每档都是 2 行）。
+     · 两行之后墨迹（Range 实测）从 y=51 贯到 y=298，首行上缘正好穿进右上角那两行：
+       `.navmeta` 日期行 51–69、`.navtools` 小签排 76–98 —— 实测交叠面积
+       1280 档：与工具排 88px²、与日期行 2700px²；1440/1600 档：660px² / 3168px²。
+     · 中文刊名「呓语集」只有三个字（≈330px 宽），一直躲得开 —— 所以中文站一个字、一个像素不动。
+   两处收口（都只挂 html[lang='en'] 的**首页报头**）：
+     ① 字号改成**按版心能放下的宽度算**，只排一行：
+        min(84px, (100vw − 226px)/12.8)；12.8 = 11.74 ÷ 0.92（留 8% 余量吸收滚动条与字体回退差）。
+        1280 档 ⇒ 82.3px、≥1422 档 ⇒ 84px 封顶；单行最宽 ≈ 986px < 1078px ⇒ 稳定一行。
+     ② 报眼上沿留**墨迹净空**：这种巨字的墨迹比行盒上缘还高出约 0.31 × 字号
+        （实测：94.72px → 高 29px、104px → 高 32px），所以要把它压到小签排下缘（y=98）以下 10px：
+        行盒顶 ≥ 108 + 0.31F，而行盒顶 = 版框顶(42) + padding-top ⇒ padding-top = 108 + 26 − 42 = 92px。
+        样张那一档是 38px，这一处是英文首页专属位移（中文站与 ≤860 档都不吃：手机档小签本来就
+        落回文档流，不抢那条缝）。
+   回退＝删掉本段（只此一处，不动 n1.css 生成物）。 */
+@media (min-width:861px){
+  html[lang='en'] .n1 .nav:not(.nav-inner) .np-zh{
+    font-size:min(84px, calc((100vw - 226px) / 12.8));
+    white-space:nowrap;
+  }
+  html[lang='en'] .n1 .nav:not(.nav-inner) .nameplate{padding-top:92px}
+}
+
+/* —— ② 页面抬头与栏题 —— */
+html[lang='en'] .n1 .pagehead h1{letter-spacing:.1em}
+html[lang='en'] .n1 .hero h1:not(.slogan){letter-spacing:.1em}
+html[lang='en'] .n1 .slogan{letter-spacing:.04em}
+html[lang='en'] .n1 .kicker{letter-spacing:.18em}
+html[lang='en'] .n1 .sec-head h2{letter-spacing:.1em}
+html[lang='en'] .n1 .subhead b{letter-spacing:.06em}
+html[lang='en'] .n1 .lead-k .cat,
+html[lang='en'] .n1 .cat{letter-spacing:.14em}
+html[lang='en'] .n1 .lead-flag{letter-spacing:.1em}
+html[lang='en'] .n1 .feat .feat-k{letter-spacing:.12em}
+html[lang='en'] .n1 .feat .feat-k b{letter-spacing:.1em}
+html[lang='en'] .n1 .book-latest b{letter-spacing:.1em}
+html[lang='en'] .n1 .reader-row .rk{letter-spacing:.1em}
+html[lang='en'] .n1 .mchip{letter-spacing:.1em}
+
+/* —— ③ 条目 / 书籍 / 板块小字 —— */
+html[lang='en'] .n1 .book-txt h3{letter-spacing:.06em}
+html[lang='en'] .n1 .book-meta{letter-spacing:.05em}
+html[lang='en'] .n1 .tile b{letter-spacing:.06em}
+html[lang='en'] .n1 .meta{letter-spacing:.04em}
+html[lang='en'] .n1 .shot figcaption span{letter-spacing:.1em}
+html[lang='en'] .n1 .seg button{letter-spacing:.04em}
+html[lang='en'] .n1 .btn{letter-spacing:.04em}
+html[lang='en'] .n1 .bench-side h4{letter-spacing:.08em}
+
+/* —— ④ 留言板 / 关于页 —— */
+html[lang='en'] .n1 .mhead b{letter-spacing:.04em}
+html[lang='en'] .n1 .mtagme{letter-spacing:.06em}
+html[lang='en'] .n1 .sw b{letter-spacing:.06em}
+html[lang='en'] .n1 .sw i{letter-spacing:.08em}
+html[lang='en'] .n1 .facts dt{letter-spacing:.1em}
+html[lang='en'] .n1 .prof-name{letter-spacing:.06em}
+
+/* —— ⑤ 版面统计与报尾 —— */
+html[lang='en'] .n1 .stats{letter-spacing:.12em}
+html[lang='en'] .n1 .stats::before{letter-spacing:.16em}
+html[lang='en'] .n1 .foot .fname{letter-spacing:.08em}
+html[lang='en'] .n1 .foot .fslogan{letter-spacing:.02em}
+html[lang='en'] .n1 .foot .flabel{letter-spacing:.12em}
+
+/* —— ⑥ 手机档（样张在 860px 收一档，这里对同样的选择器给英文的值）——
+   首页大刊名在英文页是 **The Set of Murmurs**（用户 2026-10-09 裁决），
+   比中文的「呓语集」长得多，手机上必须同时收字号与字距才放得下。 */
+@media (max-width:860px){
+  html[lang='en'] .n1 .nav:not(.nav-inner) .np-zh{font-size:30px;letter-spacing:.03em}
+  html[lang='en'] .n1 .nav-inner .np-zh{letter-spacing:.08em}
+  html[lang='en'] .n1 .npmotto{letter-spacing:.24em;text-indent:.24em}
+  html[lang='en'] .n1 .nav:not(.nav-inner) .npdeck b{letter-spacing:.03em}
+  html[lang='en'] .n1 .nav:not(.nav-inner) .npslogan{letter-spacing:.04em}
+  html[lang='en'] .n1 .nav-inner .npslogan{letter-spacing:.04em}
+  html[lang='en'] .n1 .hero h1:not(.slogan){letter-spacing:.08em}
+  html[lang='en'] .n1 .slogan{letter-spacing:.04em}
+}
+
+/* —— ⑦ 样张里写死的中文 content（CSS 生成内容，改不了 n1.css 生成物，只能在英文页换掉）——
+   `.sec-head::before` 在样张里是「第 N 版」（每个 .sec 递增 counter ban）。
+   英文页用与报头「Ed. N」同一口径的 Ed. —— 不新造词。 */
+html[lang='en'] .n1 .sec-head::before{content:"Ed. " counter(ban,decimal)}
+
+/* —— ⑧ 拉丁正文：断词 ＋ 换行 —— */
+html[lang='en'] .n1 .lede,
+html[lang='en'] .n1 .lead-ex,
+html[lang='en'] .n1 .lead-body,
+html[lang='en'] .n1 .item-txt p,
+html[lang='en'] .n1 .feat p,
+html[lang='en'] .n1 .book-txt p,
+html[lang='en'] .n1 .editor p,
+html[lang='en'] .n1 .mtxt p,
+html[lang='en'] .n1 .prose p,
+html[lang='en'] .n1 .prose-read .markdown-body p,
+html[lang='en'] .n1 .prof-bio{hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word;text-justify:inter-word}
+
+html[lang='en'] .n1 .pagehead h1,
+html[lang='en'] .n1 .hero h1:not(.slogan),
+html[lang='en'] .n1 .sec-head h2,
+html[lang='en'] .n1 .lead h3,
+html[lang='en'] .n1 .item-txt h3,
+html[lang='en'] .n1 .book-txt h3,
+html[lang='en'] .n1 .feat h3{text-wrap:balance}
+
+html[lang='en'] .n1 .lede,
+html[lang='en'] .n1 .item-txt p,
+html[lang='en'] .n1 .book-txt p,
+html[lang='en'] .n1 .prose p,
+html[lang='en'] .n1 .prose-read .markdown-body p{text-wrap:pretty}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ⑨ 报头登录态（2026-10-09，三改落定＝用户拍的「乙」）
+   ──────────────────────────────────────────────────────────────────────────────
+   缘起：「退登录按钮没有了，按头像能到个人主页的功能也没有了」——旧顶栏登录态的收口件
+   （2026-09-22「三档合一」的头像钮＋小菜单）长在 `Navbar.tsx` 上，而 N1 外壳不渲染它，
+   于是全站唯一的 `signOut()` 在首页/文章/书架/图集/留言/关于这些主页面整体消失。
+   演进：一改＝把头像钮＋小菜单搬回来；二改＝他嫌「很丑且与旁边的个人主页有重复」，
+   撤掉重复的文字签、头像由圆改方；**三改＝他看完三档渲染直接选了「乙」**：
+   头像整个不要，登录态就是两枚与 EN／开往／深 **完全同族**的 `.nt` 小签
+   ——「个人主页」（`<Link>`）＋「退出登录」（`<button>` → `signOut()`），未登录时单枚「登录」。
+
+   ⇒ 所以**本段没有可执行 CSS**：乙档用的就是 ④ 段那枚 `.nt` 的既有规格，
+     零新元素、零浮层、零悬停特效、未新增任何 token（这是它最"报纸"的地方）。
+     甲（头像方签 22px ＋ 细线方框小菜单）与丙（头像直链、退出登录挪进个人主页动作行）
+     的样式与渲染截图留在 `blog\first\n1-account-entry\`（candidates\ ＋ gen-candidates.mjs），
+     要换档＝N1Shell.tsx 那一段 JSX ＋ 把甲那几行 CSS 贴回来，两处。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* —— ⑨-b 留言／评论头像恢复可点（2026-10-09，同一条报障的后半句）——
+   `.gface` 原先是个 `<img>`/`<span>`，现在外面那层就是 `<a>`（类名仍叫 gface），
+   所以盒子尺寸/字面样式照旧，这里只补：链接不带下划线、图片撑满那个 36px 圆、
+   以及 `flex-shrink:0`（它一直是 `.msg` 的 flex 子项，旧组件 `.comment-avatar` 也有这一条）。 */
+.n1 a.gface{text-decoration:none;overflow:hidden;flex-shrink:0;cursor:pointer}
+.n1 a.gface img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
+.n1 a.gface:hover{opacity:.82}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ⑩ 留言正文的 Markdown（2026-10-09，用户原话「让留言支持markdown」）
+   ──────────────────────────────────────────────────────────────────────────────
+   渲染件＝`src/components/CommentMarkdown.tsx`（**单独一支**，与正文的 `MarkdownRenderer`
+   分开：留言层不开 raw HTML、不挂 KaTeX，见那个文件顶部说明）。
+   这里只补「样张与 `n1.css` 都没写过」的那些 markdown 元素 —— 段落本身不用管：
+   `n1.css` 的 `.n1 .mtxt p{font-size:12px;color:var(--fg2);margin:5px 0 0;max-width:720px;
+   text-align:justify}` 是**后代选择器**，包一层 `.comment-md` 后照样命中，
+   所以留言段落与改版前的字面**逐字相同**（字号 12px、墨色、5px 上边距、两端对齐）。
+
+   口径与 ③ 段「正文 markdown 接到 N1 的线上」一致：细线、青蓝 `--teal`、无圆角、无投影，
+   只是**整体降一档**（留言是 12px 的小字，标题不能按正文的 1.55em 走），
+   并且不新增颜色 —— 只用 n1.css 那套 token（--fg/--fg2/--fg3/--hair/--hair2/--teal/--bg/--disp/--body）。
+   回退＝删掉本段。
+   ══════════════════════════════════════════════════════════════════════════════ */
+.n1 .mtxt .comment-md{font-size:12px;line-height:1.8;color:var(--fg2);max-width:720px;overflow-wrap:break-word}
+/* 首尾两块不留外边距：`.mtxt p` 的上边距 5px 是「贴着名字那行」的距离，块与块之间也照它走 */
+.n1 .comment-md > :first-child{margin-top:5px}
+.n1 .comment-md > :last-child{margin-bottom:0}
+
+.n1 .comment-md h1,
+.n1 .comment-md h2,
+.n1 .comment-md h3,
+.n1 .comment-md h4,
+.n1 .comment-md h5,
+.n1 .comment-md h6{
+  font-family:var(--disp);font-weight:600;color:var(--fg);line-height:1.4;
+  font-size:13px;letter-spacing:.08em;margin:10px 0 2px;
+}
+.n1 .comment-md h1,.n1 .comment-md h2{border-bottom:1px solid var(--hair2);padding-bottom:3px}
+
+.n1 .comment-md ul,
+.n1 .comment-md ol{padding-left:1.5em;margin:5px 0 0}
+.n1 .comment-md li{margin:2px 0}
+/* 任务列表（GFM）：勾选框不占列表点，整行左移对齐普通段落 */
+.n1 .comment-md .contains-task-list{padding-left:.2em;list-style:none}
+.n1 .comment-md .task-list-item{list-style:none}
+.n1 .comment-md input[type='checkbox']{margin:0 .45em 0 0;vertical-align:-1px}
+
+.n1 .comment-md blockquote{
+  border:0;border-left:3px solid var(--teal);border-radius:0;background:none;
+  color:var(--fg2);font-style:normal;padding:0 0 0 12px;margin:6px 0 0;
+}
+
+.n1 .comment-md code{
+  font-family:'Consolas',monospace;font-size:.92em;color:var(--fg2);
+  background:none;border:1px solid var(--hair2);border-radius:0;padding:0 5px;
+}
+.n1 .comment-md pre.code-block{
+  background:var(--bg);border:1px solid var(--hair);border-radius:0;
+  padding:10px 12px;margin:7px 0 0;color:var(--fg);overflow-x:auto;line-height:1.7;
+}
+.n1 .comment-md pre.code-block code{background:none;border:0;padding:0;color:inherit;font-size:.94em}
+
+.n1 .comment-md table{border-collapse:collapse;width:100%;margin:7px 0 0;font-size:.94em}
+.n1 .comment-md th,
+.n1 .comment-md td{border:1px solid var(--hair);padding:4px 8px;border-radius:0;text-align:left}
+.n1 .comment-md th{background:var(--fg);color:var(--bg);font-weight:600}
+.n1 .comment-md tr:nth-child(even){background:none}
+
+.n1 .comment-md img{max-width:100%;border:1px solid var(--hair2);border-radius:0;box-shadow:none;margin:6px 0 0}
+.n1 .comment-md hr{border:0;height:1px;border-top:1px solid var(--hair);margin:10px 0}
+.n1 .comment-md a{color:var(--teal);text-decoration:underline;text-underline-offset:2px;word-break:break-word}
+.n1 .comment-md a:hover{color:var(--fg)}
+.n1 .comment-md strong{color:var(--fg);font-weight:600}
+.n1 .comment-md del{color:var(--fg3)}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ⑪ 关于页报眼提要：一句话不分栏、不断行（2026-10-09 用户原话
+   「让这句话『这里是呓语集，会记录一些不自知的情绪和严谨的呓语』在关于页不要分行」）
+   ──────────────────────────────────────────────────────────────────────────────
+   病根＝样张的 `.n1 .lede` 是**三栏报纸正文**（`n1.css` 第 119 行 `column-count:3`），
+   样张那句「一个不太懂代码的高中生…」有 26 字、三栏排开正好读作一段；
+   而关于页真正的提要是站长简介那 24 字，被多栏**均衡**拆成三行，一句被切碎。
+   这里只对 `#about` 报眼这一档收成单栏（`n1.css` 是生成物、不许手改），
+   首页 `.hero-mast` 与 `.pagehead` 那两档原本就各自 `column-count:1`，一个字不受影响；
+   样张里 `.about-hero .lede::first-letter` 已复位过首字下沉，这里只动分栏。
+   版心 936px，13px × 24 字 ≈ 312px —— 桌面档一行放得下；窄到放不下时照常自然折行
+   （不加 `white-space:nowrap`，否则 390px 手机上会横向溢出）。回退＝删掉本段。 */
+.n1 .about-hero .lede{column-count:1;column-rule:0}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ⑫ 首页头条：正文按版面高度填满（2026-10-09 用户拍板，原话
+   「我希望最新更新的文章能够直接把大部分的内容直接显示在主页，意味着把主页的空白占满，
+     放不下的才会到里面去看」；三档追问他全点推荐档：
+      裁切界线＝按版面高度填满 / 截断处＝渐隐＋「继续阅读 ›」/ 手机＝同样渐隐、上限约 1.5 屏）
+   ──────────────────────────────────────────────────────────────────────────────
+   病根＝样张 `.n1 .lead .meta{margin-top:auto}` 把日期行钉在区块底部，而 `Home.tsx` 的 `leadBody`
+   原来只取正文**前 3 段**（且丢弃 ≤40 字的段），于是标题与日期行之间空出一大片白。
+   做法＝① `.latest` 转成定位参照，`.lead` 绝对定位铺满左栏（右栏仍是样张的 336px），
+           行高从此**只由右栏「最近更新 4 条」决定**（不足 420px 兜底 420px，也管住只有 1 篇文章、
+           右栏根本不渲染的场合）；
+         ② `.lead-body` 吃满标题行以下、日期行以上的全部高度：`column-fill:auto` 让两栏像报纸一样
+           **一栏排满再排下一栏**，`overflow:hidden` 把排不下的（＝进文章页去读的那部分）裁掉，
+           底部 26px 渐隐；日期行右侧一枚「继续阅读 ›」（照样张 `.book-latest .more` 的写法）。
+         ③ `Home.tsx` 量一次 `scrollWidth > clientWidth`：**内容填不满**时挂 `.is-short`，恢复样张
+           原本的 `column-fill:balance`（两栏均衡）并取消渐隐、撤掉「继续阅读 ›」；
+           量不到就什么都不加，退回纯 CSS 那条路。
+   颜色一个字没新增：渐隐是 alpha 遮罩，不依赖底色，所以明暗两态同一套（`n1.css` 是生成物、没动）。
+   回退＝删掉本段 ＋ `git checkout -- src/pages/Home.tsx`。 */
+.n1 .latest{position:relative;min-height:420px}
+.n1 .recent{grid-column:2}
+.n1 .lead{position:absolute;inset:0 336px 0 0}
+.n1 .lead-body{
+  flex:1 1 auto;min-height:0;overflow:hidden;column-fill:auto;
+  -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 26px),transparent 100%);
+          mask-image:linear-gradient(to bottom,#000 calc(100% - 26px),transparent 100%);
+}
+.n1 .lead-body.is-short{
+  column-fill:balance;
+  -webkit-mask-image:none;mask-image:none;
+}
+.n1 .lead .meta .more{margin-left:auto;font-size:11px;color:var(--fg3);letter-spacing:.06em}
+.n1 .lead .meta .more:hover{color:var(--fg)}
+
+/* 手机与窄版：样张在 ≤860px 已经收成单栏流（`.latest{grid-template-columns:1fr}`、
+   `.lead-body{column-count:1}`），这里把本段的定位与填满复位回**普通文档流**，
+   只留一条「上限约 1.5 屏」的高度帽：排到帽子处渐隐，其余进文章页。 */
+@media (max-width:860px){
+  .n1 .latest{position:static;min-height:0}
+  .n1 .recent{grid-column:auto}
+  .n1 .lead{position:static;inset:auto}
+  .n1 .lead-body{flex:0 0 auto;max-height:calc(150vh - 260px)}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ⑬ 英文长标题：行距 ＋ 按长度分档（2026-10-09，用户看完三档渲染点了一个字「丙」）
+   ──────────────────────────────────────────────────────────────────────────────
+   缘起（原话）：「英语文章标题过长的话会有重叠+看起来很丑（eg.穹庐下的魔女观后感），给我方案修改」。
+   病根＝样张抬头 `.pagehead h1{line-height:1}`（在生成的 `n1.css` 里）是**为汉字定的口径**：
+     汉字墨迹落在 1em 字身框内（实测中文 42px 换行两行，净空 +2px，不撞）；
+     而英文站用的 Murmurs Title（Cormorant Garamond +8%）上伸 0.97em ＋ 下伸 0.38em ＝ **1.35em**，
+     超出 1em ⇒ **只要标题换行就必然相撞**。实测 `Impression of Jaadugar: A Witch in Mongolia`
+     （43 字符，全站最长）墨迹净空：1280 档 **−24px**、390 档 **−15px × 3**。
+   ⇒ 所以本段整段挂在 `html[lang='en']` 下，**中文站一个字不动**（生成物 `n1.css` 也没动）。
+
+   ① 行距 1 → **1.42**（>1.353 的墨迹需求，留 ≈0.07em 呼吸）：
+      实测修复后净空 1280 档 +5px、390 档 +3px。
+   ② 按标题长度分档（CSS 的 clamp 只认视口、认不出内容，长度由 `src/lib/n1TitleSize.ts` 挂类）：
+      ≤22 字符＝**不挂类**，保持样张原样的 clamp(42px,5.4vw,68px)；
+      23–40 字符＝`.t-mid` → clamp(32px,3.8vw,48px)；
+      >40 字符＝`.t-long` → clamp(30px,3vw,38px)（本例 43 字符 ⇒ 1280 档收成**单行** 38px）。
+   ③ 同族：文章详情、书介页书名、阅读页章名共用这一枚 `<h1>`，一起挂类（中文站因选择器带
+      `html[lang='en']` 天然不吃）。
+
+   ⚠️ 没碰的：`.pagehead-auth` / `.pagehead-prof` 那两枚抬头（`n1-app.css` 第 ⑥ 段收在 52px）
+      文字都是短的、永远不挂 `.t-mid/.t-long`，只跟着吃到行距 1.42（单行，仅行盒略高）。
+   ⚠️ 同族风险还没动的：`.lead h3`（46px／行距 1.16，按同机理推算撞约 −8px）、
+      `.item-txt h3`（19px／1.3，临界 −0.9px）——等用户点名再收。
+   回退＝删掉本段 ＋ 三个页面里的 `n1TitleClass(...)` 一处调用（可留，类名无样式即无副作用）。 */
+html[lang='en'] .n1 .pagehead h1{line-height:1.42}
+html[lang='en'] .n1 .pagehead h1.t-mid{font-size:clamp(32px,3.8vw,48px)}
+html[lang='en'] .n1 .pagehead h1.t-long{font-size:clamp(30px,3vw,38px)}
+
+

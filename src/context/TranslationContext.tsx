@@ -11,6 +11,11 @@
 //   ② 表不存在 / 请求失败时静默降级成「没有译文」，页面显示中文原文，
 //      英文站照样能开，不会因为一张还没建的表白屏。
 //
+// ★ 2026-10-09「英文站不依附中文站，先加载英文翻译」：
+//   英文线的译文**在挂载 React 之前就已经预载过一轮**（main.tsx + lib/translationPreload.ts），
+//   这里同步取那一份当 useState 初值 → 英文页首帧即英文，不再「先中文、后英文」。
+//   本文件不再自己发请求，只复用预载的同一个 promise（超时/失败都退化为「显示中文原文」）。
+//
 // P5（2026-09-21）加的一块：**标签词典**（`tag_translations`）与译文一起拉，
 //   一起进 localize——标签是全站共用的，一篇没译的文章照样能显示英文标签。
 // ============================================================================
@@ -20,14 +25,13 @@ import { useLocale } from '../i18n';
 import {
   ArticleTranslation,
   LocalizedArticle,
-  fetchReviewedTranslations,
   localizeArticle,
 } from '../lib/translations';
 import {
   TagMap,
-  fetchReviewedTagTranslations,
   translateTag,
 } from '../lib/tagTranslations';
+import { startPreload, takePreloaded } from '../lib/translationPreload';
 import type { Article } from '../types';
 
 interface TranslationCtx {
@@ -48,9 +52,15 @@ const Ctx = createContext<TranslationCtx | null>(null);
 
 export function TranslationProvider({ children }: { children: ReactNode }) {
   const { locale } = useLocale();
-  const [map, setMap] = useState<Record<string, ArticleTranslation>>({});
-  const [tags, setTags] = useState<TagMap>({});
-  const [ready, setReady] = useState(locale === 'zh');
+  /* ★ 2026-10-09「英文站先加载英文翻译」★
+     main.tsx 在挂载 React 之前已经预载过一轮（lib/translationPreload.ts），这里同步取那一份当**初值**：
+     于是英文页的**首帧就是英文**，不会先渲染中文再跳成英文。
+     没预载到（超时/断网/中文线）＝ 保持原来的行为：先空着、拉到了再套上，缺译文的那篇回退中文原文。 */
+  const [map, setMap] = useState<Record<string, ArticleTranslation>>(
+    () => takePreloaded(locale)?.map ?? {},
+  );
+  const [tags, setTags] = useState<TagMap>(() => takePreloaded(locale)?.tags ?? {});
+  const [ready, setReady] = useState(locale === 'zh' || !!takePreloaded(locale));
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
@@ -62,25 +72,19 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       return;
     }
     let mounted = true;
-    setReady(false);
-    // 译文与标签词典各拉一次（两条请求并发，别串起来等）
-    Promise.all([fetchReviewedTranslations('en'), fetchReviewedTagTranslations('en')]).then(
-      ([list, tagMap]) => {
-        if (!mounted) return;
-        const next: Record<string, ArticleTranslation> = {};
-        for (const tr of list) next[tr.articleId] = tr;
-        setMap(next);
-        setTags(tagMap);
-        setReady(true);
-      },
-    ).catch((err) => {
-      // 任一请求 reject 也标记就绪，避免英文站永久卡在 loading；降级为显示中文原文
-      console.warn('译文/标签词典加载失败，降级为中文原文', err);
-      if (mounted) {
-        setMap({});
-        setTags({});
-        setReady(true);
+    // version > 0 ＝ refresh()：工作台保存译文后要**真的重新拉一次**（不能用预载缓存）
+    const force = version > 0;
+    // 已经有预载数据时不许再置 ready=false，否则刚拿到的英文又会被打回「未就绪」
+    if (force || !takePreloaded(locale)) setReady(false);
+    // 与 main.tsx 的预载共用同一个 promise（不重复请求）；这个 promise 不会 reject，
+    // 超时也只是「晚一点到位」——所以英文站不会永久卡在加载态，更不会停在中文上
+    startPreload(locale, force).then((res) => {
+      if (!mounted) return;
+      if (res) {
+        setMap(res.map);
+        setTags(res.tags);
       }
+      setReady(true);
     });
     return () => {
       mounted = false;

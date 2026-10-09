@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import type { CSSProperties } from 'react';
 import { Article } from '../types';
 import { NOVEL_STATUS_META } from '../types';
 import { useLocalizedArticle } from '../context/TranslationContext';
@@ -45,8 +46,14 @@ export default function NovelCard({ article: raw }: Props) {
         <Link to={`/article/${article.id}`} className="novel-title">{article.title}</Link>
         {novel?.author && <div className="novel-author">{t('shelf.byAuthor', { name: novel.author })}</div>}
 
+        {/* 2026-10-08 批次③（B7）：原来是 `background: color + '22'` 的 8 位 hex 半透底（暗色下会糊），
+            改成把色卡色与同色系墨色交给 CSS 变量，报纸层据此画「方框细线」小签。
+            **色号仍是 NOVEL_STATUS_META 的值，一个没换。** */}
         {statusMeta && (
-          <span className="novel-status-badge" style={{ background: statusMeta.color + '22', color: statusMeta.ink }}>
+          <span
+            className="novel-status-badge"
+            style={{ '--chip-color': statusMeta.color, '--chip-ink': statusMeta.ink } as CSSProperties}
+          >
             {status ? t(novelStatusKey(status)) : statusMeta.label}
           </span>
         )}

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback, ChangeEvent } from 'react';
+import type { CSSProperties } from 'react';
 import { useArticles } from '../context/ArticleContext';
 import { CATEGORIES, CATEGORY_META, Article, ArticleAttachment, Category, NovelChapter, NovelStatus } from '../types';
 import { NOVEL_STATUS_META } from '../types';
@@ -10,6 +11,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase, SUPABASE_URL } from '../lib/supabase';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { isNovelArticle } from '../lib/novelPath';
 import {
   readChapterDraft,
   writeChapterDraft,
@@ -35,6 +37,10 @@ interface WriteDraft {
   cover: string;
   nstatus: NovelStatus;
   synopsis: string;
+  /** 中文摘要（2026-10-09 起可手写；老草稿没有这一项，读的时候按空串兜底） */
+  summary: string;
+  /** 摘要是不是手写的（没写过的草稿没有这一项 → 按「自动」处理） */
+  summaryManual?: boolean;
   chapters: NovelChapter[];
   attachments: ArticleAttachment[];
   savedAt: string;
@@ -53,6 +59,26 @@ function loadDraft(): WriteDraft | null {
 
 function clearDraftStorage() {
   try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+}
+
+/**
+ * 自动摘要＝正文（去掉 Markdown 记号、换行压成空格）的前 120 字。
+ * ⚠️ 这条规则**与「摘要框」之前逐字一模一样**（老文章的摘要就是这么来的），
+ *    现在只当兜底用：写作页的摘要框留空才走它。
+ * 2026-10-09 用户原话「我希望中文也可以修改摘要」——之前摘要只能自动生成，改不了。
+ */
+export function autoSummaryOf(text: string): string {
+  return text.replace(/[#>*`$\\[\]()]/g, '').replace(/\n/g, ' ').slice(0, 120);
+}
+
+/**
+ * 库里那条摘要是不是**人写的**：跟「按正文自动截出来」的结果不一样，就说明不是自动生成的。
+ * 已发布的老文章都是自动生成的，所以打开时仍是「自动」状态（跟着正文走，跟改动前一样）；
+ * 只有他自己写过的那条才会被当成手写、原样带进摘要框、不再跟着正文变。
+ */
+function isManualSummary(stored: string, content: string): boolean {
+  const s = (stored || '').trim();
+  return !!s && stored !== autoSummaryOf(content);
 }
 
 // 站外要用的静态图（放在 public/ 根目录，随 main 一起部署）。
@@ -87,6 +113,16 @@ export default function Write() {
   const [category, setCategory] = useState<Category>(savedDraft?.category ?? editing?.category ?? 'essay');
   const [tags, setTags] = useState(savedDraft?.tags ?? editing?.tags.join(', ') ?? '');
   const [favorite, setFavorite] = useState(savedDraft?.favorite ?? editing?.favorite ?? false);
+  /* 中文摘要（2026-10-09 用户点名「我希望中文也可以修改摘要」）：
+     之前它只由正文前 120 字自动截出来、写作页里连框都没有。
+     现在：框里写什么就存什么；**留空＝照旧自动截取**（buildArticle 里兜底）。
+     打开老文章时给的就是数据库里那条摘要（也就是现在自动生成的那段），不改就照旧。 */
+  const [summary, setSummary] = useState(savedDraft?.summary ?? editing?.summary ?? '');
+  /* 「自动」还是「手写」：自动时摘要跟着正文走（＝改动前的老行为，老文章打开就是这一档）；
+     他一旦在框里打字就转成手写，从此按他写的来。 */
+  const [summaryManual, setSummaryManual] = useState(() =>
+    id ? isManualSummary(editing?.summary || '', editing?.content || '') : !!savedDraft?.summaryManual,
+  );
   const [composer, setComposer] = useState<'article' | 'novel'>(savedDraft?.composer ?? (editing?.novel ? 'novel' : 'article'));
   const [previewing, setPreviewing] = useState(false);
   /* P3 翻译工作台：只在「编辑已有文章/小说」时可开（新文章还没 id，译文表按 id 存）。
@@ -151,12 +187,13 @@ export default function Write() {
       title.trim() ||
       content.trim() ||
       synopsis.trim() ||
+      summary.trim() ||
       chapters.some((c) => c.title.trim() || c.content.trim());
     if (!hasSomething) return;
     const timer = setTimeout(() => {
       const draft: WriteDraft = {
         title, content, category, tags, favorite, composer,
-        author, cover, nstatus, synopsis, chapters, attachments,
+        author, cover, nstatus, synopsis, summary, summaryManual, chapters, attachments,
         savedAt: new Date().toISOString(),
       };
       try {
@@ -165,7 +202,19 @@ export default function Write() {
       } catch { /* 存储配额不足等情况忽略，不影响写作 */ }
     }, 600);
     return () => clearTimeout(timer);
-  }, [id, title, content, category, tags, favorite, composer, author, cover, nstatus, synopsis, chapters, attachments]);
+  }, [id, title, content, category, tags, favorite, composer, author, cover, nstatus, synopsis, summary, summaryManual, chapters, attachments]);
+
+  /**
+   * 摘要框没被手改过时，它跟着正文走 —— 就是摘要框出现**之前**的老行为（正文改完，摘要自动跟着变）。
+   * 一旦他在框里打了字（summaryManual＝true）就停手，从此按他写的来。
+   * ⚠️ `!content.trim()` 那道闸是给**异步加载**留的：直接打开 `/write/<id>` 时首帧正文还是空的，
+   *    而补水 effect 在同一提交里才把正文塞进来，没有这道闸会用空串把摘要洗掉。
+   */
+  useEffect(() => {
+    if (summaryManual) return;
+    if (!content.trim()) return;
+    setSummary(autoSummaryOf(content));
+  }, [content, summaryManual]);
 
   // ★ 第 3 批：章节级草稿（编辑已有小说时）★
   // 进入某章：检测草稿 → 有则提示恢复/丢弃；切换章节时由下方 effect 自动存上一章
@@ -249,7 +298,7 @@ export default function Write() {
     if (!id || !editing || hydratedIdRef.current === id) return;
     hydratedIdRef.current = id;
     const untouched =
-      !title.trim() && !content.trim() && !synopsis.trim() && chapters.length === 0;
+      !title.trim() && !content.trim() && !synopsis.trim() && !summary.trim() && chapters.length === 0;
     if (!untouched) return;
     setTitle(editing.title || '');
     setContent(editing.content || '');
@@ -261,6 +310,8 @@ export default function Write() {
     setCover(editing.novel?.cover || '');
     setNstatus(editing.novel?.status || 'serializing');
     setSynopsis(editing.novel?.synopsis || '');
+    setSummary(editing.summary || '');
+    setSummaryManual(isManualSummary(editing.summary || '', editing.content || ''));
     setChapters(editing.novel?.chapters?.slice() || []);
     setAttachments(editing.attachments || []);
     // 依赖只有 id/editing：这是「文章到达」的时机，不跟着他打字跑
@@ -278,6 +329,8 @@ export default function Write() {
     setAuthor('');
     setCover('');
     setSynopsis('');
+    setSummary('');
+    setSummaryManual(false);
     setChapters([]);
     setAttachments([]);
     setDraftSavedAt(null);
@@ -536,7 +589,10 @@ export default function Write() {
       favorite,
       pinned: editing?.pinned || false,
       attachments,
-      summary: isNovelMode ? novelSummary : content.replace(/[#>*`$\\[\]()]/g, '').replace(/\n/g, ' ').slice(0, 120),
+      /* 手写过就按手写的来；没手写过（或清空了）走**逐字未改**的老规则 ——
+         老规则不 trim（正文开头是「# 标题」时摘要会带一个前导空格），这里保持原样，
+         免得老文章的摘要字符串在新旧版本之间悄悄变样。 */
+      summary: isNovelMode ? novelSummary : (summaryManual && summary.trim() ? summary.trim() : autoSummaryOf(content)),
       novel: isNovelMode ? novelObj : undefined,
     };
     const confirmMsg = isNovelMode
@@ -551,10 +607,12 @@ export default function Write() {
   const [pingUrlText, setPingUrlText] = useState('');
 
   // 「当前这篇」两条 URL（中文 + 英文）。新文章还没 id → 无法拼 URL，返回空。
+  // 小说走**书架族地址**（2026-10-09「小说界面绑定到书架」）——推给搜索引擎的也是这个。
   const pingArticleUrls = useMemo(() => {
     if (!id) return [] as string[];
+    if (editing && isNovelArticle(editing)) return [`${SITE_ORIGIN}/novels/${id}`, `${SITE_ORIGIN}/en/novels/${id}`];
     return [`${SITE_ORIGIN}/article/${id}`, `${SITE_ORIGIN}/en/article/${id}`];
-  }, [id]);
+  }, [id, editing]);
 
   const ping = useCallback(async (payload: { mode: 'items' | 'all'; urls?: string[]; includeHome?: boolean }) => {
     setPingBusy(true);
@@ -605,7 +663,8 @@ export default function Write() {
     clearDraftStorage();
     // 清掉该文章的所有章节级草稿
     if (id) clearAllChapterDrafts(id);
-    navigate(`/article/${built.article.id}`);
+    // 小说发布完落在书架族的阅读界面，普通文章仍回文章阅读页
+    navigate(isNovelArticle(built.article) ? `/novels/${built.article.id}` : `/article/${built.article.id}`);
   };
 
   /**
@@ -638,8 +697,9 @@ export default function Write() {
     if (editing.novel) {
       return sig(title, '', synopsis, chapters) !== sig(editing.title, '', editing.novel.synopsis || '', editing.novel.chapters || []);
     }
-    return sig(title, content, '', []) !== sig(editing.title, editing.content || '', '', []);
-  }, [enOpen, editing, title, content, synopsis, chapters]);
+    /* 普通文章：摘要也是「中文原稿」的一部分（2026-10-09 起可手写），改了它同样要提示未保存 */
+    return sig(title, content, summary, []) !== sig(editing.title, editing.content || '', editing.summary || '', []);
+  }, [enOpen, editing, title, content, summary, synopsis, chapters]);
 
   const exportAs = () => {
     const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
@@ -680,6 +740,7 @@ export default function Write() {
             article={editing}
             zhTitle={title}
             zhContent={content}
+            zhSummary={summary}
             zhSynopsis={synopsis}
             zhChapters={chapters}
             zhDirty={zhDirty}
@@ -825,30 +886,117 @@ export default function Write() {
     );
   }
 
+  /* ===== 「N1 样张直接做前端」（2026-10-08）=====
+     写作页主体照样张 `design-mockups\g\n1-broadsheet\write.html` 行 449–494 重排：
+       .pagehead（WRITE ／ 写作 ／ 一句话）→ `.bench` 两栏 = `.bench-main` 写作台 ＋ `.bench-side` 发布面板。
+     · 标题 → `.title-input`；分类/标签/草稿状态 → `.bench-meta`；工具 → `.toolbar`；
+       正文/预览/译文工作台 → `.editor-tabs` ＋ 本体；页脚统计 → `.bench-foot`。
+     ⚠️ 样张里**没有**的东西（文章/小说模式切换、五个上传面板、小说章节编辑器、English 译文工作台）
+        一律**保留功能**：切换摆进 `.toolbar` 最左（用 N1 的 `.seg` 语汇）、面板打开时落在工具栏下面、
+        小说那一整套与译文工作台本体本轮照旧不动（样张没有画它们，等用户点名再做）。
+     ⚠️ 面板/输入框这些「样张没给样式」的零件，外观走补齐层 `src/styles/n1-app.css`。
+     ⚠️ 回退＝`git checkout -- src/pages/Write.tsx`。 */
+  const plainWords = content.replace(/\s/g, '').length;
+  const readMinutes = Math.max(1, Math.round(plainWords / 300));
+  /* 摘要框小注里那段「现在会自动用的」，只取开头一点，免得一行小字拖成三行 */
+  const autoPreview = autoSummaryOf(content).trim().slice(0, 64) || '（还没写正文）';
+
   return (
-    <div className="page write-page">
-      <h1 className="page-title">{editing ? '编辑文章' : '写作'}</h1>
-      <div className="composer-switch">
-        <button className="mode-tab on" onClick={() => setComposer('article')}>写普通文章</button>
-        <button className="mode-tab" onClick={() => setComposer('novel')}>写小说</button>
+    <>
+      <div className="pagehead">
+        <div className="pagehead-txt">
+          <div className="kicker">WRITE</div>
+          <h1>{editing ? `编辑《${editing.title}》` : '写作'}</h1>
+          <p className="lede">Markdown 与 LaTeX，写好了直接发布。</p>
+        </div>
       </div>
-      <div className="toolbar">
-        <button className="btn btn-light" onClick={exportAs}>导出 .md / .tex</button>
-        <button className="btn btn-light" onClick={() => fileInput.current?.click()}>
-          导入文件
-        </button>
-        <input ref={fileInput} type="file" accept=".md,.markdown,.txt,.tex" style={{ display: 'none' }} onChange={onImport} />
-        <button className="btn btn-light" onClick={() => setPanel('image')}>插入图片</button>
-        <button className="btn btn-light" onClick={() => setPanel('music')}>插入音乐</button>
-        <button className="btn btn-light" onClick={() => setPanel('attachment')}>添加附件</button>
-        <button className="btn btn-light" onClick={clearAll}>重置数据</button>
-        {/* P5：翻译进度 / 标签词典的入口（这两个页面只有博主能进，藏在 URL 里没人找得到） */}
-        <Link className="btn btn-light" to="/write/translations#tags">翻译进度 / 标签词典</Link>
-        {/* 外链素材：头像原图 / 首页截图，点一下复制链接 */}
-        <button className="btn btn-light" onClick={() => setPanel('assets')}>外链素材</button>
-        {/* 推给 Bing：新文章不必等它自己排队来抓（IndexNow） */}
-        <button className="btn btn-light" onClick={() => setPanel('indexnow')}>推给 Bing</button>
-      </div>
+
+      <section className="sec">
+        <div className="bench">
+          <div className="bench-main">
+            <input
+              type="text"
+              className="title-input"
+              placeholder="文章标题…"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+
+            <div className="bench-meta">
+              {/* 分类：样张是一枚分类色小签，这里就地可改（色卡色原样取自 CATEGORY_META） */}
+              <select
+                className="mchip"
+                style={{ '--c': CATEGORY_META[category].color } as CSSProperties}
+                value={category}
+                onChange={(e) => setCategory(e.target.value as Category)}
+                aria-label="分类"
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {CATEGORY_META[c].label}
+                  </option>
+                ))}
+              </select>
+              {/* 标签：样张是一排「# 标签」，这里直接可编辑（逗号分隔），下方实时预览 */}
+              <input
+                className="mtag mtag-input"
+                type="text"
+                placeholder="# 标签（用逗号分隔）"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+              />
+              <span className="msp" />
+              <span className="msave">
+                {draftSavedAt
+                  ? `✓ 草稿已自动保存 · ${draftSavedAt.toLocaleTimeString('zh-CN', { hour12: false })}`
+                  : '正文会自动存草稿'}
+              </span>
+            </div>
+
+            {/* 摘要（2026-10-09 用户点名「我希望中文也可以修改摘要」）：
+                设了它就按设的来，留空＝照旧自动取正文前 120 字。
+                小注两种状态：空 → 把「现在会自动用的那段」念出来；非空 → 报字数。
+                小说（category=reading）不显示这一行——小说走「简介」那栏。 */}
+            {category !== 'reading' && (
+              <div className="bench-summary">
+                <textarea
+                  className="summary-input"
+                  rows={2}
+                  placeholder="摘要 · 留空就自动取正文前 120 字"
+                  value={summary}
+                  onChange={(e) => { setSummaryManual(true); setSummary(e.target.value); }}
+                  aria-label="摘要"
+                />
+                <p className="sum-hint">
+                  {summaryManual
+                    ? (summary.trim()
+                        ? `${summary.trim().length} 字 · 按你写的来（首页头条、文章列表、搜索结果的描述都用它）`
+                        : `留空＝自动取正文前 120 字：${autoPreview}`)
+                    : `自动取正文前 120 字：${autoPreview}（改正文时它自己跟着变，在这里打字就改成你写的）`}
+                </p>
+              </div>
+            )}
+
+            <div className="toolbar">
+              {/* 模式切换（样张没有这一件）：用 N1 的 .seg 分段按钮语汇 */}
+              <span className="seg">
+                <button type="button" className="on" onClick={() => setComposer('article')}>文章</button>
+                <button type="button" onClick={() => setComposer('novel')}>小说</button>
+              </span>
+              <button onClick={exportAs}>导出 .md / .tex</button>
+              <button onClick={() => fileInput.current?.click()}>导入文件</button>
+              <input ref={fileInput} type="file" accept=".md,.markdown,.txt,.tex" style={{ display: 'none' }} onChange={onImport} />
+              <button onClick={() => setPanel('image')}>插入图片</button>
+              <button onClick={() => setPanel('music')}>插入音乐</button>
+              <button onClick={() => setPanel('attachment')}>添加附件</button>
+              <button onClick={clearAll}>重置数据</button>
+              {/* P5：翻译进度 / 标签词典的入口（这两个页面只有博主能进，藏在 URL 里没人找得到） */}
+              <Link to="/write/translations#tags">翻译进度 / 标签词典</Link>
+              {/* 外链素材：头像原图 / 首页截图，点一下复制链接 */}
+              <button onClick={() => setPanel('assets')}>外链素材</button>
+              {/* 推给 Bing：新文章不必等它自己排队来抓（IndexNow） */}
+              <button onClick={() => setPanel('indexnow')}>推给 Bing</button>
+            </div>
 
 
       {panel === 'image' && (
@@ -1018,41 +1166,6 @@ export default function Write() {
         </div>
       )}
 
-      <div className="write-form card">
-        <input
-          type="text"
-          className="write-title"
-          placeholder="文章标题…"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-
-        <div className="write-meta">
-          <div className="meta-field">
-            <label>分类</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value as Category)}>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {CATEGORY_META[c].label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="meta-field">
-            <label>标签（用逗号分隔）</label>
-            <input
-              type="text"
-              placeholder="如: 线代, 证明, 复习"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-            />
-          </div>
-          <label className="fav-check">
-            <input type="checkbox" checked={favorite} onChange={(e) => setFavorite(e.target.checked)} />
-            收藏/星标
-          </label>
-        </div>
-
         <div className="editor-tabs">
           <button className={`tab-btn ${!previewing && !enOpen ? 'active' : ''}`} onClick={() => { setPreviewing(false); setEnOpen(false); }}>
             编辑
@@ -1073,6 +1186,7 @@ export default function Write() {
             article={editing}
             zhTitle={title}
             zhContent={content}
+            zhSummary={summary}
             zhSynopsis={synopsis}
             zhChapters={chapters}
             zhDirty={zhDirty}
@@ -1093,33 +1207,63 @@ export default function Write() {
             rows={18}
           />
         )}
-      </div>
 
-      <div className="write-actions">
-        {category === 'reading' && (
-          <div className="novel-publish-hint">
-            你当前在 <strong>小说模式</strong>：发布时会保存 书名、作者、封面、章节、简介，并在「小说书架」以封面形式展示。
-            发布前若没有章节，会提示你补充。
+            <div className="bench-foot">
+              <span>{plainWords} 字</span>
+              <span>预计阅读 {readMinutes} 分钟</span>
+              <span className="msp" />
+              <span>{editing ? 'Markdown · 编辑已有文章' : 'Markdown · 新建'}</span>
+            </div>
           </div>
-        )}
-        {!editing && (
-          <div className="write-draft-status">
-            {draftSavedAt ? (
-              <span className="draft-saved" title={'草稿保存时间：' + draftSavedAt.toLocaleString('zh-CN')}>
-                ✓ 草稿已自动保存 · {draftSavedAt.toLocaleTimeString('zh-CN', { hour12: false })}
-              </span>
-            ) : (
-              <span className="draft-hint">写作内容会自动保存为草稿，刷新或离开后回来仍能接着写</span>
+
+          {/* 发布面板（样张的 .bench-side）：状态/可见/分类/收藏 四行 ＋ 发布 ＋ 推给 Bing */}
+          <aside className="bench-side">
+            <h4>发布</h4>
+            <div className="side-row">
+              <span>状态</span>
+              <b>{editing ? '已发布' : '草稿'}</b>
+            </div>
+            <div className="side-row">
+              <span>可见</span>
+              <b>{category === 'reading' ? '书架' : '公开'}</b>
+            </div>
+            <div className="side-row">
+              <span>分类</span>
+              <b>{CATEGORY_META[category].label}</b>
+            </div>
+            <div className="side-row">
+              <span>收藏</span>
+              <label className="side-check">
+                <input type="checkbox" checked={favorite} onChange={(e) => setFavorite(e.target.checked)} />
+                {favorite ? '已收藏 / 星标' : '未收藏'}
+              </label>
+            </div>
+            <button className="btn wide" onClick={save}>
+              {editing ? '保存修改' : category === 'reading' ? '发布这本小说' : '发布文章'}
+            </button>
+            <button className="btn ghost wide" onClick={() => setPanel('indexnow')}>推给 Bing</button>
+            <p className="side-note">发布后会自动写入 sitemap，并推送到 IndexNow。</p>
+            {category === 'reading' && (
+              <p className="side-note">
+                你当前在小说模式：发布时会保存 书名、作者、封面、章节、简介，并在「小说书架」以封面形式展示；发布前若没有章节，会提示你补充。
+              </p>
             )}
-            {draftSavedAt && (
-              <button className="draft-clear" onClick={clearDraft} title="清除本地草稿">清除草稿</button>
+            {!editing && (
+              <p className="side-note">
+                {draftSavedAt
+                  ? `草稿保存于 ${draftSavedAt.toLocaleString('zh-CN')}`
+                  : '正文会自动保存为草稿，刷新或离开后回来仍能接着写'}
+                {draftSavedAt && (
+                  <>
+                    {' '}
+                    <button className="draft-clear" onClick={clearDraft} title="清除本地草稿">清除草稿</button>
+                  </>
+                )}
+              </p>
             )}
-          </div>
-        )}
-        <button className="btn btn-primary" onClick={save}>
-          {editing ? '保存修改' : category === 'reading' ? '发布这本小说' : '发布文章'}
-        </button>
-      </div>
-    </div>
+          </aside>
+        </div>
+      </section>
+    </>
   );
 }

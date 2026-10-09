@@ -6,8 +6,9 @@ import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useT, useLocale } from '../i18n';
-import type { DictKey } from '../i18n/dict';
 import { catKey } from '../i18n/dict';
+import { NAV_ITEMS } from '../lib/navItems';
+import { LATIN_NAME } from '../lib/masthead';
 
 /* ============================================================
    顶栏 v2 —— 2026-09-20
@@ -81,23 +82,12 @@ const CATEGORY_ROUTES: Record<string, string> = {
   study: '/category/study',
 };
 
-/* active 判定统一成 startsWith：原来只有 pathname === path 才算激活，
-   所以停在 /article/xxx、/category/xxx 这类详情页时「文章」不会高亮。
-   ★ 英文版（2026-09-21）：label 换成**字典键**，由 t() 按当前语言取词；
-     路由 to 仍是语言无关的（react-router 的 basename 会补上 /en 前缀）。 */
-const NAV_ITEMS: { to: string; labelKey: DictKey; match: (path: string) => boolean }[] = [
-  { to: '/', labelKey: 'nav.home', match: (p) => p === '/' },
-  {
-    to: '/articles',
-    labelKey: 'nav.articles',
-    match: (p) => p.startsWith('/articles') || p.startsWith('/article/') || p.startsWith('/category/'),
-  },
-  { to: '/novels', labelKey: 'nav.bookshelf', match: (p) => p.startsWith('/novels') },
-  { to: '/gallery', labelKey: 'nav.gallery', match: (p) => p.startsWith('/gallery') },
-  { to: '/guestbook', labelKey: 'nav.guestbook', match: (p) => p.startsWith('/guestbook') },
-  { to: '/friends', labelKey: 'nav.friends', match: (p) => p.startsWith('/friends') },
-  { to: '/about', labelKey: 'nav.about', match: (p) => p.startsWith('/about') },
-];
+/* 主导航的路由表已搬到 `src/lib/navItems.ts`（NAV_ITEMS）：
+   ① active 判定统一成 startsWith（原来只有 pathname === path 才算激活，
+      所以停在 /article/xxx、/category/xxx 这类详情页时「文章」不会高亮）；
+   ② labelKey 是**字典键**，由 t() 按当前语言取词，路由 to 是语言无关的
+      （react-router 的 basename 会补上 /en 前缀）；
+   ③ ★ B2（2026-10-08）：报头要按同一张表算「第 M 版」，组件与报头引同一份，避免两处漂移。 */
 
 /** ≤1023px 这一档要换一套结构（登录态收成纯头像 + 菜单），所以宽度得让 JS 也知道。 */
 function useMediaQuery(query: string): boolean {
@@ -118,16 +108,28 @@ interface NavbarProps {
   /** 全文搜索词（由 Layout 持有，页面通过 Outlet context 取用） */
   query: string;
   setQuery: (value: string) => void;
+  /**
+   * ★ B2（2026-10-08）：当前是不是「首页报头版」。
+   * 首页的站名/标语/简介已经由 Layout 的报头（`.bs-mast`，巨幅刊名）接管，
+   * 顶栏里那份小刊名就是重复的 —— 置 true 时给 `.navbar` 挂 `nav-mast`，
+   * CSS 只做一件事：把这一行里的品牌块藏掉（`.nav-links` 是 flex:1，
+   * 所以彩点条与操作区的横向位置**一个像素都不动**）。
+   */
+  masthead?: boolean;
 }
 
-export default function Navbar({ query, setQuery }: NavbarProps) {
+export default function Navbar({ query, setQuery, masthead = false }: NavbarProps) {
   const location = useLocation();
-  const { myProfile } = useProfile();
+  const { profile, myProfile } = useProfile();
   const { isAdmin, user, signOut } = useAuth();
   const { theme, toggle } = useTheme();
   const t = useT();
   const { altHref, locale } = useLocale();
   const isNarrow = useMediaQuery('(max-width:1023px)');
+  /* 顶栏小刊名下面那一行小标语（B2）：中文页用站长在关于页可编辑的线上签名，
+     英文页用站点英文名（英文标语 "Dreams half-known, words unaccounted for" 有 41 个字符，
+     压在顶栏左侧会比刊名还宽一倍，把整行的余量吃光 —— 见 broadsheet.css 里的宽度说明）。 */
+  const brandSlogan = locale === 'en' ? LATIN_NAME : (profile.signature || t('brand.tagline'));
 
   const [hidden, setHidden] = useState(false); // 向下滚动隐藏
   const [scrolled, setScrolled] = useState(false); // 滚出顶部后加深阴影
@@ -239,7 +241,7 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
 
   return (
     <>
-      <nav className={`navbar${hidden ? ' nav-hidden' : ''}${scrolled ? ' navbar-scrolled' : ''}`}>
+      <nav className={`navbar${masthead ? ' nav-mast' : ''}${hidden ? ' nav-hidden' : ''}${scrolled ? ' navbar-scrolled' : ''}`}>
         <div className="nav-inner">
           <button
             className={`nav-burger${menuOpen ? ' open' : ''}`}
@@ -252,10 +254,17 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
             <span />
           </button>
 
+          {/* 品牌块（B2 起＝**内页的小刊名**：左上角 23px 刊名 ＋ 一行小标语，照 N1 的
+              `.nav-inner .nameplate`）。首页不显示它 —— 报头里有一枚巨幅刊名（nav-mast）。
+              标语那一行写在 `<span class="brand-slogan">` 里，默认 `display:none`，
+              只有 `.layout.bs` 下才显形，所以去掉 bs 类即完全回到改版前的顶栏。 */}
           <Link to="/" className="nav-brand">
             <img src="/logo.svg" alt="" className="brand-logo brand-logo-light" />
             <img src="/logo-dark.svg" alt="" className="brand-logo brand-logo-dark" />
-            <span className="brand-text">{t('brand.short')}</span>
+            <span className="nav-brand-txt">
+              <span className="brand-text">{t('brand.short')}</span>
+              <span className="brand-slogan">{brandSlogan}</span>
+            </span>
           </Link>
 
           <div className="nav-links">
@@ -426,7 +435,11 @@ export default function Navbar({ query, setQuery }: NavbarProps) {
                     {myProfile?.avatar ? (
                       <img src={myProfile.avatar} alt="" />
                     ) : (
-                      <span className="nav-avatar-placeholder" />
+                      /* 没设头像的人＝昵称首字（2026-10-08 用户点名「未设置头像人群」统一走首字字面，
+                         与留言板 .gface.letter、文章评论 .comment-avatar 同一口径；原来是空的占位 span） */
+                      <span className="nav-avatar-placeholder">
+                        {(myProfile?.nickname || '').trim().charAt(0) || t('comment.avatarFallback')}
+                      </span>
                     )}
                   </button>
                   {userMenuOpen && (

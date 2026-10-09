@@ -55,7 +55,7 @@ function keepOrSeed(out, seed) {
 
 async function main() {
   const prefix = detectPrefix();
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/articles?select=id,date,category&order=date.desc`, {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/articles?select=id,date,category,novel&order=date.desc`, {
     headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
   });
   if (!res.ok) throw new Error(`Supabase 返回 ${res.status}`);
@@ -74,10 +74,18 @@ async function main() {
       en: enPage(`/category/${c}`),
       lastmod: today,
     })),
-    // 文章详情页
+    // 详情页：小说进书架族的 `/novels/<书id>`（2026-10-09「小说界面绑定到书架」，
+    // 与站内 lib/novelPath.ts、scripts/prerender.mjs 同一判据），其余仍 /article/<id>
     ...rows
       .filter((r) => r && r.id)
-      .map((r) => ({ zh: zhPage(`/article/${r.id}`), en: enPage(`/article/${r.id}`), lastmod: day(r.date) })),
+      .map((r) => {
+        let nv = r.novel;
+        if (typeof nv === 'string') { try { nv = JSON.parse(nv); } catch { nv = null; } }
+        const isNovel = r.category === 'reading' && Array.isArray(nv && nv.chapters) && nv.chapters.length > 0;
+        const p = `/novels/${r.id}`;
+        const q = `/article/${r.id}`;
+        return { zh: zhPage(isNovel ? p : q), en: enPage(isNovel ? p : q), lastmod: day(r.date) };
+      }),
   ];
 
   const block = (e, useEn) => `  <url>

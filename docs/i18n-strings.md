@@ -335,3 +335,38 @@
 1. **Supabase 返回的登录报错**（如 `Invalid login credentials`、`Email not confirmed`）是**库里直接吐的英文**，
    原样显示——所以**中文登录页的这类报错本来就是英文**，这次没动它。要做中英映射的话跟我说，我加一层对照表。
 2. `src/pages/Write.tsx`、`src/components/NovelComposer.tsx`（写作编辑器，只有博主自己看）保持中文。
+
+## 十四、登录页 / 个人主页「可读性」（2026-10-09 新增）
+
+起因：用户「登录页和个人主页可读性不强」。六题问答里拍板：表单格子左上方加一行小字标签、
+个人主页补一张档案表。**这些是界面文案，照例中英并排、中文栏用站内既有口径。**
+
+### 登录页新增（`login.lbl*`，`src/pages/LoginPage.tsx`）
+
+| 键名 | 用在哪 | 中文 | English |
+| --- | --- | --- | --- |
+| `login.lblEmail` | 邮箱格上方标签 | 邮箱 | Email |
+| `login.lblPassword` | 密码格上方标签 | 密码 | Password |
+| `login.lblConfirm` | 确认密码格上方标签 | 确认密码 | Confirm password |
+| `login.lblCaptcha` | 算术题那一格上方标签 | 人机验证 | Verification |
+
+> 原有的 `login.email` / `login.password` / `login.confirmPassword` / `login.captchaAnswer`
+> **不动**：它们现在是**格子里的示例与提示**。其中只有 `login.password`（「至少8位，含字母和数字」）
+> 和 `login.captchaAnswer`（「填答案」）的信息量比标签大、继续留在格子里；
+> 邮箱与确认密码的示例已清空（标签已经说了名字，再重复一遍是噪声）。
+
+### 个人主页新增（`profile.lbl*` / `profile.fact*` / `profile.role*` / `profile.needSignIn` / `count.messages`）
+
+| 键名 | 用在哪 | 中文 | English |
+| --- | --- | --- | --- |
+| `profile.lblNickname` / `profile.lblSignature` / `profile.lblIntro` | 编辑表单三行标签 | 昵称 / 个性签名 / 个人介绍 | Nickname / Signature / Introduction |
+| `profile.secArchive` | 档案表栏题 | 档案 | Archive |
+| `profile.factName` / `profile.factRole` | 档案表栏名 | 昵称 / 身份 | Name / Role |
+| `profile.roleAdmin` / `profile.roleUser` | 身份那一行的值 | 博主 / 读者 | Author / Reader |
+| `profile.factJoined` / `profile.factPosts` / `profile.factComments` | 档案表栏名 | 加入 / 文章 / 留言 | Joined / Posts / Messages |
+| `profile.needSignIn` / `profile.goSignIn` | 未登录时的空态说明 / 按钮 | 还没有登录，这里看不到你的主页。/ 去登录 | You are not signed in, so there is nothing to show here yet. / Sign in |
+| `count.messages` | 留言条数（档案表用） | {n} 条 | {n} message / {n} messages |
+
+> 档案表**按「拿得到数据才显示一行」生成**：加入＝本人会话的 `user.created_at`（访客态没有这一行）、
+> 文章＝全站总数（`articles` 表没有作者列，只有博主主页出这一行）、留言＝`comments` ＋ `guestbook` 计数
+> （任一查询失败就不显示，**不拿 0 冒充**）。

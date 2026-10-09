@@ -7,6 +7,7 @@
     { "source": "/articles", "destination": "/index.html" },
     { "source": "/gallery", "destination": "/index.html" },
     { "source": "/novels", "destination": "/index.html" },
+    { "source": "/novels/(.*)", "destination": "/index.html" },
     { "source": "/category/(.*)", "destination": "/index.html" },
     { "source": "/article/(.*)", "destination": "/index.html" },
     { "source": "/write/translations", "destination": "/index.html" },

@@ -1,0 +1,316 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   B6 · 同族按钮收口（全局）—— 2026-10-08 补做
+   起因 ＝ 用户原话「**改按钮按上面所说**」，指向上一个窗口 B5 那一节的收尾两行：
+     ① 「次级按钮亮色 3.54:1 —— 要提亮是一行改 color-mix(… 72%)」
+     ② 「**同族还没迁的按钮**：`.more-link`、其它页面的 `.fav-btn`、`.search-clear`、`.tag`、
+        上传/分页等原生控件」＋ B5 之后仍挂着的同族老皮肤（`.back-to-top`、关闭圆钮、
+        留言页签、登录页控件、后台小按钮…）
+
+   口径 ＝ **不新造语言，照 B5 已立的两级按钮走**（设计真值仍是样张 N1「大报」）：
+     ① 文字按钮：无底色 / 无圆角 / 无阴影 / 无位移，一条下划线，悬停整条变 `--accent-deep`；
+     ② 方框：1px 墨线、无填充（需要压住底下内容的悬浮控件除外，它用纸底顶替透明）；
+     ③ 图标按钮：无圆底（B5 已处理顶栏那一排，这里补抽屉/弹窗/登录页那几枚）。
+
+   ⚠️ 这一层**只动外观**：文案、`href`、`onClick`、`disabled` 语义一律没碰。
+   ⚠️ 全文件**零裸 hex**、**零 `!important`**，色值一律由既有 token / `color-mix` 派生。
+   ⚠️ 与 B5 的分工：B5 管 `.btn*` 与顶栏 `.nav-icon-btn`；本层管**其余按钮族**，
+      故选择器写成不带 `.layout.bs` 的裸类名 —— 登录页（`/login`）不带 `.layout` 外壳，
+      带前缀反而罩不住它；本层随 `main.tsx` 的 import 一起进退。
+   ↩︎ 回退 ＝ 删 `src/main.tsx` 里那一行 import ＋ 删本文件（一个文件，零残留）。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── ① 次级按钮提亮（B5 点名的 3.54:1）─────────────────────────────────────────
+   `.btn-light / -outline / -ghost` 原用 `--bs-ink-2`（墨 60%）＝亮色 3.54:1，低于正文 4.5:1。
+   改成墨 72% 混纸：既不到主按钮那一档的纯墨，也不再掉到装饰级。
+   ⚠️ 报眼那枚「浏览全部」有更特异性的 `.layout.bs .bs-cta .btn-light-outline`（0,3,0），不受影响。 */
+.layout.bs .btn-light,
+.layout.bs .btn-light-outline,
+.layout.bs .btn-ghost{
+  color:color-mix(in srgb,var(--bs-ink) 72%,var(--bs-paper));
+}
+
+/* ── ② 入口类文字按钮：「更多 ›」「阅读 ›」「开始阅读」────────────────────────────
+   老皮肤＝淡青底药丸 + 悬停位移（`translateX(3px)`）。照 N1 的 `.btn-sm` 档收口。
+   字色与 ① 的次级按钮同档（墨 72%）：**可点按的次级文字一律 72%**，
+   非控件的 meta 小字（`.tag`、`.bs-entry-meta`）仍走 `--bs-ink-2`，两档不混。 */
+.more-link,
+.read-more{
+  padding:0 0 2px;border:0;border-bottom:1px solid var(--bs-hair);border-radius:0;
+  background:transparent;box-shadow:none;
+  font-size:11.5px;font-weight:400;letter-spacing:.14em;
+  color:color-mix(in srgb,var(--bs-ink) 72%,var(--bs-paper));
+  transition:none;
+}
+.more-link:hover,
+.read-more:hover{
+  background:transparent;box-shadow:none;transform:none;
+  color:var(--accent-deep);border-bottom-color:var(--accent-deep);
+}
+
+/* ── ③ 标签（`.tag`）：与 `.bs-entry-tags .tag` 同一口径（列表页已拍过，这里补齐其余页面）── */
+.tag{
+  padding:0;border:0;border-radius:0;background:transparent;
+  font-size:.72rem;letter-spacing:.06em;color:var(--bs-ink-2);
+  transition:none;
+}
+.tag:hover{background:transparent;transform:none;color:var(--bs-ink)}
+
+/* ── ④ 星标按钮（`.fav-btn`）：与 `.bs-entry-k .fav-btn` 同一口径 ──────────────────
+   老皮肤＝34px 圆底；收藏态原本是「白字压珊瑚粉」（S6 已把字色改对，这里只把**圆底**拆掉）。 */
+.fav-btn{
+  width:22px;height:22px;border:0;border-radius:0;background:transparent;
+  color:var(--bs-ink-2);box-shadow:none;transition:none;
+}
+.fav-btn:hover{background:transparent;box-shadow:none;transform:none;color:var(--bs-ink)}
+.fav-btn.fav-on{background:transparent;color:var(--coral-ink);box-shadow:none}
+
+/* ── ⑤ 关闭/清除类圆钮：抽屉关闭、弹窗关闭、登录卡关闭、搜索清除、附件删除 ─────────
+   老皮肤＝实底圆钮；N1 的报面上没有圆底图标钮，一律「无底、不带位移、悬停只变色」。 */
+.search-clear,
+.nav-drawer-close,
+.modal-close,
+.login-card-close,
+.attach-remove{
+  border:0;border-radius:0;background:transparent;box-shadow:none;
+  color:var(--bs-ink-2);transition:none;
+}
+.search-clear:hover,
+.nav-drawer-close:hover,
+.modal-close:hover,
+.login-card-close:hover,
+.attach-remove:hover{
+  background:transparent;box-shadow:none;transform:none;color:var(--coral-ink);
+}
+
+/* ── ⑥ 回到顶部：悬浮控件，报面上没有它的先例 ─────────────────────────────────
+   它是**压在正文之上**的，底不能透明（透明会让底下的字透出来），所以照 N1 的方框走、
+   用纸底顶替透明；去掉 50% 圆、实底青蓝与投影，悬停照主按钮反转成墨底纸字。 */
+.back-to-top{
+  width:40px;height:40px;border:1px solid var(--bs-ink);border-radius:0;
+  background:var(--bs-paper);color:var(--bs-ink);box-shadow:none;
+  font-size:1.05rem;transition:none;
+}
+.back-to-top:hover,
+.back-to-top.show:hover{
+  background:var(--bs-ink);color:var(--bs-paper);border-color:var(--bs-ink);
+  box-shadow:none;transform:none;
+}
+
+/* ── ⑦ 登录页控件（`/login` 不带 `.layout.bs` 外壳，故最外层就写裸类名）──────────── */
+.login-btn{
+  border:1px solid var(--bs-ink);border-radius:0;background:transparent;box-shadow:none;
+  color:var(--bs-ink);font-size:13px;font-weight:400;letter-spacing:.3em;
+  padding:12px;transition:none;
+}
+.login-btn:hover:not(:disabled){
+  background:var(--bs-ink);color:var(--bs-paper);
+  box-shadow:none;transform:none;
+}
+.login-btn:disabled{opacity:1;color:var(--bs-ink-3);border-color:var(--bs-hair);cursor:not-allowed}
+.login-switch-btn,
+.auth-switch{
+  border:0;border-bottom:1px solid var(--bs-hair);border-radius:0;background:none;
+  color:color-mix(in srgb,var(--bs-ink) 72%,var(--bs-paper));text-decoration:none;padding:0 0 2px;
+  font-size:12.5px;letter-spacing:.1em;transition:none;
+}
+.login-switch-btn:hover,
+.auth-switch:hover{color:var(--accent-deep);border-bottom-color:var(--accent-deep)}
+.login-eye{border-radius:0;color:var(--bs-ink-2);transition:none}
+.login-eye:hover{background:transparent;color:var(--bs-ink)}
+.login-remember input{accent-color:var(--accent-deep)}
+
+/* ── ⑧ 留言板页签：改成与列表页分栏条同语言（无底；当前版＝墨色字 ＋ 底下 2px 墨线）── */
+.guestbook-tabs{
+  gap:0;padding:0;background:transparent;border:0;border-bottom:1px solid var(--bs-ink);
+  border-radius:0;width:100%;
+}
+.guestbook-tab{
+  border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;
+  padding:10px 18px 8px;font-size:.86rem;font-weight:400;letter-spacing:.1em;
+  color:var(--bs-ink-2);transition:none;
+}
+.guestbook-tab:hover{background:transparent;color:var(--bs-ink);transform:none}
+.guestbook-tab.active{
+  background:transparent;color:var(--bs-ink);box-shadow:none;font-weight:600;
+  border-bottom-color:var(--bs-ink);
+}
+
+/* ── ⑨ 返回类入口（`‹ 全部文章`）与书籍卡上的箭头/小签 ───────────────────────── */
+.back-link{
+  border:0;border-bottom:1px solid var(--bs-hair);border-radius:0;background:transparent;
+  color:color-mix(in srgb,var(--bs-ink) 72%,var(--bs-paper));
+  padding:0 0 2px;font-size:12.5px;letter-spacing:.1em;transition:none;
+}
+.back-link:hover{
+  background:transparent;transform:none;color:var(--accent-deep);border-bottom-color:var(--accent-deep);
+}
+.book-arrow{
+  border:0;border-radius:0;background:transparent;font-weight:400;transition:none;
+  color:color-mix(in srgb,var(--bs-ink) 72%,var(--bs-paper));
+  padding:0 0 0 6px;
+}
+.book-arrow:hover{background:transparent;transform:none;color:var(--accent-deep)}
+.card-pin{
+  border:1px solid var(--honey-ink);border-radius:0;background:transparent;
+  color:var(--honey-ink);letter-spacing:.16em;font-weight:400;
+}
+.book-status{border-radius:0;background:transparent;font-weight:400}
+.book-latest-tag{border-radius:0;background:transparent;font-weight:400;color:var(--aqua-ink)}
+.cat-nav-count{border:1px solid var(--bs-hair);border-radius:0;background:transparent;font-weight:400}
+
+/* ── ⑩ 后台/未迁页面上的小按钮（同族收口；后台整页版式属 P7，本层不碰版式）──────
+   一律「无底文字按钮 / 1px 方框」两档，去掉实底、圆角、投影与悬停位移。 */
+.draft-clear,
+.friend-op,
+.comment-fold-btn,
+.gallery-remove,
+.tab-btn,
+.mode-tab,
+.tr-mini-btn{
+  border:1px solid var(--bs-hair);border-radius:0;background:transparent;box-shadow:none;
+  color:var(--bs-ink-2);font-weight:400;letter-spacing:.08em;transition:none;
+}
+.draft-clear:hover,
+.friend-op:hover,
+.comment-fold-btn:hover,
+.tab-btn:hover,
+.mode-tab:hover,
+.tr-mini-btn:hover{
+  background:transparent;transform:none;box-shadow:none;
+  border-color:var(--bs-ink);color:var(--bs-ink);
+}
+.tab-btn.active,
+.mode-tab.active{
+  background:transparent;box-shadow:none;border-color:var(--bs-ink);color:var(--bs-ink);font-weight:600;
+}
+.editor-tabs{
+  gap:8px;padding:0;background:transparent;border:0;border-radius:0;width:fit-content;
+}
+.reply-cancel,.tr-mini-danger,.friend-op-del,.gallery-remove{color:var(--coral-ink);border-color:var(--coral-ink)}
+.reply-cancel:hover,.tr-mini-danger:hover,.friend-op-del:hover,.gallery-remove:hover{color:var(--coral-ink);border-color:var(--coral-ink);background:transparent}
+.novel-edit-chops button{
+  border:1px solid var(--bs-hair);border-radius:0;background:transparent;
+  color:var(--bs-ink-2);transition:none;
+}
+.novel-edit-chops button:hover:not(:disabled){background:transparent;color:var(--coral-ink);border-color:var(--coral-ink)}
+.color-palette span{border-radius:0;box-shadow:none;transition:none}
+.color-palette span:hover{transform:none;box-shadow:none}
+.avatar-upload-btn{
+  border-radius:0;border-style:solid;border-width:1px;border-color:var(--bs-hair);
+  background:transparent;transition:none;
+}
+.avatar-upload-btn:hover{transform:none;border-color:var(--bs-ink)}
+.fav-check{border:1px solid var(--bs-hair);border-radius:0;background:transparent}
+.gallery-dropzone,.media-dropzone{
+  border-style:solid;border-width:1px;border-color:var(--bs-hair);border-radius:0;
+}
+/* 拖放区悬停：只让**线**变墨（原样式还会铺一层 6%/8% 的淡色底）——
+   报纸上没有「悬停铺底」这一档，反馈由线色承担。 */
+.gallery-dropzone:hover,.gallery-form.dragover .gallery-dropzone,
+.media-dropzone:hover,.media-panel.media-dragging .media-dropzone{
+  background:transparent;border-color:var(--bs-ink);
+}
+.gallery-dropzone:hover .gallery-drop-hint{color:var(--bs-ink)}
+
+/* ── ⑪ 手机抽屉的导航条目：原＝「青蓝实底药丸」的当前版 ─────────────────────────
+   桌面顶栏在 B2 已换成报头的双线夹导航（当前版加粗），抽屉是它的手机版，当时没跟着迁。
+   这里照同一套语言收口：无底、悬停只变色，**当前版＝加粗 ＋ 左侧 2px 墨线**
+   （缩进用 border-left 的 2px 顶替，文字横坐标不变）。
+   ⚠️ 点「登录」那颗主按钮的字色**不在本步范围**（`.nav-drawer-links a` 抢字色的旧账由他点不点名），
+      本步只动条目本身的皮肤。 */
+.nav-drawer-links{padding:10px 0 20px;gap:0}
+.nav-drawer-links a{
+  padding:11px 14px;border-radius:0;color:var(--bs-ink-2);
+  font-weight:400;letter-spacing:.06em;transition:none;
+}
+.nav-drawer-links a:hover{color:var(--accent-deep);background:transparent}
+.nav-drawer-links a.active{
+  color:var(--bs-ink);background:transparent;font-weight:600;
+  border-left:2px solid var(--bs-ink);padding-left:12px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ⑫ 顶栏 / 底栏 —— 状态态与暗色态的补漏（2026-10-08 晚，B7）
+   ──────────────────────────────────────────────────────────────────────────────
+   起因 ＝ 用户原话「**改按钮改错了，我让你改的是顶栏和底栏**」。
+   B6 的判据只量「**默认态 ＋ `backgroundColor`**」，于是漏掉两类老皮肤，而这两类**恰好全在
+   顶栏和底栏上**（实测见 `first/broadsheet-migration/bars-states-before.log`）：
+
+     ① **渐变底量不到**：`background-image` 为渐变时 `backgroundColor` 是透明的，
+        判据把它当「干净」；
+     ② **状态态/暗色变体罩不住**：`index.css` 行 1302–1308 有一条暗色墙
+        `[data-theme='dark'] .btn-primary, …, .nav-drawer-links a.active, …, .back-to-top
+         { color:var(--accent-on); background:var(--grad-main) }` —— 特异性 (0,2,0)~(0,3,1)，
+        B5 用 (0,3,0) 只罩住了顶栏那排 `.nav-icon-btn.active`，**底栏 `.back-to-top` 与
+        抽屉 `.nav-drawer-links a.active` 的裸类名 (0,1,0)/(0,2,1) 全被它压过**。
+
+   改前实测（`probe-bars-states.mjs`，1440/1100/900/390 × 亮暗）：
+     · **底栏右下 `.back-to-top`**：亮色＝纸底方框（B6 已修），**暗色仍 `linear-gradient(135deg,#5BA8D8,…)`
+       青蓝渐变实底** ← 就是暗色截图里右下方那块蓝方块；
+     · **顶栏（手机档汉堡抽屉）`.nav-drawer-links a.active`**：暗色仍是**青蓝渐变实底药丸**；
+     · **顶栏「分类 ∨」`.nav-cat-toggle`**：悬停/展开铺 `--bg-soft` 淡蓝底（亮暗皆然）；
+     · **顶栏分类下拉 `.nav-cat-item`**：悬停/当前铺淡蓝底；头像菜单 `.nav-user-item` 同病；
+     · **顶栏搜索浮层 `.nav-search`/`.nav-search-input`**：投影 ＋ 淡蓝描边药丸。
+
+   收口口径与 B5/B6 同源（不新造）：**无填充、无渐变、无铺底、无投影**，悬停只变色；
+   浮层面板一律 1px 墨线方框。⚠️ 分类彩条/彩点（`.nav-cat-bar`/`.cat-dot`）仍是唯一豁免项。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── ① 底栏右下「回到顶部」：连暗色变体一起交回纸底方框 ────────────────────────
+   亮色那版在 ⑥ 已修；暗色被 `[data-theme='dark'] .back-to-top`(0,2,0) 压过，
+   这里用同特异性 ＋ 更靠后的源码位置覆盖（本文件在 index.css 之后加载）。 */
+[data-theme='dark'] .back-to-top,
+[data-theme='dark'] .back-to-top.show{
+  background:var(--bs-paper);background-image:none;color:var(--bs-ink);
+  border:1px solid var(--bs-ink);border-radius:0;box-shadow:none;
+}
+[data-theme='dark'] .back-to-top:hover,
+[data-theme='dark'] .back-to-top.show:hover{
+  background:var(--bs-ink);background-image:none;color:var(--bs-paper);
+  border-color:var(--bs-ink);transform:none;
+}
+
+/* ── ② 顶栏（手机汉堡抽屉）当前项：暗色那条青蓝渐变药丸 ─────────────────────── */
+[data-theme='dark'] .nav-drawer-links a.active{
+  background:transparent;background-image:none;color:var(--bs-ink);font-weight:600;
+  border-left:2px solid var(--bs-ink);padding-left:12px;
+}
+
+/* ── ③ 顶栏「分类 ∨」（1024–1199 档）：悬停/展开不铺底，只变色 ───────────────── */
+.nav-cat-toggle{
+  border-radius:0;color:var(--bs-ink-2);transition:none;
+}
+.nav-cat-toggle:hover,
+.nav-cat-toggle.open{
+  background:transparent;background-image:none;border-radius:0;
+  color:var(--accent-deep);
+}
+
+/* ── ④ 顶栏两块浮层（分类下拉 / 头像菜单）：1px 墨线方框，条目悬停只变色 ──────── */
+.nav-cat-panel,
+.nav-user-menu{
+  background:var(--bs-paper);border:1px solid var(--bs-ink);border-radius:0;box-shadow:none;
+}
+.nav-cat-item,
+.nav-user-item{
+  border-radius:0;color:var(--bs-ink-2);font-weight:400;letter-spacing:.04em;transition:none;
+}
+.nav-cat-item:hover,
+.nav-cat-item.active,
+.nav-user-item:hover,
+.nav-user-item.danger:hover{
+  background:transparent;background-image:none;
+}
+.nav-cat-item:hover,
+.nav-user-item:hover{color:var(--accent-deep)}
+.nav-cat-item.active,
+.nav-cat-item.active:hover{color:var(--bs-ink);font-weight:600}
+.nav-user-item.danger,
+.nav-user-item.danger:hover{color:var(--coral-ink)}
+
+/* ── ⑤ 顶栏搜索浮层：投影拆掉、输入框改方框（字与占位符一个字没动）────────────── */
+.nav-search{box-shadow:none;border-bottom:1px solid var(--bs-ink)}
+.nav-search-input{
+  background:transparent;border:1px solid var(--bs-hair);border-radius:0;box-shadow:none;
+}
+.nav-search-input:focus-within{border-color:var(--bs-ink);box-shadow:none}

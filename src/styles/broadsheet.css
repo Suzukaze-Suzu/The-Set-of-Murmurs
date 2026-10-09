@@ -1,0 +1,1691 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   B1 · 整页版框（2026-10-08，P1 第二批「立骨架」第 1 步）
+   ──────────────────────────────────────────────────────────────────────────────
+   这一层是**报纸版的外壳**，按迁移计划书 §5「载体决策」新建：不动 `index.css`
+   那 2200+ 行，新开一层，在 `main.tsx` 的 `import './index.css'` 之后引入，
+   全站靠 `.layout.bs` 这个类生效 —— **把 Layout.tsx 里的 `bs` 去掉即整层回退**。
+
+   设计真值 = 样张 N1「大报」`design-mockups\g\n1-broadsheet.mjs` 行 29–57
+   与行 420 附近的 `@media (max-width:860px)`。三件东西：
+     ① 整页版框：外 2px 实线 ＋ 往里 5px 一圈 1px 细线（细线画在 `background` 上，
+        把 `::before`/`::after` 腾出来给竖排刊眉 —— N1 就是这么做的）；
+     ② 框内左右两条**竖排刊眉**（左＝刊名·期数·版次，右＝域名），纵向居中；
+     ③ 天头正中一个**鱼尾**（古籍版框的做法），吊在内框线上。
+
+   ⚠️ 颜色一律走 `index.css` 里的既有 token（`--bs-ink` / `--bs-hair` / `--bs-ink-3`），
+      一个裸 hex 都不写 —— 那几个 token 本身由凉风凉色卡 `color-mix` 派生，亮暗自动跟随。
+   ⚠️ 期号/版次由 `--bs-spine-l` 变量给值（B2 已用 Layout 的 inline style 写动态值：
+      文章总数 / 当前页导航序号），这里只留一条写死文案做兜底。
+
+   📌 本文件的中文注释在 2026-10-08 被一次 PowerShell 读写往返**损坏过**（读成 GBK 再写回 UTF-8，
+      丢字节、换行被吃）——**CSS 语句本身一直是 ASCII、未受损**，注释是**按本线记录手工重写**的，
+      可能与最初的措辞有出入。教训：改这个文件一律用文件编辑工具，不要用 `Get-Content -Raw | Set-Content` 回写。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── ① 整页版框 ───────────────────────────────────────────────────────────────
+   横向**不吃版面宽度**：`.layout` 不加左右 padding、`.main`/`.nav-inner` 的 max-width
+   一字未动，所以顶栏那套手工像素账（S10 还没收）不会被这一层搅乱。
+   代价＝版框上下留白用 margin 给（照 N1 的 body padding 26/22/40 略收一点）。 */
+.layout.bs{
+  position:relative;
+  margin:20px 18px 30px;
+  border:var(--bs-rule-heavy) solid var(--bs-ink);      /* 外线：2px 实线 */
+  border-radius:0;                                      /* 版框是方的，别吃全局圆角 */
+  min-height:calc(100vh - 20px - 30px - 2 * var(--bs-rule-heavy) * 2);
+  background-repeat:no-repeat;
+  /* 内线：贴着外线往里 5px 的一圈 1px 细线（四条，靠 background 分层画） */
+  background-image:
+    linear-gradient(var(--bs-hair),var(--bs-hair)),
+    linear-gradient(var(--bs-hair),var(--bs-hair)),
+    linear-gradient(var(--bs-hair),var(--bs-hair)),
+    linear-gradient(var(--bs-hair),var(--bs-hair));
+  background-position:5px 5px, 5px calc(100% - 6px), 5px 5px, calc(100% - 6px) 5px;
+  background-size:calc(100% - 10px) 1px, calc(100% - 10px) 1px, 1px calc(100% - 10px), 1px calc(100% - 10px);
+}
+
+/* ── ② 竖排刊眉（左＝刊名·期数·版次，右＝域名）────────────────────────────────
+   放在框内左右各 9px 处、纵向居中；`writing-mode:vertical-rl` 让它竖着排。
+   ⚠️ 只在**版心有富余**的宽度上显示：`.main`/`.nav-inner` 是 max-width 1080，
+      框内左右各要腾出 ~30px 才不压到内容，所以 <1200px 收掉（N1 是 <861 收）。 */
+.layout.bs::before{
+  content:var(--bs-spine-l,"呓语集 · 第 12 期 · 第 1 版");
+  position:absolute;left:9px;top:50%;transform:translateY(-50%);
+  writing-mode:vertical-rl;font-size:9.5px;letter-spacing:.28em;line-height:1;
+  color:var(--bs-ink-3);pointer-events:none;white-space:nowrap;
+}
+.layout.bs::after{
+  content:"the-set-of-murmurs.me";
+  position:absolute;right:9px;top:50%;transform:translateY(-50%);
+  writing-mode:vertical-rl;font-size:9.5px;letter-spacing:.24em;line-height:1;
+  color:var(--bs-ink-3);pointer-events:none;white-space:nowrap;
+}
+
+/* ── ③ 天头鱼尾（古籍版框做法：上宽下窄、再收成一个倒三角）────────────────────
+   用真元素而不是伪元素，是因为 `.layout.bs` 的两个伪元素已经被左右刊眉占掉了。
+   这里**不动 DOM 结构**，只让 Layout 多挂一个空的装饰 span（`aria-hidden`）。 */
+.layout.bs > .bs-tail{
+  position:absolute;left:50%;top:-9px;transform:translateX(-50%);
+  width:30px;height:9px;background:var(--bs-ink);pointer-events:none;
+  clip-path:polygon(0 0,50% 62%,100% 0,100% 100%,50% 38%,0 100%);
+}
+/* 版框上沿留一条窄带，让鱼尾有地方「吊」——顶栏不再直接贴在框线上 */
+.layout.bs{padding-top:12px}
+
+/* ── 响应式 ──────────────────────────────────────────────────────────────────
+   ⚠️ 2026-10-08 W1 改版：阈值**由 1199 收到 860**，与样张 N1 的 861 一档对齐。
+   旧账写 1199 的理由是「本站版心 1080 比样张窄、旁边没富余」——W1 把版心提到
+   1152 之后这个前提没了（框内左右各余下 43px），所以中间那一段（861–1199）也留着刊眉。
+   回滚＝把下一条的 `max-width:860px` 改回 `max-width:1199px`（文件末尾 W1 段的
+   `min-width:861px` 那条同样要一起撤，两条是配对的）。 */
+@media (max-width:860px){
+  .layout.bs{margin:10px 10px 24px;padding-top:9px;
+    min-height:calc(100vh - 10px - 24px - 2 * var(--bs-rule-heavy) * 2)}
+  .layout.bs::before,.layout.bs::after{display:none}   /* 手机上放不下竖排刊眉（照 N1） */
+  .layout.bs > .bs-tail{top:-8px;width:22px;height:7px} /* 鱼尾缩小（照 N1） */
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   B2 · 报头（2026-10-08，P1 第二批「立骨架」第 2 步）
+   ──────────────────────────────────────────────────────────────────────────────
+   设计真值 = 样张 N1「大报」`design-mockups\g\n1-broadsheet.mjs` 行 47–83（报头）
+              ＋ 行 348–383（≤860px 那一档）。五件东西（计划书 §5 B2）：
+     ① 首页：日期/版次在**右上角**（.bs-mast-meta）；
+     ② 首页：**巨幅刊名 ＋ logo**（.bs-nameplate，clamp(54px,7.4vw,104px)，首页那枚唯一的 <h1>）；
+     ③ 首页：拉丁刊名 THE SET OF MURMURS（.bs-npmotto）；
+     ④ 首页：副题行＝标语 ＋ 提要句（.bs-npdeck，一行不折，照 N1）；
+     ⑤ 首页＋内页：**双线夹导航**（.navbar 顶上 3px 双线、底下 1px 单线）。
+   其余页的「报头」＝顶栏左侧那枚 **23px 小刊名 ＋ 一行小标语**（.nav-brand / .brand-slogan，
+   照 N1 的 `.nav-inner .nameplate` 那一档）。
+
+   ⚠️ 报头**不进 sticky**：它是 Layout 里 `.navbar` 之上的一块正常流内容，往下滚就随页面滚走；
+      顶栏（`.navbar`）自己仍然 sticky —— 报纸的报头本来也不该钉在屏幕上。
+      顺序上它正好落在「副题行 → 双线夹导航」之间，和 N1 的报头从上到下一致。
+   ⚠️ **分类彩点条一个字没动**：`.nav-cats` / `.cat-dot-link` / `.cat-dot` / `.cat-name`
+      在本层零命中（改前改后的元素级截图逐像素比对为证）。首页把品牌块藏掉，而
+      `.nav-links` 是 `flex:1`，所以**彩点条与操作区在屏幕上位置不变**。
+   ⚠️ 一个裸 hex 都不写：全走 --bs-ink / --bs-ink-2 / --bs-ink-3 / --bs-hair / --bs-hair-2。
+   ⚠️ 顶栏宽度账（沿用 index.css 里那份手工账，改这里就要复核）：
+      ≥1200 访客原本 813/1032、管理员 950/1032。B2 把品牌块从 105px 改到约 120px（中文：
+      小刊名 3 字 23px ＋ 标语 12 字 9px，两行同宽），彩点悬停展开的 +70 仍由 `.nav-links` 吸收。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── ⑤ 双线夹导航：顶栏本身 ───────────────────────────────────────────────── */
+.layout.bs .navbar{
+  background:var(--bs-paper);          /* 报纸用纸，不是毛玻璃 */
+  backdrop-filter:none;
+  border-top:var(--bs-rule-2) double var(--bs-ink);   /* 双线在上 */
+  border-bottom:1px solid var(--bs-ink);              /* 单线在下 */
+}
+/* 导航项：从「胶囊药丸」改成 N1 的分栏条目（竖细线分隔、当前版加粗）。
+   横向内边距**保持原样 11px 不动**（顶栏宽度账很紧），只改纵向与外观。 */
+.layout.bs .nav-links{gap:0}
+.layout.bs .nav-links a{
+  padding:6px 11px;border-radius:0;background:transparent;box-shadow:none;
+  font-size:.85rem;letter-spacing:.06em;color:var(--bs-ink-2);
+}
+.layout.bs .nav-links a + a{border-left:1px solid var(--bs-hair-2)}
+.layout.bs .nav-links a:hover{background:transparent;color:var(--bs-ink)}
+.layout.bs .nav-links a.active{background:transparent;color:var(--bs-ink);font-weight:600;box-shadow:none}
+/* ⚠️ 英文那条老账**必须原样补回来**：index.css 末尾「英文页顶栏宽度账」把英文导航项的
+   左右内边距从 11px 收到 7px、项间距从 5px 收到 2px（英文标签长，不收就超宽）。
+   上面这条 `.layout.bs .nav-links a` 特异性 (0,3,1) 比 `html[lang='en'] .nav-links a`
+   的 (0,2,2) 高，会把它顶掉 —— 实测顶掉后 8 个导航项一共宽了 64px，
+   /en/articles 的彩点一悬停就压到末项 About 上（重叠 61px）。
+   这里照原样补回 7px，并且**英文标签不加字距**（拉丁字 .06em 又要多 48px）。 */
+html[lang='en'] .layout.bs .nav-links a{padding-left:7px;padding-right:7px;letter-spacing:normal}
+/* 首页（报头版）：巨幅刊名已经在报头里了，这一行里的品牌块就是重复的 —— 收掉。
+   注意 `.nav-links` 是 `flex:1`，品牌块一藏，右侧的**彩点条与操作区一像素都不动**；
+   链接则在这一行剩下的空间里居中（照 N1 的双线夹导航）。 */
+.layout.bs .navbar.nav-mast .nav-brand{display:none}
+.layout.bs .navbar.nav-mast .nav-links{justify-content:center}
+
+/* ── 内页报头：左上角 23px 小刊名 ＋ 一行小标语 ─────────────────────────────── */
+.nav-brand-txt{display:flex;align-items:center;gap:9px}  /* 非 bs 时的原样（去掉 bs 即回退） */
+.brand-slogan{display:none}
+.layout.bs .nav-brand{
+  font-family:var(--font-display);font-weight:600;font-size:23px;letter-spacing:.3em;
+  line-height:1;color:var(--bs-ink);
+}
+.layout.bs .brand-logo{width:22px;height:22px}
+.layout.bs .nav-brand-txt{flex-direction:column;align-items:flex-start;gap:3px;line-height:1}
+.layout.bs .brand-slogan{
+  display:block;                                  /* 基础层是 display:none，只在 bs 下显形 */
+  font-family:var(--font-body,inherit);font-weight:400;font-size:9px;letter-spacing:.1em;
+  color:var(--bs-ink-3);line-height:1;white-space:nowrap;
+}
+/* 英文的刊名是拉丁字，同样字号＋.3em 字距会比中文那枚宽 40px：
+   「Murmurs」在 23px/.3em 下量到 162px，而英文顶栏的余量本来就只剩约 40px。
+   与 index.css 末尾那份「英文页顶栏宽度账」同一口径 —— **只收字号与字距，不动结构**。 */
+html[lang='en'] .layout.bs .nav-brand{font-size:18px;letter-spacing:.16em}
+/* 英文那行小标语（THE SET OF MURMURS，18 个拉丁大写）在 9px/.1em 下量到 172px，
+   比刊名那行还宽 —— 顶栏右侧的彩点条一悬停展开就会压到末项。收到 8px／不加字距后
+   约 137px ≤ 刊名行的 140px，品牌块整体跟着回到 140 以下（改版前是 135.9）。 */
+html[lang='en'] .layout.bs .brand-slogan{font-size:8px;letter-spacing:normal}
+
+/* ── ① 报头信息条：日期 ／ 期 ／ 版 ／ 域名（右上角）──────────────────────────── */
+.bs-mast{position:relative}
+.bs-mast-inner{max-width:var(--bs-wrap-w);margin:0 auto;padding:0 24px;position:relative;text-align:center}
+html[lang='en'] .bs-mast-inner{max-width:var(--bs-wrap-w);padding-left:16px;padding-right:16px}
+.bs-mast-meta{
+  position:absolute;right:24px;top:12px;
+  font-size:10.5px;letter-spacing:.2em;line-height:1.6;
+  color:var(--bs-ink-2);text-align:right;white-space:nowrap;
+}
+html[lang='en'] .bs-mast-meta{right:16px}
+
+/* ── ② 巨幅刊名 ＋ logo（首页唯一 h1）──────────────────────────────────────── */
+.bs-nameplate{
+  display:flex;align-items:center;justify-content:center;
+  margin:0;padding:36px 0 6px;
+  font-family:var(--font-display);font-weight:600;line-height:1;
+}
+.bs-np-link{display:flex;align-items:center;gap:20px;color:inherit;text-decoration:none}
+.bs-np-mark{width:46px;height:46px;display:block;object-fit:contain}
+.bs-np-mark-dark{display:none}
+[data-theme='dark'] .bs-np-mark-light{display:none}
+[data-theme='dark'] .bs-np-mark-dark{display:block}
+.bs-np-zh{font-size:clamp(54px,7.4vw,104px);letter-spacing:.16em;line-height:1;color:var(--bs-ink)}
+
+/* ── ③ 拉丁刊名（紧贴刊名，小字大字距）────────────────────────────────────── */
+.bs-npmotto{
+  margin:0;padding:4px 0 0;text-align:center;
+  font-size:9.5px;letter-spacing:.42em;text-indent:.42em;color:var(--bs-ink-3);
+}
+
+/* ── ④ 副题行：标语（衬线粗）＋ 提要句（前面一条短横线）────────────────────── */
+.bs-npdeck{
+  display:flex;align-items:baseline;justify-content:center;gap:14px;flex-wrap:nowrap;white-space:nowrap;
+  margin:0;padding:10px 0 15px;color:var(--bs-ink);
+}
+.bs-npdeck b{
+  font-family:var(--font-display);font-weight:600;font-size:clamp(12px,1.33vw,17px);
+  letter-spacing:.2em;white-space:nowrap;
+}
+.bs-npdeck-lede{
+  position:relative;padding-left:18px;font-size:clamp(9.5px,1.09vw,14px);letter-spacing:.02em;
+  color:var(--bs-ink-2);white-space:nowrap;
+}
+.bs-npdeck-lede::before{content:"";position:absolute;left:1px;top:50%;width:10px;height:1px;background:var(--bs-ink-3)}
+/* 英文的两句天生比中文长得多（标语 41 字符 ＋ 提要 69 字符），死守一行会横向溢出：
+   照 N1 手机档的做法让它折行 —— 标语一行、提要另起一行居中。 */
+html[lang='en'] .bs-npdeck{flex-wrap:wrap;white-space:normal;gap:1px 0}
+html[lang='en'] .bs-npdeck-lede{white-space:normal;max-width:840px;padding-left:0;text-align:center}
+html[lang='en'] .bs-npdeck-lede::before{display:none}
+
+/* ── ≤1199px：顶栏标语挤不下就先收掉 ──────────────────────────────────────── */
+@media (max-width:1199px){
+  .layout.bs .brand-slogan{display:none}
+}
+/* 首页那条「只剩按钮」的入口条（P2 会重做成报眼方框）：报头已经把站名/标语/简介讲完了，
+   这一条只需要一条窄带，不再占满一屏 */
+.layout.bs .hero-cta-only{padding:20px 24px 22px;margin-bottom:26px}
+/* ── ≤860px：照 N1 那一档（刊名降到 38px、提要折行居中）────────────────────── */
+@media (max-width:860px){
+  .bs-mast-inner{padding:0 18px}
+  .bs-mast-meta{right:18px;top:10px;font-size:8.5px;letter-spacing:.1em}
+  .bs-mast-site{display:none}                    /* 手机上不报域名（照 N1 的 .nm-site） */
+  .bs-nameplate{padding:26px 0 5px}
+  .bs-np-link{gap:11px}
+  .bs-np-mark{width:26px;height:26px}
+  .bs-np-zh{font-size:38px;letter-spacing:.1em}
+  .bs-npmotto{font-size:8.5px;letter-spacing:.34em;text-indent:.34em;padding-top:2px}
+  .bs-npdeck{flex-wrap:wrap;white-space:normal;gap:2px 0;padding:7px 0 12px}
+  .bs-npdeck b{font-size:12.5px;letter-spacing:.18em;white-space:normal}
+  .bs-npdeck-lede{padding-left:0;font-size:11px;line-height:1.72;white-space:normal;
+    text-align:center;max-width:300px;margin:0 auto}
+  .bs-npdeck-lede::before{display:none}
+  .layout.bs .nav-brand{font-size:16px;letter-spacing:.24em}
+  html[lang='en'] .layout.bs .nav-brand{font-size:13px;letter-spacing:.16em}
+  .layout.bs .brand-logo{width:15px;height:15px}
+  .layout.bs .hero-cta-only{padding:16px 18px 18px;margin-bottom:20px}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   B3 · 报尾（2026-10-08，P1 第二批「立骨架」第 3 步）
+   ──────────────────────────────────────────────────────────────────────────────
+   设计真值 = 样张 N1「大报」`design-mockups\g\n1-broadsheet.mjs` 行 336–346（报尾 CSS）
+              ＋ `design-mockups\g\common.mjs` 行 108–118（报尾结构）＋ N1 行 424（≤860 收标语）。
+
+   N1 的报尾是一行：
+     双线夹（上 3px 双线 ／ 下 4px 实线）｜符号 ＋ 刊名 ＋ 标语 ｜ 弹性空白 ｜ 友链 · 开往 ＋ 开往徽章
+   线外再落一行版权小注（N1 的 `.tag` 那一档）。
+
+   ⚠️ **只重排，不删文案也不删控件**：标语、副标题、关于/留言板/友链/RSS（＋管理员「写作」）、
+      版权行、开往徽章一个都没少 —— 原来竖排的五六行现在挂进这一行的左组/右组。
+   ⚠️ 颜色一律走既有 token（`--bs-ink` / `--bs-ink-2` / `--bs-ink-3` / `--bs-hair`），
+      **本层一个裸 hex 都不写**；唯一写死的是徽章框的底色 `#fff`（照 N1 的 `.tww{background:#fff}`），
+      因为那两枚 PNG 是**为白底画的深色字**，暗色下淡底会让字糊掉（N1 也保持白底）。
+   ⚠️ 开往徽章与呓语集符号都是**既有素材原样使用**，没有重绘、没有调色。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.footer{
+  /* 报尾线：上双线下实线（N1 的 `border-top:3px double` ＋ `border-bottom:4px solid`） */
+  background:var(--bs-paper);
+  border-top:var(--bs-rule-2) double var(--bs-ink);
+  border-bottom:var(--bs-rule-heavy) solid var(--bs-ink);
+  /* `.layout` 是 flex column ＋ `.main{flex:1}`，页脚本来就贴在底部；
+     下面那条只在**页脚之后没有别的内容**时生效，用来把版心留白收在报尾上方。 */
+  margin-top:auto;
+}
+.layout.bs > .main + .footer{margin-top:26px}
+.footer-inner{
+  /* ⚠️ 2026-10-08 A1：内边距 24px ⇒ 限宽写成 24×2 ＋ 净宽，让**里面的内容**与版心左右对齐
+     （旧账只写净宽 1152，里面的内容实际只有 1104，比版心每侧缩进 24px）。 */
+  max-width:calc(var(--bs-wrap-w) + 48px);margin:0 auto;padding:10px 24px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;text-align:left;
+}
+.footer-inner > *{max-width:100%}
+
+/* ── 左组：符号 ＋ 刊名 ＋ 标语 ─────────────────────────────────────────────── */
+/* ⚠️ 报尾这两组「亮/暗各一枚图」的写法**必须避开 `.容器 img` 这种元素选择器**：
+   站点既有的换图规则长这样 —— `.foot-mark-dark,[data-theme=dark] .foot-mark-light{display:none}`
+   特异性只有 (0,1,0)，而我第一版写的 `.footer .foot-mark img{display:block}` 是 (0,2,1)、
+   `.foot-tww img{display:block}` 是 (0,1,1)：**两枚图会同时显形**（实测亮色下
+   `.foot-mark` 高 48px ＝ 两枚 24px 叠着、两枚开往徽章并排）。
+   现在改成：尺寸/`display` 由**换图规则自己带**（两态显式给值），容器只用 `:where()`（0 特异性）
+   管布局 —— 这样任何 (0,1,0) 的换图规则都不会被压掉。
+   本机 DevTools 的 `CSS.getMatchedStylesForNode` 已复核：`.foot-mark-dark` 命中的规则里
+   不再出现任何 (0,1,0) 以上的 `display` 竞争者。 */
+.footer .foot-mark{flex:none;line-height:0}
+:where(.footer) :where(.foot-mark img){width:24px;height:24px;object-fit:contain}
+.foot-mark-light,[data-theme='dark'] .foot-mark-dark{display:block;width:24px;height:24px;object-fit:contain}
+.foot-mark-dark,[data-theme='dark'] .foot-mark-light{display:none}
+.foot-name{
+  font-family:var(--font-display);font-weight:600;font-size:14px;
+  letter-spacing:.24em;line-height:1;color:var(--bs-ink);white-space:nowrap;
+}
+.foot-slogan{
+  font-size:10.5px;letter-spacing:.12em;line-height:1.4;
+  color:var(--bs-ink-2);white-space:nowrap;
+}
+
+/* ── 弹性空白（N1 的 `.sp`）：由 `.footer-links{margin-left:auto}` 给，
+      把左组（符号＋刊名＋标语）与右组顶到两头，不必多挂一个空 span。 ─────────── */
+
+/* ── 右组：站点链接 · 副标题 · 「友链 · 开往」标签 · 开往徽章 ────────────────── */
+/* N1 那行链接之间是文字「·」；这里改用**竖细线分栏**（与顶栏导航同一套语言）。
+   分隔点包在真元素里（`.fl-sep`）直接藏掉 —— 裸文字节点在 flex 里是匿名 item，
+   实测线上仍占 3.91px 宽（`.footer p{font-size:.9rem}` 那条会把它撑起来）。
+   **链接文字、可点范围一个字都没动。** */
+.footer-links{
+  display:inline-flex;align-items:center;flex-wrap:wrap;
+  column-gap:10px;row-gap:4px;margin:0 0 0 auto;
+  line-height:1;color:var(--bs-ink-2);white-space:nowrap;
+}
+.footer .fl-sep{display:none}
+.footer-links a{
+  font-size:.8rem;
+  color:var(--bs-ink-2);text-decoration:none;padding:2px 0 2px 10px;
+  border-left:1px solid var(--bs-hair-2);
+}
+.footer-links a:first-child{padding-left:0;border-left:0}
+.footer-links a:hover{color:var(--bs-ink)}
+.foot-caption{
+  font-size:10px;letter-spacing:.1em;line-height:1;
+  color:var(--bs-ink-2);white-space:nowrap;
+}
+/* 英文那两行是同一句（标语 `brand.full` 与副标题 `brand.footerCaption` 英文同值），
+   两个都摆出来就是重字 —— 英文站**照改版前只留一句**，中文站两句不同、都保留。 */
+html[lang='en'] .foot-caption{display:none}
+.foot-flabel{
+  font-size:9.5px;letter-spacing:.2em;line-height:1;
+  color:var(--bs-ink-2);white-space:nowrap;
+}
+/* 开往徽章（`.tww`）：细线白底框，照 N1 的 `border:1px solid var(--hair);background:#fff;padding:2px 6px` */
+.foot-tww{
+  display:block;flex:none;line-height:0;
+  border:1px solid var(--bs-hair);background:#fff;padding:2px 6px;
+}
+.foot-tww a{display:block;line-height:0}
+/* ⚠️ 尺寸**不能**写成 `.foot-tww img{display:block;width:120px;height:30px}` —— 见上面 `.foot-mark`
+   那段的说明：那条 (0,1,1) 会把 `.tj-badge-dark{display:none}` (0,1,0) 压成 block，
+   亮色下**两枚开往徽章会并排显形**（实测 `.foot-tww` 高 66px）。
+   改由换图规则自己带尺寸（两态显式给值，且本对规则 `display` 值不同 → 不会被压缩合并）。 */
+:where(.foot-tww) :where(img){width:120px;height:30px}
+.tj-badge-light,[data-theme='dark'] .tj-badge-dark{display:inline-block;width:120px;height:30px}
+.tj-badge-dark,[data-theme='dark'] .tj-badge-light{display:none;width:120px;height:30px}
+
+/* ── 线外：版权小注（位置照 N1 的 `.tag`：居中、9.5px、大字距；墨色取二级而非 N1 的三级）──
+   ⚠️ 诚实登记一处**与样张的有意偏离**：N1 这几行用的是 `--bs-ink-3`（38% 墨），
+      实测**亮色下只有 2.13:1**（`#afb2b3` on `#ffffff`）—— 比站点原有的
+      `.footer-copy`（`--text-secondary` on 白 ≈ 2.6:1）还浅，小字基本读不出来。
+      故报尾一律改用 `--bs-ink-2`（亮 3.72:1 / 暗 5.70:1）。想让 N1 那个浅灰原样回来，
+      把这四处的 `--bs-ink-2` 换回 `--bs-ink-3` 即可（一行一处，共四处）。 */
+.foot-copy{
+  margin:10px 0 0;text-align:center;
+  font-size:9.5px;letter-spacing:.18em;line-height:1.6;
+  color:var(--bs-ink-2);opacity:1;
+}
+
+@media (max-width:860px){
+  /* 手机上这一行放不下三组，照 N1 收掉标语（原页脚标语本来就在手机端最后一行） */
+  .foot-slogan{display:none}
+  /* ⚠️ 手机端改**单列左对齐**：右下角那颗「回到顶部」是 `position:fixed;right:22px;bottom:26px`
+     （44×44，`index.css` 行 1242），窄屏上开往徽章正好落在它底下被压住（实测 390px 截图）。
+     换行布局会把徽章推到右侧那条死角里，单列就不会 —— 每一行的宽度都由内容决定，
+     够不到右下角。 */
+  .footer-inner{padding:10px 18px;gap:10px;flex-direction:column;align-items:flex-start}
+  /* 版权行是居中一长行，窄屏上仍会伸到那颗「回到顶部」底下（它贴在视口右下角，
+     而版权行正好是页面最后一行）。给报尾块留一条底部内边距把版权行抬进去，
+     让按钮落在这条空白里；≤600px（真手机档）要留得更宽 —— 实测 390px 下
+     46px 还差 5px 相交、110px 才零相交（按钮 44×44 贴在 right:22/bottom:26）。 */
+  .footer{padding-bottom:46px}
+  .layout.bs > .main + .footer{margin-top:20px}
+}
+@media (max-width:860px){
+  .footer{padding-bottom:110px}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   B4 · 首页版式（2026-10-08，P1 第二批「立骨架」第 4 步 ＋ P2 首页整体替换）
+   ──────────────────────────────────────────────────────────────────────────────
+   这一步是「批次①」：首页**整体覆盖**，不再逐处微调 —— `Home.tsx` 的渲染层按 N1 重排，
+   逻辑（数据/搜索/无限滚动/收藏/路由/字数口径/i18n）一行没改。
+
+   设计真值 ＝ 样张 N1 `design-mockups\g\n1-broadsheet.mjs`：
+     · 报眼 `.hero`/`.hero-face`          行 105–147
+     · 分区带 `.sec`/`.sec-head`（计数器） 行 150–157
+     · 主副板块 `.latest`/`.lead`/`.recent` 行 164–198
+     · 方框专栏 `.duo`/`.feat`             行 203–209
+     · 报讯块 `.book`/`.book-*`            行 212–224
+     · 索引带 `.tiles`/`.tile`             行 227–234
+     · 手机档 `@media (max-width:860px)`   行 380–394
+     ＋ 结构/文案落位见 `common.mjs` 行 185–294。
+
+   ⚠️ 颜色一律走既有 token（--bs-ink / -2 / -3、--bs-hair / -2、--bs-paper）；
+      **分类色只从 `--c`（＝CATEGORY_META 的色卡色，由 TSX 用 inline style 传）或
+      既有 token 派生** —— 本段一个自造色号都没有。
+   ⚠️ 首页**不出 h1**：唯一那枚 h1 是报头里的巨幅刊名（Layout 的 `.bs-nameplate`）。
+   ⚠️ 分类彩点（顶栏 `.nav-cats`）与索引带的色卡色**位置与配色一字不改**，
+      这里只画索引带（`.bs-tile`）的方块与文字。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── 首页版心：**跟随 `.main` 的内容盒**（2026-10-08 A1 起＝样张净宽那一档；
+       旧账 1040 → W1 的 `--bs-wrap-w` → A1 的 `max-width:100%`）──────────────────────── */
+.layout.bs .page.home{max-width:100%}
+
+/* ── ① 报眼方框 ─────────────────────────────────────────────────────────────── */
+.bs-hero{
+  display:grid;grid-template-columns:minmax(0,1fr) 172px;gap:26px;
+  align-items:start;padding:14px 0 16px;margin:2px 0 0;
+}
+.bs-hero-txt{display:flex;flex-direction:column;align-items:center;min-width:0;text-align:center}
+.bs-byline{
+  width:100%;margin:0;padding:5px 0 7px;border-top:1px solid var(--bs-hair-2);
+  font-size:10px;letter-spacing:.24em;line-height:1.6;color:var(--bs-ink-3);text-align:center;
+}
+.bs-stats{
+  list-style:none;display:flex;flex-wrap:wrap;justify-content:center;
+  width:100%;margin:0;padding:9px 0 0;border-top:1px solid var(--bs-ink);
+}
+.bs-stats li{
+  display:flex;align-items:baseline;gap:6px;
+  padding:0 16px;border-right:1px solid var(--bs-hair-2);
+}
+.bs-stats li:last-child{border-right:0}
+.bs-stats b{font-family:var(--font-display);font-weight:600;font-size:15px;color:var(--bs-ink)}
+.bs-stats span{font-size:10px;color:var(--bs-ink-3)}
+.bs-cta{display:flex;gap:22px;justify-content:center;margin-top:14px}
+
+.bs-face{
+  margin:0;padding:12px 10px;display:flex;flex-direction:column;align-items:center;
+  gap:6px;border:1px solid var(--bs-ink);
+}
+.bs-face img{
+  width:132px;height:132px;border-radius:50%;object-fit:cover;display:block;
+  box-shadow:0 0 0 1px var(--bs-hair-2);
+}
+.bs-face::after{
+  content:"主编　凉风凉";
+  font-size:10px;letter-spacing:.2em;line-height:1.4;color:var(--bs-ink-2);text-align:center;
+}
+html[lang='en'] .bs-face::after{content:"EDITOR　SUZUKAZE"}
+
+/* ── ② 分区带：双线 ＋ 自动累加的「第 N 版」计数器（B4 的正题）──────────────────
+   计数器挂在 `.layout.bs .page.home` 上，`.bs-sec` 每出现一次 `counter-increment` 加一；
+   搜索态是**整页替换**，所以同一时刻页面上只有一条分配序列，不会串号。 */
+.layout.bs .page.home{counter-reset:bs-ban}
+.bs-sec{margin-top:26px;counter-increment:bs-ban}
+.bs-sec-head{
+  display:flex;align-items:baseline;gap:12px;
+  padding:11px 0 9px;border-top:var(--bs-rule-2) double var(--bs-ink);
+}
+.bs-sec-head::before{
+  content:"第 " counter(bs-ban,decimal) " 版";
+  margin-right:4px;
+  font-size:10px;letter-spacing:.2em;color:var(--bs-ink-3);white-space:nowrap;
+}
+.bs-sec-head h2{
+  font-family:var(--font-display);font-weight:600;font-size:20px;
+  letter-spacing:.18em;line-height:1.2;color:var(--bs-ink);
+}
+.bs-sec-head small{
+  font-size:9.5px;letter-spacing:.26em;color:var(--bs-ink-3);white-space:nowrap;
+}
+.bs-sec-head .more-link{margin-left:auto}
+/* 老样式把 `.section-title` 做成「左竖条＋字号 1.4rem、标题与更多按钮分列两端」，
+   新头部的层级改由「小版次号 ＋ 衬线标题 ＋ 拉丁小字 ＋ 右端更多」承担（照 N1），
+   所以这一段的 h2 不带 .section-title 类，老的 4px 竖条不会跟进来。 */
+
+/* ── ③ 最新更新：主板块（本期头条）＋ 副板块（其余 4 篇）────────────────────── */
+.bs-latest{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:0}
+.bs-lead{
+  display:flex;flex-direction:column;
+  padding:16px 30px 18px 0;border-right:1px solid var(--bs-hair);
+}
+.bs-lead-k{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bs-lead-cat{font-size:10px;letter-spacing:.24em;color:var(--bs-ink-2)}
+.bs-lead-flag{
+  font-size:9.5px;letter-spacing:.2em;padding:1px 7px;
+  color:var(--c,var(--bs-ink));border:1px solid var(--c,var(--bs-ink));
+}
+.bs-lead h3{
+  font-family:var(--font-display);font-weight:600;line-height:1.16;letter-spacing:.02em;
+  margin:10px 0 0;font-size:clamp(26px,3.1vw,40px);
+}
+.bs-lead h3 a{color:var(--bs-ink);text-decoration:none}
+.bs-lead h3 a:hover{text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
+.bs-lead-ex{
+  font-size:14.5px;line-height:1.8;color:var(--bs-ink-2);
+  margin:12px 0 0;text-align:justify;
+}
+.bs-lead-body{
+  column-count:2;column-gap:24px;column-rule:1px solid var(--bs-hair-2);
+  margin-top:14px;
+}
+.bs-lead-body p{
+  font-size:12.5px;line-height:1.85;color:var(--bs-ink-2);
+  margin:0 0 10px;text-align:justify;break-inside:avoid;
+}
+.bs-lead-meta{
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  margin:auto 0 0;padding-top:11px;border-top:1px solid var(--bs-hair-2);
+  font-size:10px;letter-spacing:.1em;color:var(--bs-ink-3);
+}
+.bs-lead-meta span + span::before{content:"·";margin-right:10px;color:var(--bs-ink-3)}
+.bs-lead-read{margin-left:auto;color:var(--bs-ink-2);text-decoration:none;white-space:nowrap}
+.bs-lead-read:hover{color:var(--bs-ink)}
+/* 头条落在**小说**上时沿用 NovelCard（它的卡片样式进整站换皮时再迁），
+   这里只用 :where() 管外框，避免压掉 NovelCard 自己那套 (0,1,0) 规则。 */
+.bs-lead-card{margin-top:10px}
+:where(.bs-lead-card) :where(.novel-card){border:0;padding:0;background:transparent;box-shadow:none}
+
+.bs-recent{padding:16px 0 0 26px;min-width:0}
+.bs-subhead{
+  display:flex;align-items:baseline;gap:10px;
+  padding:0 0 7px;border-bottom:1px solid var(--bs-ink);
+}
+.bs-subhead b{font-family:var(--font-display);font-weight:600;font-size:14px;letter-spacing:.2em;color:var(--bs-ink)}
+.bs-subhead small{font-size:9px;letter-spacing:.26em;color:var(--bs-ink-3);margin-left:auto}
+.bs-recent-list{list-style:none;margin:0;padding:0}
+.bs-recent-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 0;border-bottom:1px solid var(--bs-hair-2);
+}
+.bs-recent-item:last-child{border-bottom:0;padding-bottom:0}
+.bs-recent-dot{width:8px;height:8px;flex:none;margin-top:6px}
+.bs-recent-txt{min-width:0;flex:1}
+.bs-recent-txt h3{
+  font-family:var(--font-display);font-weight:600;font-size:17px;line-height:1.35;
+  letter-spacing:.04em;margin:0;
+}
+.bs-recent-txt h3 a{color:var(--bs-ink);text-decoration:none}
+.bs-recent-txt h3 a:hover{text-decoration:underline;text-underline-offset:3px}
+.bs-recent-go{flex:none;align-self:center;font-size:12px;color:var(--bs-ink-3)}
+.bs-recent-item:hover .bs-recent-go{color:var(--bs-ink)}
+.bs-meta{
+  display:flex;flex-wrap:wrap;gap:10px;
+  margin:6px 0 0;font-size:9.5px;letter-spacing:.1em;color:var(--bs-ink-3);
+}
+.bs-meta span + span::before{content:"·";margin-right:10px;color:var(--bs-ink-3)}
+
+/* ── ④ 置顶与收藏：方框专栏两列（N1 的 `.duo` / `.feat`）───────────────────── */
+.bs-feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-top:12px}
+.bs-feat{border:1px solid var(--bs-hair);padding:14px 16px;min-width:0}
+.bs-feat-k{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  font-size:9.5px;letter-spacing:.2em;color:var(--bs-ink-3);
+}
+.bs-feat-k b{font-weight:600;color:var(--c,var(--bs-ink));letter-spacing:.14em}
+.bs-feat-k .fav-btn{margin-left:auto}
+.bs-feat h3{
+  font-family:var(--font-display);font-weight:600;font-size:20px;letter-spacing:.06em;
+  line-height:1.3;margin:10px 0 6px;
+}
+.bs-feat h3 a{color:var(--bs-ink);text-decoration:none}
+.bs-feat h3 a:hover{text-decoration:underline;text-underline-offset:4px}
+.bs-feat > p{font-size:11.5px;line-height:1.75;color:var(--bs-ink-2);margin:0;text-align:justify}
+.bs-feat .bs-meta{margin-top:9px}
+
+/* ── ⑤ 书籍更新：报讯块（左侧封面 ＋ 右侧文字）─────────────────────────────── */
+.bs-books{display:grid;grid-template-columns:1fr;gap:0}
+.bs-books.single{grid-template-columns:1fr}
+.bs-book{
+  display:grid;grid-template-columns:104px minmax(0,1fr);gap:20px;align-items:start;
+  padding:14px 0 16px;border-bottom:1px solid var(--bs-hair);text-decoration:none;
+}
+.bs-book:last-child{border-bottom:0}
+.bs-book-cover{margin:0;width:104px}
+.bs-book-cover img{width:104px;height:148px;object-fit:cover;display:block}
+.bs-book-cover-ph{
+  display:flex;align-items:center;justify-content:center;width:104px;height:148px;
+  font-family:var(--font-display);font-weight:600;font-size:2rem;color:var(--honey-ink);
+  background:color-mix(in srgb,var(--honey-gold) 26%,transparent);
+}
+.bs-book-txt{min-width:0}
+.bs-book-txt h3{
+  font-family:var(--font-display);font-weight:600;font-size:26px;letter-spacing:.16em;
+  line-height:1.3;color:var(--bs-ink);margin:0;
+}
+.bs-book:hover .bs-book-txt h3{text-decoration:underline;text-underline-offset:5px}
+.bs-book-meta{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px;
+  font-size:10px;letter-spacing:.12em;color:var(--bs-ink-3);
+}
+.bs-book-status{
+  padding:2px 7px;color:var(--chip-ink,var(--bs-ink));
+  border:1px solid color-mix(in srgb,var(--chip-color,var(--bs-ink)) 55%,var(--bs-paper));
+}
+.bs-book-count{color:var(--bs-ink-3)}
+.bs-book-intro{
+  font-size:12px;line-height:1.8;color:var(--bs-ink-2);
+  margin:10px 0 0;max-width:640px;text-align:justify;
+}
+.bs-book-latest{
+  display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;
+  margin:12px 0 0;padding-top:9px;border-top:1px solid var(--bs-hair-2);
+  font-size:11.5px;color:var(--bs-ink-2);
+}
+.bs-book-latest b{font-weight:600;font-size:9.5px;letter-spacing:.16em;color:var(--bs-ink-3)}
+.bs-book-latest-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bs-book-latest .go{margin-left:auto;font-size:11px;color:var(--bs-ink-3);white-space:nowrap}
+.bs-book:hover .bs-book-latest .go{color:var(--bs-ink)}
+
+/* ── ⑥ 分类浏览：索引带（N1 的 `.tiles` / `.tile`）───────────────────────────
+   分类色只画「名字前面的小方块」，字仍走墨色 —— 与全站「字全部用墨色，
+   颜色全部不用墨色」的铁律一致；色卡色本身由 TSX 的 `--c` 传进来。 */
+.bs-tiles{
+  display:flex;flex-wrap:wrap;align-items:baseline;
+  border-top:var(--bs-rule-2) double var(--bs-ink);padding-top:10px;margin-top:12px;
+}
+.bs-tile{
+  display:inline-flex;align-items:baseline;gap:9px;
+  padding:3px 20px;border-right:1px solid var(--bs-hair-2);text-decoration:none;
+}
+.bs-tile:first-child{padding-left:0}
+.bs-tile:last-child{border-right:0}
+.bs-tile b{
+  font-family:var(--font-display);font-weight:600;font-size:16px;letter-spacing:.12em;
+  color:var(--bs-ink);white-space:nowrap;
+}
+.bs-tile b::before{
+  content:"";display:inline-block;width:8px;height:8px;margin-right:10px;
+  background:var(--c,var(--bs-ink));
+}
+.bs-tile .n{font-size:12px;color:var(--bs-ink-3)}
+.bs-tile:hover b{color:var(--accent-deep)}
+
+/* ── 手机档（照 N1 行 380–394 ＋ 本站既有 ≤860 那一档）────────────────────── */
+@media (max-width:860px){
+  .bs-hero{grid-template-columns:1fr;gap:16px;padding:10px 0 12px}
+  .bs-face{order:-1;align-self:center;padding:10px}
+  .bs-face img{width:104px;height:104px}
+  .bs-stats li{padding:0 11px}
+  .bs-cta{gap:16px}
+  .bs-sec{margin-top:20px}
+  .bs-sec-head h2{font-size:17px;letter-spacing:.14em}
+  .bs-sec-head small{display:none}                     /* 窄屏让位给附标题（N1 的 `.sec-head` 也先收小字） */
+  .bs-latest{grid-template-columns:1fr}
+  .bs-lead{padding:14px 0 16px;border-right:0;border-bottom:1px solid var(--bs-ink)}
+  .bs-lead h3{font-size:26px;line-height:1.2}
+  .bs-lead-ex{text-align:left;font-size:12.5px}
+  .bs-lead-body{column-count:1;column-rule:0}
+  .bs-lead-body p{text-align:left}
+  .bs-lead .bs-lead-meta{margin-top:12px}
+  .bs-recent{padding:14px 0 0}
+  .bs-recent-txt h3{font-size:16px}
+  .bs-feats{grid-template-columns:1fr;gap:14px}
+  .bs-feat h3{font-size:18px}
+  .bs-book{grid-template-columns:80px minmax(0,1fr);gap:14px}
+  .bs-book-cover,.bs-book-cover img,.bs-book-cover-ph{width:80px}
+  .bs-book-cover img,.bs-book-cover-ph{height:114px}
+  .bs-book-txt h3{font-size:20px;letter-spacing:.1em}
+  .bs-book-intro{display:none}                          /* 手机上先收简介，留住书名/状态/最新章 */
+  .bs-book-latest-text{white-space:normal}
+  .bs-tiles{gap:2px 0;padding-top:8px}
+  .bs-tile{padding:3px 13px}
+  .bs-tile b{font-size:14px}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   批次② · P3 列表与分类（2026-10-08）
+   ──────────────────────────────────────────────────────────────────────────────
+   这一批是「整体覆盖」的第二批（计划书 §5 P3 ＋ 首批的批次划分口径）：
+   `/articles` 与 `/category/:category` 的**渲染层一次重写到位**，逻辑（数据、筛选、
+   数据库全文搜索、无限滚动、i18n、字数口径）一行没动。
+
+   设计真值 = 计划书 §5 P3 两行：
+     · `/articles`：`全部` ＋ 5 个分类筛选 chip ＋ 搜索计数 → **报纸「版面导航带」**；
+        卡片网格 → **三栏纯文字流（栏间竖线）**；`滚动加载更多…`/`已加载全部 N 篇` → 「续版」提示。
+     · `/category/:c`：**巨幅分类栏题** ＋ `‹ 全部文章` 返回 ＋ `{n} 篇` ＋ 本类文章流 ＋ 两种空态。
+   （N1 样张里没有「列表页」，所以这一页是**用报纸的版面语言新写**的，不是照抄某一块。）
+
+   ⚠️ 一个裸 hex 都不写：全走 --bs-ink / -2 / -3、--bs-hair / -2、--bs-paper；
+      分类色只从 `--c`（＝CATEGORY_META 的色卡色，由 TSX 用 inline style 传）取。
+   ⚠️ **分类彩点条（顶栏 `.nav-cats`）一个字没动** —— 本段对 `.nav-cats` / `.cat-dot` /
+      `.cat-dot-link` / `.cat-name` 零命中；分类小签（`.card-cat` / `.detail-cat`）本段也不碰，
+      它们仍然是「亮色＝色卡实底＋白字、暗色＝13% 淡底＋色卡字」的原样。
+   ⚠️ 列表卡片换成 `.bs-entry`（`components/BsEntry.tsx`）：**信息一条没少**
+      （分类名、置顶签、收藏星、标题、摘要、标签串、日期·字数、阅读›；小说另加状态签与
+      「共 N 章 · M 字」），只是**文章一律不配图**（硬约束：文章不要用图片）。
+   ⚠️ `Articles` 页卡片的收藏按钮**本来就点了无效**（未传 onToggleFavorite）——这是既有语义坑，
+      照原样保留（本页仍不传），实拍里那颗 ☆ 点下去依旧没有反应，与改版前逐字一致。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── 版心：三栏纯文字流要够宽；**跟随 `.main` 的内容盒**（2026-10-08 A1；旧账 1040 → W1 的 token）── */
+.layout.bs .page.list-page{max-width:100%}
+
+/* ── ① 版面导航带（页题 ＋ 拉丁小字 ＋ 右端计数 ＋ 分类分栏条）────────────────── */
+.bs-band{padding:4px 0 0}
+.bs-band-head{
+  display:flex;align-items:baseline;gap:16px;
+  padding:14px 0 10px;border-top:var(--bs-rule-2) double var(--bs-ink);
+}
+.bs-band-head h1{
+  margin:0;font-family:var(--font-display);font-weight:600;
+  font-size:clamp(30px,3.6vw,48px);letter-spacing:.14em;line-height:1.1;color:var(--bs-ink);
+}
+.bs-band-latin{font-size:9.5px;letter-spacing:.42em;color:var(--bs-ink-3);white-space:nowrap}
+.bs-band-count{margin-left:auto;font-size:10.5px;letter-spacing:.2em;color:var(--bs-ink-2);white-space:nowrap}
+
+/* 筛选 chip：从「胶囊药丸」改成**分栏条目**（竖细线分隔、当前版底下一条色线）。
+   ⚠️ 有意偏离：老样式里激活态是「该分类色卡色实底 ＋ --cat-on 白字」。报纸的分栏条目没有实底，
+      改为「墨色字 ＋ 底下 2px 该分类色线」，**分类色本身一点没换**（仍是 CATEGORY_META 的色卡色）。
+      要回到实底：删掉本段里 `.filter-chip` 那三条即可（下面的 `.active` 一删就回到基础层）。 */
+.bs-chips{
+  display:flex;flex-wrap:wrap;align-items:stretch;
+  border-bottom:1px solid var(--bs-ink);margin:0 0 2px;
+}
+.layout.bs .bs-chips .filter-chip{
+  border:0;border-bottom:2px solid transparent;border-right:1px solid var(--bs-hair-2);
+  border-radius:0;background:transparent;box-shadow:none;
+  padding:8px 17px 7px;font-size:.86rem;font-weight:400;letter-spacing:.1em;
+  color:var(--bs-ink-2);transition:none;
+}
+.layout.bs .bs-chips .filter-chip:first-child{padding-left:0}
+.layout.bs .bs-chips .filter-chip:last-child{border-right:0}
+.layout.bs .bs-chips .filter-chip:hover{transform:none;box-shadow:none;background:transparent;color:var(--bs-ink)}
+.layout.bs .bs-chips .filter-chip.active{
+  background:transparent;box-shadow:none;color:var(--bs-ink);font-weight:600;
+  border-bottom-color:var(--cat-color,var(--bs-ink));
+}
+
+/* ── ② 三栏纯文字流（栏间竖线由每条的 border-left 承担，行线由 border-bottom 承担）──
+   用 grid 而不是 `column-count`：多栏流在无限滚动追加时会把已读的条目**挤到别的栏**，
+   滚动位置会跳；grid 的格子位置稳定。`align-items` 默认 stretch，所以每条的 border-left
+   会拉满整行高度 → 竖线是连续的（行距为 0，上下行之间不出现断口）。 */
+.bs-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:0;row-gap:0}
+.bs-entry{
+  display:flex;flex-direction:column;min-width:0;
+  padding:18px 22px 20px;
+  border-left:1px solid var(--bs-hair-2);
+  border-bottom:1px solid var(--bs-hair-2);
+}
+.bs-entry:nth-child(3n+1){border-left:0;padding-left:0}
+.bs-entry-k{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  font-size:9.5px;letter-spacing:.2em;color:var(--bs-ink-2);
+}
+.bs-entry-dot{width:7px;height:7px;flex:none;background:var(--c,var(--bs-ink))}
+.bs-entry-k .fav-btn{
+  margin-left:auto;width:22px;height:22px;border-radius:0;background:transparent;
+  font-size:.95rem;color:var(--bs-ink-2);box-shadow:none;
+}
+.bs-entry-k .fav-btn:hover{transform:none;box-shadow:none;color:var(--bs-ink)}
+.bs-entry-k .fav-btn.fav-on{background:transparent;color:var(--coral-ink)}
+.bs-entry-k .card-pin{font-size:.68rem;padding:1px 7px;border-radius:0;background:transparent;
+  border:1px solid var(--honey-ink);color:var(--honey-ink);letter-spacing:.16em}
+.bs-entry-title{
+  font-family:var(--font-display);font-weight:600;
+  font-size:clamp(19px,1.75vw,23px);line-height:1.32;letter-spacing:.03em;margin:9px 0 0;
+}
+.bs-entry-title a{color:var(--bs-ink);text-decoration:none}
+.bs-entry-title a:hover{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+.bs-entry-sum{
+  font-size:12px;line-height:1.82;color:var(--bs-ink-2);
+  margin:9px 0 0;text-align:justify;
+}
+.bs-entry-book{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin:10px 0 0;font-size:10px;letter-spacing:.1em;color:var(--bs-ink-2);
+}
+.bs-entry-tags{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 0}
+.bs-entry-tags .tag{
+  font-size:.72rem;letter-spacing:.06em;padding:0;background:transparent;border-radius:0;
+  color:var(--bs-ink-2);
+}
+.bs-entry-tags .tag:hover{background:transparent;transform:none;color:var(--bs-ink)}
+.bs-entry-meta{
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  margin:auto 0 0;padding-top:11px;border-top:1px solid var(--bs-hair-2);
+  font-size:9.5px;letter-spacing:.1em;color:var(--bs-ink-2);
+}
+.bs-entry-meta span + span::before{content:"·";margin-right:10px;color:var(--bs-ink-2)}
+.bs-entry-read{margin-left:auto;color:var(--bs-ink-2);text-decoration:none;white-space:nowrap}
+.bs-entry-read:hover{color:var(--bs-ink)}
+.bs-entry:hover .bs-entry-title a{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+
+/* ── ③ 续版提示 ＋ 空态（文案一字未改，只换排印）──────────────────────────── */
+.layout.bs .list-loading,.layout.bs .list-end{
+  color:var(--bs-ink-2);font-size:10.5px;letter-spacing:.24em;
+  padding:18px 0 6px;text-align:center;opacity:1;
+}
+.layout.bs .list-loading{border-top:0}
+.layout.bs .list-end{border-top:1px solid var(--bs-hair-2);margin-top:0}
+.layout.bs .empty-state{color:var(--bs-ink-2);text-align:center;padding:56px 20px}
+.layout.bs .empty-state .empty-icon{
+  background:transparent;border:1px solid var(--bs-hair);border-radius:0;box-shadow:none;
+}
+.layout.bs .empty-state p{font-size:12.5px;letter-spacing:.1em;line-height:1.9}
+.layout.bs .result-count{
+  font-size:10.5px;letter-spacing:.14em;color:var(--bs-ink-2);
+  margin:0;padding:10px 0 8px;border-bottom:1px solid var(--bs-hair-2);
+}
+.layout.bs .result-count strong{color:var(--bs-ink);font-weight:600}
+
+/* ── ④ 分类栏题（`/category/:c`：巨幅分类名 ＋ 返回 ＋ 计数）────────────────────
+   `.cat-header` 的**左竖条＝分类色**这条语言照旧保留（第2f步的「左竖条是颜色」），
+   只把它的毛玻璃卡、圆角、模糊光斑收掉，改成报眉那种「一条粗线 ＋ 巨幅衬线标题」。 */
+.layout.bs .cat-header{
+  background:transparent;border:0;border-left:4px solid var(--cat-accent,var(--bs-ink));
+  border-radius:0;box-shadow:none;overflow:visible;
+  padding:6px 0 14px 22px;margin:0 0 6px;
+}
+.layout.bs .cat-header::after{display:none}          /* 老样式的模糊光斑圆 */
+.layout.bs .cat-header .back-link{
+  background:transparent;border:0;border-radius:0;padding:0;
+  color:var(--bs-ink-2);font-size:.8rem;letter-spacing:.14em;
+}
+.layout.bs .cat-header .back-link:hover{
+  background:transparent;transform:none;color:var(--bs-ink);text-decoration:underline;
+}
+.layout.bs .cat-header h1{
+  font-family:var(--font-display);font-weight:600;
+  font-size:clamp(34px,5vw,62px);letter-spacing:.14em;line-height:1.14;
+  color:var(--bs-ink);margin:10px 0 8px;
+}
+.layout.bs .cat-header .cat-count{font-size:10.5px;letter-spacing:.24em;color:var(--bs-ink-2);margin:0}
+
+/* ── 响应式：三栏 → 两栏 → 单栏（栏线跟着切，别留下悬空的竖线）────────────── */
+@media (max-width:1099px){
+  .bs-flow{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .bs-entry:nth-child(3n+1){border-left:1px solid var(--bs-hair-2);padding-left:22px}
+  .bs-entry:nth-child(2n+1){border-left:0;padding-left:0}
+}
+@media (max-width:759px){
+  .bs-flow{grid-template-columns:minmax(0,1fr)}
+  .bs-entry,
+  .bs-entry:nth-child(2n+1),
+  .bs-entry:nth-child(3n+1){border-left:0;padding-left:0;padding-right:0}
+  .bs-band-head{gap:10px;padding:12px 0 9px}
+  .bs-band-head h1{font-size:26px;letter-spacing:.1em}
+  .bs-band-latin{display:none}
+  .bs-band-count{font-size:9.5px;letter-spacing:.14em}
+  .layout.bs .bs-chips .filter-chip{padding:7px 11px 6px;font-size:.8rem;letter-spacing:.06em}
+  .bs-entry{padding:15px 0 16px}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   批次② · P4 文章详情（2026-10-08）—— 本次重点之一，逐条对计划书 §6.1
+   ──────────────────────────────────────────────────────────────────────────────
+   版式命题（§6.1 开头）：「报纸没有『网页文章页』，报纸只有**版面**——一篇文章独占一个版。」
+
+   ① 报头退位：内页报头本来就是左上角 23px 小刊名 ＋ 标语小字（B2 做的），本步不动；
+   ② 引题行＝分类小签 ＋ `#标签` 串（居中）；
+   ③ 主题＝`h1.detail-title`，衬线 clamp(34px,5vw,60px)、居中、字距 .06em；
+   ④ 副题＝`summary`（若有）居中（⚠️ 老页面**不渲染 summary**，按 §6.1 第 4 条补上）；
+   ⑤ 署名条＝`▪ 日期 · N 字` 双线夹；**四个博主操作全部做成署名条右端的下划线式小按钮**
+      （☆收藏／导出 .md／编辑文章／删除文章 —— 后两个从页尾搬上来，文案与 confirm 一字未改）；
+   ⑥ 本版要目＝`details.toc` 双线方框 ＋ 点线索引（桌面默认展开、手机折叠，展开逻辑在 TSX）；
+   ⑦ 正文＝`MarkdownRenderer` 在报纸正文栏里：**全档单栏**（口径见下面那段注释），
+      ≥861px 整块正文栏宽 `--bs-reading-w`（672px＝42em）居中、两端对齐，≤860px 全宽；
+      无首字下沉（单栏档放大「一」会像破折号）；
+      `pre / table / iframe / img` 强制 `column-span:all`；KaTeX 行间公式 `break-inside:avoid`；
+   ⑧ 附件＝「第 N 版」方框清单（📎 保留）；
+   ⑨ 评论区＝「读者来信」栏（版带 ＋ 复位计数器；头像有则圆裁、无则首字方印；回复用缩进＋竖引线）；
+   ⑩ 英文站缺译提示＝脚注小字（墨色三级）；
+   ⑪ 阅读进度＝报眉下方一条 1px 青蓝细线，随滚动增长（`--accent`，色卡青蓝）。
+
+   ⚠️ 一个裸 hex 都不写；分类色只从 `--c` / inline `--cat-color` 取。
+   ⚠️ 评论区的样式**只挂在 `.article-detail` 下**：`CommentSection` 是留言板（P6）与
+      NovelReader（P5）共用的组件，那两个页面本轮还没迁，不能在这里被顺带改掉。
+   ⚠️ `.comment-title` 的**文案一字未改**（仍是「留言（N）」），只是降级成版带下的小注，
+      上面新加的「读者来信」是**新栏题**（字典键 `comment.deskTitle`），不是替换。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* 正文档要更宽的版心（W1 起 ＝ 样张净宽）；`counter-reset` 让详情页的「第 N 版」**从 1 起算**
+   （而首页那条计数链挂在 `.page.home` 上，两页互不串号 —— §6.1 第 9 条要求）。 */
+.layout.bs .page.article-detail{max-width:100%;counter-reset:bs-ban}
+
+/* ── ⑪ 阅读进度：报眉下方 1px 青蓝细线 ────────────────────────────────────────
+   `top` 由 TSX 按顶栏实测高度写值；顶栏往下滚时会自己滑走（`.nav-hidden`），
+   这时细线收到屏幕最上沿 —— 过渡时长与 index.css 里 `.navbar` 那条 transform .32s 对齐，
+   细线跟着报眉一起走，不会在 64px 处留一条悬空的横线漂在正文上。 */
+.bs-progress{
+  position:sticky;top:64px;z-index:4;height:1px;margin:0 0 18px;
+  background:var(--bs-hair-2);transition:top .32s cubic-bezier(.22,1,.36,1);
+}
+.bs-progress i{display:block;height:1px;width:0;background:var(--accent)}
+
+/* ── ②③④ 引题行 / 主题 / 副题 ─────────────────────────────────────────────── */
+.layout.bs .article-detail .detail-head{margin:0}
+.layout.bs .article-detail .detail-cats{justify-content:center;gap:10px;margin:0 0 16px}
+.layout.bs .article-detail .detail-tag{
+  font-size:.8rem;letter-spacing:.06em;color:var(--bs-ink-2);
+}
+.layout.bs .article-detail .detail-title{
+  font-family:var(--font-display);font-weight:600;
+  font-size:clamp(34px,5vw,60px);line-height:1.18;letter-spacing:.06em;
+  text-align:center;color:var(--bs-ink);margin:0 0 12px;
+}
+.bs-article-deck{
+  text-align:center;font-size:14.5px;line-height:1.85;color:var(--bs-ink-2);
+  max-width:660px;margin:0 auto 18px;
+}
+
+/* ── ⑤ 署名条（双线夹）＋ 四个下划线式小按钮 ───────────────────────────────── */
+.layout.bs .article-detail .detail-meta{
+  /* ⚠️ 2026-10-08 A1：它是 `display:flex` 的收窄块，双线夹只跟内容一样宽（实测 274px），
+     在版心放宽到 1152 之后变成「标题满宽、中间一截短横线」。改成占满整栏，
+     里面的字仍 `justify-content:center` 居中——上下线这才与标题、正文同一条边线。 */
+  width:100%;
+  display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;
+  margin:0 0 26px;padding:9px 0;
+  border-top:var(--bs-rule-2) double var(--bs-ink);border-bottom:1px solid var(--bs-ink);
+  font-size:10.5px;letter-spacing:.14em;color:var(--bs-ink-2);
+}
+.layout.bs .article-detail .detail-meta-icon{color:var(--bs-ink-3)}
+.layout.bs .article-detail .meta-btn{
+  border:0;border-bottom:1px solid var(--bs-hair);border-radius:0;
+  background:transparent;box-shadow:none;padding:0 0 1px;
+  font-size:.8rem;letter-spacing:.1em;color:var(--bs-ink-2);
+}
+.layout.bs .article-detail .meta-btn:hover{
+  transform:none;box-shadow:none;color:var(--bs-ink);border-bottom-color:var(--bs-ink);
+}
+/* ☆/★ 收藏的**实底**是 S6 定的对比度修法（白字压珊瑚粉 5.73:1），本步只把它拍方，不退回描边 */
+.layout.bs .article-detail .meta-btn.meta-fav-on{
+  background:var(--coral-pink);color:var(--coral-on);border-bottom:0;padding:2px 8px;
+}
+.layout.bs .article-detail .meta-btn-danger{color:var(--coral-ink)}
+.layout.bs .article-detail .meta-btn-danger:hover{border-bottom-color:var(--coral-ink);color:var(--coral-ink)}
+.layout.bs .article-detail .detail-meta .meta-btn:first-of-type{margin-left:6px}
+
+/* ── ⑩ 缺译提示 → 脚注小字（墨色三级）────────────────────────────────────── */
+.layout.bs .article-detail .detail-i18n-notice{
+  margin:0 0 22px;padding:8px 0;
+  border-left:0;border-top:1px solid var(--bs-hair-2);border-bottom:1px solid var(--bs-hair-2);
+  border-radius:0;background:transparent;
+  color:var(--bs-ink-2);font-size:10.5px;letter-spacing:.06em;line-height:1.8;
+  font-style:normal;text-align:center;
+}
+
+/* ── ⑥ 本版要目（双线方框 ＋ 点线索引）─────────────────────────────────────── */
+.layout.bs .article-detail .toc{
+  border:1px solid var(--bs-ink);border-radius:0;background:transparent;box-shadow:none;
+  margin:0 0 26px;padding:0;overflow:hidden;
+}
+.layout.bs .article-detail .toc-toggle{
+  padding:11px 16px;font-family:var(--font-display);font-weight:600;
+  font-size:14px;letter-spacing:.2em;color:var(--bs-ink);
+}
+.layout.bs .article-detail .toc-toggle:hover{background:transparent}
+.layout.bs .article-detail .toc[open] .toc-toggle{border-bottom:1px solid var(--bs-ink)}
+.layout.bs .article-detail .toc-list{padding:10px 16px 14px;gap:0}
+.layout.bs .article-detail .toc-link{
+  display:flex;align-items:baseline;padding:6px 0;border-radius:0;
+  border-bottom:1px dotted var(--bs-hair-2);
+  color:var(--bs-ink-2);font-size:.88rem;letter-spacing:.02em;
+}
+.layout.bs .article-detail .toc-link:last-child{border-bottom:0}
+.layout.bs .article-detail .toc-link:hover{background:transparent;color:var(--bs-ink)}
+.layout.bs .article-detail .toc-lv2{padding-left:16px;font-size:.86rem}
+.layout.bs .article-detail .toc-lv3{padding-left:32px;font-size:.84rem}
+
+/* ── ⑦ 正文：报纸正文栏 ───────────────────────────────────────────────────── */
+.layout.bs .article-detail .bs-article-body{border-top:var(--bs-rule-2) double var(--bs-ink);padding-top:22px}
+.layout.bs .article-detail .detail-body{
+  border:0;border-radius:0;background:transparent;box-shadow:none;padding:0;
+}
+.layout.bs .article-detail .bs-article-body .markdown-body{font-size:1rem;line-height:1.95;color:var(--bs-ink)}
+.layout.bs .article-detail .bs-article-body .markdown-body p{margin:0 0 1em}
+.layout.bs .article-detail .bs-article-body .markdown-body h1,
+.layout.bs .article-detail .bs-article-body .markdown-body h2,
+.layout.bs .article-detail .bs-article-body .markdown-body h3,
+.layout.bs .article-detail .bs-article-body .markdown-body h4{color:var(--bs-ink)}
+.layout.bs .article-detail .bs-article-body .markdown-body a{color:var(--sky-ink)}
+.layout.bs .article-detail .bs-article-body .markdown-body blockquote{
+  border-left:2px solid var(--bs-ink);border-radius:0;background:transparent;
+  color:var(--bs-ink-2);padding:4px 0 4px 16px;
+}
+/* ⚠️ 2026-10-08 用户口径**「单栏正文」**（原话就这四个字，是对计划书 §6.1 第 7 条「≥1100px 双栏」的改口）：
+   原先 ≥1100px 的双栏（`column-count:2` ＋ 栏间 1px 竖线 ＋ 首字下沉）**已撤掉**，全档统一为**单栏**。
+   ⚠️ 2026-10-08 二次变更（W1，用户原话「**现在阅读宽度太窄了，修改**」）：栏宽由
+   `min(34em,100%)`（实测 **544px**，1440 屏上只占版心 38%、约 30 汉字/行）改成
+   `--bs-reading-w`（**672px ＝ 42em @16px，约 38 汉字/行**）。两端对齐（`text-justify:inter-ideograph`）照旧。
+   ⚠️ 收紧放在**整块正文栏**（`.bs-article-body` ＋ 副题）上，不再单挂在 `.markdown-body`：
+      W1 之前版心窄（920/1040），正文 544 居中还看得过去；版心提到 1152 之后，
+      单挂正文会出现「居中大标题横跨 1152、下面正文只有 672、左右空一大片」的头重脚轻。
+      收在整块上，署名条（双线夹）／要目方框／正文／附件**共用同一条左右边线**，报纸正文栏这才成形。
+   回滚＝把下面这组 `var(--bs-reading-w)` 换回「`.markdown-body{max-width:34em}`（只挂正文）」，
+      并把媒体档从 861 换回 901。首字下沉照旧取消（§6.1 原话「首字下沉只在双栏档开」——
+      单栏那档把「一」放大成破折号是既有教训）。`pre/table/iframe/img` 的 `column-span:all`
+      也一并撤了：单栏下它本来就是空转。 */
+@media (min-width:861px){
+  .layout.bs .article-detail .bs-article-body{
+    /* ⚠️ 2026-10-08 A1：用户原话「保持宽度不变在每个页面，像首页一样的宽度，」
+       ＋ 下一句「你改的是那边，把宽的改成窄的」——他指的正是这里：正文栏 W1 收成 672px
+       （`--bs-reading-w`）后与版心 1152 不一致，**这一页看起来就和首页不一样宽**。
+       现在撤掉这道内收，正文栏＝版心（`.page` 的 100%），字号行距两端对齐全部照旧。
+       只是「一行字数变多」（1152 宽下中文约 65 字/行），若嫌长把下面 max-width 换回
+       `var(--bs-reading-w)` 即可一键回头。 */
+    max-width:100%;margin-left:auto;margin-right:auto;
+    text-align:justify;text-justify:inter-ideograph;
+  }
+  .layout.bs .article-detail .detail-body{text-align:justify;text-justify:inter-ideograph}
+  /* 副题栏（`summary`）与正文栏同宽；首页书籍报讯块里的介绍段同理 */
+  .layout.bs .article-detail .bs-article-deck{max-width:100%}
+  .layout.bs .bs-book p{max-width:100%}
+}
+/* 行间公式不跨栏、只防断（留着的唯一一条栏内规则） */
+.layout.bs .article-detail .bs-article-body .markdown-body .katex-display{break-inside:avoid}
+
+/* ── ⑧ 附件：方框清单（版带 ＋ 细线条目）──────────────────────────────────── */
+.layout.bs .article-detail .detail-attachments{
+  margin-top:0;border:0;border-radius:0;background:transparent;box-shadow:none;padding:0;
+}
+.layout.bs .article-detail .detail-att-ttl{
+  display:flex;align-items:baseline;gap:12px;
+  margin:0 0 10px;padding:11px 0 9px;
+  border-top:var(--bs-rule-2) double var(--bs-ink);
+  font-family:var(--font-display);font-weight:600;font-size:18px;
+  letter-spacing:.18em;color:var(--bs-ink);
+  counter-increment:bs-ban;
+}
+.layout.bs .article-detail .detail-att-ttl::before{
+  content:"第 " counter(bs-ban,decimal) " 版";
+  font-family:var(--font-body,inherit);font-weight:400;font-size:10px;
+  letter-spacing:.2em;color:var(--bs-ink-3);white-space:nowrap;
+}
+.layout.bs .article-detail .detail-att-ttl::after{
+  content:"ATTACHMENTS";margin-left:auto;
+  font-family:var(--font-body,inherit);font-weight:400;font-size:9.5px;
+  letter-spacing:.26em;color:var(--bs-ink-3);white-space:nowrap;
+}
+.layout.bs .article-detail .detail-att-list{gap:0}
+.layout.bs .article-detail .detail-att-item{
+  border:0;border-bottom:1px solid var(--bs-hair-2);border-radius:0;background:transparent;
+  padding:9px 0;
+}
+.layout.bs .article-detail .detail-att-item:hover{transform:none;border-bottom-color:var(--bs-ink)}
+.layout.bs .article-detail .detail-att-name{color:var(--bs-ink)}
+.layout.bs .article-detail .detail-att-size{color:var(--bs-ink-2);letter-spacing:.1em}
+
+/* ── ⑨ 评论区 → 读者来信栏（样式只挂在 .article-detail 下，见段首说明）──────── */
+.layout.bs .article-detail .bs-letters{margin-top:30px}
+.layout.bs .article-detail .comment-section{margin-top:14px}
+.layout.bs .article-detail .comment-title{
+  display:block;font-family:var(--font-body,inherit);font-weight:400;
+  font-size:10.5px;letter-spacing:.24em;color:var(--bs-ink-2);margin:0 0 16px;
+}
+.layout.bs .article-detail .comment-form{
+  background:transparent;border:0;border-radius:0;box-shadow:none;padding:0;
+  gap:12px;margin:0 0 26px;
+}
+.layout.bs .article-detail .comment-content{
+  border:0;border-bottom:1px solid var(--bs-ink);border-radius:0;background:transparent;
+  padding:8px 0;font-size:.95rem;color:var(--bs-ink);
+}
+.layout.bs .article-detail .comment-content:focus{box-shadow:none;border-bottom-color:var(--accent)}
+.layout.bs .article-detail .reply-target{
+  background:transparent;border:0;border-left:2px solid var(--bs-hair);border-radius:0;
+  padding:4px 0 4px 12px;font-size:.82rem;color:var(--bs-ink-2);
+}
+.layout.bs .article-detail .reply-cancel{color:var(--coral-ink);font-size:.78rem}
+.layout.bs .article-detail .comment-login-tip{
+  background:transparent;border:1px dashed var(--bs-hair);border-radius:0;
+  color:var(--bs-ink-2);font-size:.86rem;letter-spacing:.06em;padding:12px 14px;
+}
+.layout.bs .article-detail .comment-list{gap:0}
+.layout.bs .article-detail .comment-item{
+  background:transparent;border:0;border-top:1px solid var(--bs-hair-2);border-radius:0;
+  box-shadow:none;padding:16px 0 4px;
+}
+.layout.bs .article-detail .comment-head{gap:9px;margin-bottom:6px}
+/* 头像：有图＝圆裁（img 上的 inline 50% 保留），无图＝**首字方印**（方框墨线，照 §6.1 第 9 条） */
+.layout.bs .article-detail .comment-avatar{
+  border:1px solid var(--bs-ink);border-radius:0;background:transparent;
+  color:var(--bs-ink);font-family:var(--font-display);font-weight:600;
+}
+.layout.bs .article-detail .comment-name-label{
+  font-family:var(--font-display);font-weight:600;font-size:14px;
+  letter-spacing:.08em;color:var(--bs-ink);
+}
+.layout.bs .article-detail .comment-date{font-size:9.5px;letter-spacing:.14em;color:var(--bs-ink-2)}
+.layout.bs .article-detail .comment-body{color:var(--bs-ink-2);line-height:1.85;font-size:.95rem}
+.layout.bs .article-detail .comment-reply,
+.layout.bs .article-detail .comment-delete{
+  background:none;border:0;border-bottom:1px solid var(--bs-hair);border-radius:0;
+  color:var(--bs-ink-2);font-size:.78rem;letter-spacing:.06em;padding:0 0 1px;transition:none;
+}
+.layout.bs .article-detail .comment-reply:hover,
+.layout.bs .article-detail .comment-delete:hover{
+  background:none;color:var(--bs-ink);border-bottom-color:var(--bs-ink);
+}
+.layout.bs .article-detail .comment-children{gap:4px;margin-top:6px}
+.layout.bs .article-detail .comment-reply-row,
+.layout.bs .article-detail .comment-fold{
+  border-left:1px solid var(--bs-hair);border-radius:0;
+  margin-left:14px;padding-left:14px;
+}
+.layout.bs .article-detail .comment-fold-btn{
+  background:none;border:0;border-bottom:1px dashed var(--bs-hair);border-radius:0;
+  color:var(--bs-ink-2);font-size:.78rem;padding:2px 0;letter-spacing:.06em;
+}
+.layout.bs .article-detail .comment-fold-btn:hover{background:none;color:var(--bs-ink)}
+.layout.bs .article-detail .empty-tip{color:var(--bs-ink-2);font-size:12px;letter-spacing:.1em}
+.layout.bs .article-detail .submit-ok{color:var(--bs-ink-2);font-size:.8rem;letter-spacing:.1em}
+
+/* ── 手机档 ───────────────────────────────────────────────────────────────── */
+@media (max-width:860px){
+  .layout.bs .page.article-detail{max-width:100%}
+  .bs-progress{top:58px;margin-bottom:14px}
+  .layout.bs .article-detail .detail-title{font-size:30px;line-height:1.24;letter-spacing:.04em}
+  .bs-article-deck{font-size:13px;text-align:left}
+  .layout.bs .article-detail .detail-meta{gap:10px;font-size:9.5px;letter-spacing:.1em}
+  .layout.bs .article-detail .meta-btn{font-size:.76rem}
+  .layout.bs .article-detail .detail-att-ttl::after{display:none}
+  .layout.bs .article-detail .bs-article-body .markdown-body{font-size:.95rem;line-height:1.9}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   B5 · 按钮层（全局）—— 2026-10-08 补做，起因＝用户原话「主要是你的按钮条没改」
+   ──────────────────────────────────────────────────────────────────────────────
+   病灶：`index.css` 行 274–286 的 `.btn` 是「胶囊药丸 ＋ 底色填充 ＋ 光带扫过 ＋ 悬停上浮」那一套。
+   批次①②把页面结构换成了报纸，**按钮却还是那套皮肤**：首页报眼 `.bs-cta` 那条里的
+   「浏览全部」仍是描边药丸、「写文章」仍是青蓝实底；顶栏「登录」、详情页「发送」同理 ——
+   全站凡是走 `.btn` 的地方，一个都没进报纸层。
+
+   设计真值 = N1 样张 `design-mockups\g\n1-broadsheet.mjs`：全站只有两级按钮 ——
+     ① 文字按钮：N1 `.btn` / `.btn.ghost`（样张行 135–139）＝ 一条下划线、12.5px、字距 .14em，
+        悬停整条变青蓝；**没有底色、没有圆角、没有阴影、没有位移**。
+     ② 方框：N1 的 `.lead-flag` / `.badge` / `.toc` 那一系（1px 墨线、无填充、无圆角），
+        实心反转只在 `.seg i.on`（墨底纸字）出现过 —— 本层拿它当「主按钮」。
+   映射：`.btn` / `.btn-light` / `.btn-light-outline` / `.btn-ghost` → ①；
+        `.btn-primary` / `.btn-warm` → ②；`.btn-danger` → ① 的珊瑚墨色版（与 P4 `.meta-btn-danger` 同档）。
+
+   ⚠️ 本层只动**外观**：文案、`href`、`onClick`、`disabled` 语义一律没碰。
+   ⚠️ 特异性一律带 `.layout.bs`（0,3,0），压过 index.css 里的 `.btn`(0,1,0)、
+      `.btn-light-outline:hover`(0,2,0)、`.nav-auth .btn-sm`(0,2,0)、
+      `[data-theme='dark'] .nav-icon-btn.active`（同为 0,3,0 但源码在前）等所有老账。
+   ↩︎ 回退＝删掉本段（含标题行），按钮立刻回到改版前的药丸皮肤。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── ① 基础：N1 `.btn` 原样 —— 下划线文字按钮 ───────────────────────────────── */
+.layout.bs .btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  position:static;overflow:visible;
+  padding:0 0 2px;
+  border:0;border-bottom:1px solid var(--bs-ink);border-radius:0;
+  background:transparent;box-shadow:none;
+  font-size:12.5px;font-weight:400;letter-spacing:.14em;line-height:1.5;
+  color:var(--bs-ink);white-space:nowrap;
+  transform:none;transition:none;
+}
+.layout.bs .btn::after{content:none}                       /* 老样式那条扫过按钮的光带 */
+.layout.bs .btn:hover,
+.layout.bs .btn:active,
+.layout.bs .btn:focus-visible{
+  color:var(--accent-deep);border-bottom-color:var(--accent-deep);
+  background:transparent;box-shadow:none;transform:none;
+}
+
+/* ── ② 次级：淡一档的同一枚文字按钮（N1 `.btn.ghost`）───────────────────────── */
+.layout.bs .btn-light,
+.layout.bs .btn-light-outline,
+.layout.bs .btn-ghost{
+  color:var(--bs-ink-2);border-bottom-color:var(--bs-hair);
+  background:transparent;box-shadow:none;border-radius:0;backdrop-filter:none;
+}
+.layout.bs .btn-light:hover,
+.layout.bs .btn-light-outline:hover,
+.layout.bs .btn-ghost:hover{
+  color:var(--accent-deep);border-bottom-color:var(--accent-deep);background:transparent;
+}
+
+/* 报眼那条入口：访客只看得见这一枚（`写文章` 只有博主登录后才有），
+   所以它照 N1 的**主 CTA**「开始阅读」那一档走 —— 墨色下划线，而不是次级那档淡灰。 */
+.layout.bs .bs-cta .btn-light-outline{
+  color:var(--bs-ink);border-bottom-color:var(--bs-ink);
+}
+.layout.bs .bs-cta .btn-light-outline:hover{
+  color:var(--accent-deep);border-bottom-color:var(--accent-deep);
+}
+
+/* ── ③ 主按钮：墨色方框；悬停反转成墨底纸字（N1 的方框 ＋ `.seg i.on` 的反转）── */
+.layout.bs .btn-primary,
+.layout.bs .btn-warm{
+  padding:3px 11px 4px;
+  border:1px solid var(--bs-ink);border-radius:0;
+  background:transparent;box-shadow:none;
+  font-size:11.5px;font-weight:400;letter-spacing:.16em;color:var(--bs-ink);
+}
+.layout.bs .btn-primary:hover,
+.layout.bs .btn-primary:active,
+.layout.bs .btn-warm:hover{
+  background:var(--bs-ink);color:var(--bs-paper);border-color:var(--bs-ink);
+  box-shadow:none;transform:none;
+}
+
+/* ── ④ 危险：珊瑚墨色文字按钮（删文章／退出登录／删分类）────────────────────── */
+.layout.bs .btn-danger{
+  padding:0 0 2px;border:0;border-bottom:1px solid var(--coral-ink);border-radius:0;
+  background:transparent;box-shadow:none;color:var(--coral-ink);
+  font-size:12.5px;letter-spacing:.14em;
+}
+.layout.bs .btn-danger:hover{
+  background:transparent;color:var(--coral-ink);border-bottom-color:var(--coral-ink);transform:none;
+}
+
+/* ── ⑤ 小号（顶栏「登录」、卡片上的操作）与禁用态：只缩排印与内边距 ───────────── */
+.layout.bs .btn-sm{padding-bottom:1px;font-size:11.5px;letter-spacing:.14em}
+.layout.bs .btn-sm.btn-primary,
+.layout.bs .btn-sm.btn-warm{padding:2px 9px 3px;font-size:11px}
+.layout.bs .btn:disabled,
+.layout.bs .btn[disabled]{
+  color:var(--bs-ink-3);border-bottom-color:var(--bs-hair);
+  background:transparent;cursor:not-allowed;
+}
+
+/* ── ⑥ 顶栏那排图标按钮（搜索／站点地图／主题／EN）与汉堡：去掉圆底与实底激活态 ── */
+.layout.bs .nav-icon-btn{border-radius:0;transition:none}
+.layout.bs .nav-icon-btn:hover{background:transparent;color:var(--bs-ink)}
+.layout.bs .nav-icon-btn.active{background:transparent;color:var(--bs-ink)}
+.layout.bs .nav-burger{border-radius:0}
+.layout.bs .nav-burger:hover{background:transparent}
+
+/* ── 手机档：照 N1 的 860 那一档（字号再收一点，方框内边距同缩）──────────────── */
+@media (max-width:860px){
+  .layout.bs .btn{font-size:11.5px;letter-spacing:.12em}
+  .layout.bs .btn-primary,.layout.bs .btn-warm{padding:2px 9px 3px;font-size:11px}
+  .layout.bs .btn-danger{font-size:11.5px}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   W1 · 版面宽度对齐样张（2026-10-08）
+   ──────────────────────────────────────────────────────────────────────────────
+   用户原话：「**现在阅读宽度太窄了，修改，还有所有界面参照你最开始给我的那一个静态
+   样张修改**」。这一段的**唯一职责**就是把「一把尺子」铺满全站 —— 报头 / 顶栏 / 版心 /
+   正文栏 / 报尾，值全部来自 `index.css` 文件末尾 W1 段的两个 token。
+
+   ① 样张真值（`design-mockups\g\n1-broadsheet.mjs` 行 30）：`.wrap{max-width:1240px;
+      padding:14px 44px 42px}` ⇒ **版心净宽 1152px**。本站旧账是 1080（净宽 1040）——
+      即「比样张窄 112px，还多一道 .page 920 的内收」。这里把三层拉平到样张那一档：
+        · `.main` = `--bs-wrap-w` 1152 ＋ padding 20×2 ⇒ 内容 1152（= 样张 `.wrap` 的净宽）
+        · `.page` = `--bs-wrap-w`（**不再内收到 920**）
+        · 顶栏 / 报头 / 报尾 = `--bs-wrap-w`（在 `index.css` 与上面 B2/B3 段里改）
+   ② 正文阅读栏另给一个 token：`--bs-reading-w:672px`（＝42em @16px，约 38 汉字/行）。
+      旧的 `min(34em,100%)` 实测 **544px**、1440 屏上只占 38% 宽，是「阅读宽度太窄」的
+      直接来源。**不跟版心一样宽**：报纸正文栏本来就窄于版心（样张的 `.lede` 也是多栏），
+      42em 落在「报刊正文栏」与「网页正文栏」之间的常见档。
+   ③ 竖排刊眉的显示阈值由 1200 推到 **861**：旧账 1200 是因为版心只有 1080、旁边没富余
+      （见本文件 B1 段原注释），现在版心 1152、框内左右各有 43px（18 框距＋25），
+      861 档实测不压内容 —— **与样张 N1 的 861 一档对齐**。
+      ⚠️ 这一条是「一致」的推论：860 以下手机档本来就 `display:none`，中间那段（861–1199）
+         本次才第一次出现刊眉，若他嫌挤，回滚＝把下面的 861 改回 1200。
+   ⚠️ 零裸 hex、不动任何颜色；纯几何改动，改前改后可用 `probe-width-now.mjs` 逐档对账。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+ /* ① 版心：三层同一把尺子
+    ⚠️ 2026-10-08 A1 改口径（用户原话「保持宽度不变在每个页面，像首页一样的宽度，」）：
+       `*{box-sizing:border-box}` 下 `max-width` **含内边距**，所以「内容净宽 1152（＝首页
+       `.n1 .wrap` 1240 − 44×2）」要写成 `--bs-wrap-w + 44px`（本站内边距 22×2 从这 44 里出）。
+       旧账 `+40px` 配的是 20px 内边距，内容宽同样是 1152，只差右侧内缩 2px。
+       `.page` 不再单独限宽（`max-width:100%` ⇒ 逐像素跟随 `.main` 的内容盒），
+       否则它会带着 `.article-detail 800` 这类内收，比首页窄一档。
+       全站宽度证据与回滚见 `first\width-all-pages\`（`index.css` 末尾 A1 段亦同）。 */
+.layout.bs .main{max-width:calc(var(--bs-wrap-w) + 44px)}
+.layout.bs .page{max-width:100%}
+
+ /* 刊眉阈值：与样张 N1 的 861 对齐（旧账 1200 是「版心太窄」的副产品） */
+@media (min-width:861px){
+  .layout.bs::before,.layout.bs::after{display:block}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   批次③ · B7 ＝ P5.1 书架（`/novels`）＋ 书籍条目件 NovelCard（2026-10-08）
+   ──────────────────────────────────────────────────────────────────────────────
+   设计真值 = 计划书 §6.2 第一句：「**书头页（shelf）→ 报纸的「新书评介版」**」——
+   书架页与书头页同族：报纸的「新书评介」＝**左侧书封进图框（外 1px 墨线 ＋ 5px 衬白），
+   右侧书名巨幅衬线 ＋ 作者 ＋ 状态签 ＋ 章数字数 ＋ 简介 ＋ 阅读入口**，一本一块、
+   块间双线分隔（与 P2 首页 ⑤「书籍更新：报讯块」同一族，只是这一页尺度更大一号）。
+
+   ⚠️ 页头（`.cat-header` 的巨幅分类名 ＋ 左色竖条 ＋ `共 N 本 · M 章`）**P3 段已经迁完**，
+      本段一个字不碰：P5.01 / P5.02 直接吃 P3 的成果（回归靠探针在本页复验）。
+   ⚠️ 书封是「文章不配图」三条豁免之一（图集 / 书封 / 头像），照旧保留；无封面时仍是书名首字占位。
+   ⚠️ 状态签原来在 `NovelCard.tsx` / `NovelReader.tsx` 里用 `statusMeta.color + '22'`
+      （8 位 hex 半透底）内联下发 —— **暗色下这种半透底会糊**，本步把它换成
+      `--chip-color` / `--chip-ink` 两个变量（与 P2 首页书籍块、P4 详情页同一套约定），
+      值仍是 `NOVEL_STATUS_META` 的**色卡色与同色系墨色**，一个色号都没换。
+   ⚠️ 零裸 hex；分类色/状态色只从 `--chip-*` 变量拿。
+   ⚠️ 本段是**全局**规则（不加页码前缀）：`/novels` 与首页头条（小说时沿用 NovelCard）
+      共用同一个条目件，首页那一档在段末用 `:where(.bs-lead-card)` 收窄，不动它的列宽。
+      回退＝删本段（组件层只有上面那两处内联变量的替换需要一起还原）。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── ① 书架：一本一块的评介块 ─────────────────────────────────────────────── */
+.layout.bs .novel-grid{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:0;margin:0;
+  border-top:var(--bs-rule-2) double var(--bs-ink);padding-top:4px;
+}
+.layout.bs .novel-card{
+  display:grid;grid-template-columns:158px minmax(0,1fr);gap:26px;align-items:start;
+  background:transparent;border:0;border-bottom:var(--bs-rule-2) double var(--bs-hair);
+  border-radius:0;box-shadow:none;overflow:visible;
+  padding:24px 0 26px;transition:none;
+}
+.layout.bs .novel-card:last-child{border-bottom:var(--bs-rule-2) double var(--bs-hair)}
+.layout.bs .novel-card:hover{transform:none;box-shadow:none}
+
+/* ── ② 书封：图框（照 B1 版框的「双边」收小一号：外 1px 墨线 ＋ 5px 衬白）──────── */
+.layout.bs .novel-cover-wrap,
+.layout.bs .novel-cover-placeholder{
+  border:1px solid var(--bs-ink);border-radius:0;box-shadow:none;
+  padding:5px;background:var(--bs-paper);
+}
+.layout.bs .novel-cover{
+  width:100%;height:auto;aspect-ratio:3/4;object-fit:cover;display:block;
+  border-radius:0;background:transparent;
+}
+.layout.bs .novel-cover-placeholder{align-items:center;justify-content:center}
+.layout.bs .novel-cover-char{
+  font-family:var(--font-display);font-weight:600;font-size:3.2rem;color:var(--bs-ink-2);
+}
+
+/* ── ③ 右侧文字块：书名 → 作者 → 状态签 → 简介 → 章数字数 → 阅读入口 ─────────── */
+.layout.bs .novel-card-body{padding:0;gap:0;display:flex;flex-direction:column}
+.layout.bs .novel-title{
+  font-family:var(--font-display);font-weight:600;
+  font-size:clamp(24px,2.6vw,32px);letter-spacing:.14em;line-height:1.26;
+  color:var(--bs-ink);text-decoration:none;
+}
+.layout.bs .novel-title:hover{color:var(--bs-ink);text-decoration:underline;text-underline-offset:5px}
+.layout.bs .novel-author{margin-top:9px;font-size:10.5px;letter-spacing:.18em;color:var(--bs-ink-2)}
+/* 状态签：方框细线（撤掉 TSX 里 `color + '22'` 的 8 位 hex 半透底） */
+.layout.bs .novel-status-badge{
+  align-self:flex-start;margin-top:10px;padding:2px 9px;border-radius:0;
+  font-size:9.5px;font-weight:600;letter-spacing:.16em;background:transparent;
+  color:var(--chip-ink,var(--bs-ink));
+  border:1px solid color-mix(in srgb,var(--chip-color,var(--bs-ink)) 55%,var(--bs-paper));
+}
+.layout.bs .novel-synopsis{
+  background:transparent;border:0;border-radius:0;padding:0;margin:12px 0 0;
+  max-width:660px;font-size:12.5px;line-height:1.9;color:var(--bs-ink-2);text-align:justify;
+}
+.layout.bs .novel-stats{
+  display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:13px 0 0;
+  font-size:10px;letter-spacing:.14em;color:var(--bs-ink-3);
+}
+.layout.bs .novel-card .read-more{
+  align-self:flex-start;margin-top:15px;padding:0 0 2px;border-radius:0;background:transparent;
+  border-bottom:1px solid var(--bs-ink);
+  font-size:12.5px;font-weight:400;letter-spacing:.14em;color:var(--bs-ink);transition:none;
+}
+.layout.bs .novel-card .read-more:hover{
+  background:transparent;transform:none;
+  color:var(--accent-deep);border-bottom-color:var(--accent-deep);
+}
+
+/* ⚠️ 状态色的墨是**写死在 `NOVEL_STATUS_META` 里的亮色墨**（如青蓝 `#2A6577`，白底 6.9:1 合格）——
+    暗色下压深纸只剩 **2.28:1**，必须跟着主题提亮。做法：把色卡色往**当期墨色**混
+    （暗色墨本身是亮色，于是「提亮」），语义色仍在、暗色实测回到 **7.09:1**。
+    **没有新造色号**：两个色都来自台账（色卡色来自 NOVEL_STATUS_META，墨色来自 `--bs-ink`）。
+    这一条同时罩住首页 ⑤ 书籍块（`.bs-book-status`，P2 留下的同一处隐患）。 */
+[data-theme='dark'] .layout.bs .novel-status-badge,
+[data-theme='dark'] .layout.bs .bs-book-status{
+  color:color-mix(in srgb,var(--chip-color,var(--bs-ink)) 66%,var(--bs-ink));
+  border-color:color-mix(in srgb,var(--chip-color,var(--bs-ink)) 42%,var(--bs-paper));
+}
+
+/* ── ④ 空态（P5.03/04）：图标从「圆底光晕」改成细线方框，文案一字未改 ─────────── */
+.layout.bs .empty-icon-ghost::before{background:transparent;border:1px solid var(--bs-hair);border-radius:0}
+.layout.bs .empty-icon-ghost::after{background:var(--bs-paper);border-radius:0}
+
+/* ── ⑤ 首页头条那一档：同一个条目件，收窄书封与书名（不动它自己的列宽/栏线）────── */
+:where(.bs-lead-card) :where(.novel-card){
+  grid-template-columns:112px minmax(0,1fr);gap:18px;border-bottom:0;padding:0;
+}
+:where(.bs-lead-card) :where(.novel-title){font-size:clamp(22px,2vw,28px)}
+:where(.bs-lead-card) :where(.novel-cover-wrap),
+:where(.bs-lead-card) :where(.novel-cover-placeholder){padding:4px}
+
+/* ── ⑥ 手机档（照 B2/P2 的 860 那一档）───────────────────────────────────── */
+@media (max-width:860px){
+  .layout.bs .novel-card{grid-template-columns:104px minmax(0,1fr);gap:16px;padding:18px 0 20px}
+  .layout.bs .novel-title{font-size:22px;letter-spacing:.1em}
+  .layout.bs .novel-card .read-more{font-size:11.5px}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   批次③ · B8 ＝ P5.2 NovelReader 四态（2026-10-08）—— 本次重点之一，逐条对计划书 §6.2
+   ──────────────────────────────────────────────────────────────────────────────
+   四态＝**书头页（shelf）／沉浸页（reader）／目录抽屉（tocOpen）／设置面板（settingOpen）**。
+   结构一行不动：`view` 状态机、目录抽屉、设置面板、进度存 localStorage、←/→ 翻章、
+   点屏幕中部唤出工具条（2.6s 自动隐藏）、输入框聚焦时不响应键盘 —— 全部照旧。
+
+   ① **书头页 → 报纸「新书评介版」**：书封进图框（外 1px 墨线 ＋ 5px 衬白，与 B7 书架同一枚语言），
+      右侧书名巨幅衬线 ＋ 作者 ＋ 方框状态签 ＋ `共 N 章 · M 字` ＋ 简介；
+      `▶ 开始阅读 / 继续阅读 · 第 N 章`＝**墨色方框主按钮（悬停反转成墨底纸字）**，
+      `目录`＝下划线文字按钮 —— 与 B5/B6 的两级按钮同一套。
+      下方 `整本评论（N）` 做成**双线方框的「读者来信」栏**，展开即完整评论区。
+   ② **沉浸页（reader）→ 真全屏版面**：`position:fixed;inset:0` 本来就把整页版框压在下面
+      （`--reader-bg` 现在＝纸底，不再是一套独立调色板）；顶部工具条＝报眉（纸底 ＋ 一条墨线底），
+      按钮全走「图标无圆底 / 栏题可点」；正文栏 `min(36em,100%)` 居中、衬线、两端对齐；
+      部分大标题＝双线夹版带；章名＝栏题（底下一条双线）；底部 `上一章/下一章`＝方框按钮；
+      整本进度细线＝1px 青蓝（与 P4 详情页的阅读进度细线同一档）。
+   ③ **目录抽屉 → 「本期要目」**：左缘一条竖排拉丁刊眉 `CONTENTS`（与 B1 的竖排刊眉同做法），
+      栏题双线夹；条目＝分栏条目（方框序号 ＋ 衬线章名 ＋ 右端字数），**当前章加粗并一条青蓝左线**；
+      部分名＝小标（青蓝左线）。
+   ④ **设置面板 → 底部「排印设置」条**：抓手＝一条细线；三行标签＝栏题小字；
+      按钮＝**方框**，`on` 态反转成墨底纸字。**不凭空加选项**（样张里那组「底色/字体」是样张自造的，
+      真实阅读器只有夜昼 ＋ 字号 ＋ 行距 —— 以真实功能为准）。
+
+   ⚠️ D4（他已拍板）**夜昼收编**：阅读器的 `novel-theme` 独立夜档不再自己调色，改为复用**站内
+      `data-theme`**。落点两处：① CSS 里 `.novel-reader` 的 `--reader-*` 四件套改成引用 `--bs-*`
+      （index.css 里 `[data-theme='dark']` 那套 `--reader-night-*` 因此不再被引用）；② TSX 里
+      夜间开关改调 `useTheme().toggle`。**回退＝把这段 ⓪ 删掉、TSX 的 `useTheme` 换回
+      `useLocalStorage('novel-theme')`**，独立夜档立刻回来。
+   ⚠️ D5（他已拍板）顺手修两个既有缺陷：① 行距指示器原来恒显示「适中」，改成跟着档位走；
+      ② `shelf.off` 的中文值原来是「开启」（off 态按钮显示「开启」易误读），改成「关闭」。
+   ⚠️ 正文栏宽度**跟着字号走**（`min(36em,100%)`）：为此把 `fontSize` 的内联 style 从
+      `<article class="nreader-chapter">` 上移到 `.nreader-page` 容器，底部导航与评论区才会与正文同宽。
+      `lineHeight` 仍留在 article 上（不让评论区行距跟着变）。
+   ⚠️ 评论区这一族（`.comment-*`）**不带页面前缀**（只带 `.layout.bs`）：详情页那一份是 P4 里按
+      `.article-detail` 收窄的，两处声明一致；本段这个是给阅读器（以及后续留言板）用的。
+      等 P6.8（B11）统一时，可以把 P4 那份的页面前缀撤掉、两边合一。
+   ⚠️ 一个裸 hex 都没有：全走 `--bs-ink/-2/-3`、`--bs-hair/-2`、`--bs-paper/-2`、`--accent`、`--scrim-*`。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── ⓪ D4 收编：阅读器四件套＝站内 token（`--reader-night-*` 那套不再被引用）───── */
+.layout.bs .novel-reader,
+.layout.bs .novel-reader-night{
+  --reader-bg:var(--bs-paper);
+  --reader-text:var(--bs-ink);
+  --reader-secondary:var(--bs-ink-2);
+  --reader-soft:var(--bs-paper-2);
+}
+
+/* ── ① 书头页：报纸「新书评介版」─────────────────────────────────────────── */
+.layout.bs .nreader-shelf{display:flex;flex-direction:column;gap:0;padding:4px 0 18px}
+.layout.bs .nreader-cover-hero{
+  display:grid;grid-template-columns:194px minmax(0,1fr);gap:30px;align-items:start;
+  padding:0 0 22px;border-bottom:var(--bs-rule-2) double var(--bs-ink);
+}
+/* 书封＝图框（外 1px 墨线 ＋ 5px 衬白；img 与「首字占位」共用同一枚框） */
+.layout.bs .nreader-hero-cover{
+  display:block;width:194px;height:auto;aspect-ratio:3/4;object-fit:cover;
+  border:1px solid var(--bs-ink);border-radius:0;box-shadow:none;padding:5px;background:var(--bs-paper);
+}
+.layout.bs .nreader-hero-cover-ph{
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:600;font-size:3rem;color:var(--bs-ink-2);
+  background:var(--bs-paper);
+}
+.layout.bs .nreader-book-title{
+  font-family:var(--font-display);font-weight:600;
+  font-size:clamp(28px,3.6vw,44px);letter-spacing:.14em;line-height:1.22;
+  color:var(--bs-ink);margin:12px 0 0;
+}
+.layout.bs .nreader-book-author{margin-top:10px;font-size:10.5px;letter-spacing:.18em;color:var(--bs-ink-2)}
+.layout.bs .nreader-status-badge{
+  align-self:flex-start;margin-top:11px;padding:2px 9px;border-radius:0;
+  font-size:9.5px;font-weight:600;letter-spacing:.16em;background:transparent;
+  color:var(--chip-ink,var(--bs-ink));
+  border:1px solid color-mix(in srgb,var(--chip-color,var(--bs-ink)) 55%,var(--bs-paper));
+}
+[data-theme='dark'] .layout.bs .nreader-status-badge{
+  color:color-mix(in srgb,var(--chip-color,var(--bs-ink)) 66%,var(--bs-ink));
+  border-color:color-mix(in srgb,var(--chip-color,var(--bs-ink)) 42%,var(--bs-paper));
+}
+.layout.bs .nreader-book-meta{
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  margin-top:14px;padding-top:11px;border-top:1px solid var(--bs-hair-2);
+  font-size:10px;letter-spacing:.14em;color:var(--bs-ink-3);
+}
+.layout.bs .nreader-synopsis{
+  max-width:660px;margin:20px 0 0;padding:0;background:transparent;
+  border:0;border-radius:0;font-size:12.5px;line-height:1.9;color:var(--bs-ink-2);text-align:justify;
+}
+.layout.bs .nreader-shelf-actions{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-top:22px}
+.layout.bs .nreader-start-btn{
+  display:inline-flex;align-items:center;gap:10px;padding:9px 18px;
+  border:1px solid var(--bs-ink);border-radius:0;background:transparent;box-shadow:none;
+  font-family:var(--font-body,inherit);font-size:12.5px;font-weight:400;letter-spacing:.14em;
+  color:var(--bs-ink);transition:none;
+}
+.layout.bs .nreader-start-btn:hover{transform:none;box-shadow:none;background:var(--bs-ink);color:var(--bs-paper)}
+.layout.bs .nreader-start-ico{font-size:.72rem}
+.layout.bs .nreader-toc-btn{
+  padding:0 0 2px;border:0;border-bottom:1px solid var(--bs-ink);border-radius:0;background:transparent;
+  font-size:12.5px;font-weight:400;letter-spacing:.14em;color:var(--bs-ink);transition:none;
+}
+.layout.bs .nreader-toc-btn:hover{
+  background:transparent;transform:none;color:var(--accent-deep);border-bottom-color:var(--accent-deep);
+}
+/* 整本评论（`<details>`）→ 双线方框的「读者来信」栏 */
+.layout.bs .nreader-book-comments{
+  margin:28px 0 0;border:1px solid var(--bs-ink);border-radius:0;background:transparent;overflow:hidden;
+}
+.layout.bs .nreader-book-comments summary{
+  padding:11px 16px;font-family:var(--font-display);font-weight:600;
+  font-size:14px;letter-spacing:.2em;color:var(--bs-ink);cursor:pointer;
+}
+.layout.bs .nreader-book-comments[open] summary{border-bottom:1px solid var(--bs-ink);margin-bottom:0}
+.layout.bs .nreader-book-comments > .comment-section{padding:14px 16px 18px}
+
+/* ── ② 沉浸页：报眉 ＋ 正文栏 ＋ 版带 ＋ 方框翻章 ─────────────────────────── */
+.layout.bs .nreader-page{background:var(--reader-bg,var(--bs-paper))}
+.layout.bs .nreader-topbar{
+  padding:11px 20px;background:var(--bs-paper);backdrop-filter:none;
+  border-bottom:1px solid var(--bs-ink);
+}
+.layout.bs .nreader-top-btn{
+  width:auto;min-width:30px;height:30px;border-radius:0;background:transparent;
+  color:var(--bs-ink);font-size:.95rem;transition:none;
+}
+.layout.bs .nreader-top-btn:hover{background:transparent;color:var(--accent-deep)}
+.layout.bs .nreader-top-btn.back{font-size:1.5rem;line-height:1}
+.layout.bs .nreader-top-title{
+  padding:2px 10px;border-radius:0;background:transparent;
+  font-family:var(--font-display);font-weight:600;font-size:15px;letter-spacing:.12em;color:var(--bs-ink);
+}
+.layout.bs .nreader-top-title:hover{
+  background:transparent;color:var(--bs-ink);text-decoration:underline;text-underline-offset:5px;
+}
+.layout.bs .nreader-top-progress{font-size:10px;letter-spacing:.16em;color:var(--bs-ink-3)}
+/* 正文栏：宽度跟着字号走（em 由 `.nreader-page` 的内联 fontSize 给） */
+.layout.bs .nreader-chapter{
+  max-width:min(36em,100%);margin:0 auto;padding:76px 0 40px;color:var(--bs-ink);
+}
+.layout.bs .nreader-chapter-title{
+  font-family:var(--font-display);font-weight:600;font-size:1.24em;letter-spacing:.2em;
+  line-height:1.5;text-align:center;color:var(--bs-ink);
+  margin:0 0 30px;padding:0 0 14px;border-bottom:var(--bs-rule-2) double var(--bs-ink);
+}
+/* 部分大标题（`# 第一部分`）→ 双线夹版带（原先是两侧破折号） */
+.layout.bs .nreader-part-title{
+  font-family:var(--font-display);font-weight:600;font-size:1.55em;letter-spacing:.18em;
+  line-height:1.4;text-align:center;color:var(--bs-ink);text-shadow:none;
+  margin:0 0 34px;padding:10px 0;border:0;
+  border-top:var(--bs-rule-2) double var(--bs-ink);border-bottom:1px solid var(--bs-ink);
+}
+.layout.bs .nreader-part-title::before,
+.layout.bs .nreader-part-title::after{display:none;content:none}
+.layout.bs .nreader-page .markdown-body{font-size:inherit;line-height:inherit;color:var(--bs-ink)}
+.layout.bs .nreader-page .markdown-body p{text-align:justify;text-justify:inter-ideograph;margin:0 0 1em}
+.layout.bs .nreader-page .markdown-body blockquote{
+  background:transparent;border-left:2px solid var(--bs-ink);border-radius:0;
+  color:var(--bs-ink-2);padding:4px 0 4px 16px;
+}
+.layout.bs .nreader-page .markdown-body code{background:var(--bs-paper-2);border-radius:0}
+.layout.bs .nreader-footnav{
+  max-width:min(36em,100%);gap:12px;margin:24px auto 0;padding:14px 0 12px;
+  background:var(--bs-paper);backdrop-filter:none;border-top:1px solid var(--bs-ink);
+}
+.layout.bs .nreader-foot-btn{
+  padding:11px 14px;border:1px solid var(--bs-hair);border-radius:0;background:transparent;
+  color:var(--bs-ink);transition:none;
+}
+.layout.bs .nreader-foot-btn:hover:not(:disabled){background:transparent;transform:none;border-color:var(--bs-ink)}
+.layout.bs .nreader-foot-btn:disabled{opacity:.32}
+.layout.bs .nreader-foot-dir{
+  font-family:var(--font-display);font-weight:600;font-size:12.5px;letter-spacing:.14em;color:var(--bs-ink);
+}
+.layout.bs .nreader-foot-name{font-size:10.5px;letter-spacing:.06em;color:var(--bs-ink-3)}
+.layout.bs .nreader-chapter-comments{
+  max-width:min(36em,100%);margin:26px auto 0;padding:20px 0 40px;
+  border-top:1px solid var(--bs-hair-2);
+}
+.layout.bs .nreader-comments-ttl{
+  display:block;font-family:var(--font-body,inherit);font-weight:400;
+  font-size:10.5px;letter-spacing:.24em;color:var(--bs-ink-2);margin:0 0 16px;
+}
+.layout.bs .nreader-book-progress{height:1px;background:transparent}
+.layout.bs .nreader-book-progress-fill{background:var(--accent);opacity:1}
+
+/* ── ③ 目录抽屉 → 「本期要目」（左缘竖排拉丁刊眉 ＋ 分栏条目）──────────────── */
+.layout.bs .nreader-toc{
+  width:min(380px,86vw);padding-left:34px;position:relative;
+  background:var(--bs-paper);color:var(--bs-ink);box-shadow:none;border-left:1px solid var(--bs-ink);
+}
+.layout.bs .nreader-toc::before{
+  content:"CONTENTS";position:absolute;left:9px;top:50%;transform:translateY(-50%);
+  writing-mode:vertical-rl;font-size:9.5px;letter-spacing:.3em;color:var(--bs-ink-3);
+  pointer-events:none;white-space:nowrap;
+}
+.layout.bs .nreader-toc-head{
+  padding:15px 20px 13px 0;font-family:var(--font-display);font-weight:600;
+  font-size:14px;letter-spacing:.2em;color:var(--bs-ink);
+  border-top:var(--bs-rule-2) double var(--bs-ink);border-bottom:1px solid var(--bs-ink);
+}
+.layout.bs .nreader-toc-head .nreader-top-btn{color:var(--bs-ink-2)}
+.layout.bs .nreader-toc-head .nreader-top-btn:hover{color:var(--bs-ink)}
+.layout.bs .nreader-toc-list{padding:10px 0 14px}
+.layout.bs .nreader-toc-item{
+  gap:12px;padding:11px 12px;border:0;border-bottom:1px solid var(--bs-hair-2);border-radius:0;
+  background:transparent;color:var(--bs-ink-2);transition:none;
+}
+.layout.bs .nreader-toc-item:hover{background:transparent;color:var(--bs-ink)}
+.layout.bs .nreader-toc-item.current{
+  background:transparent;color:var(--bs-ink);font-weight:600;
+  border-left:2px solid var(--accent);padding-left:10px;
+}
+.layout.bs .nreader-toc-no{
+  width:24px;height:24px;border:1px solid var(--bs-hair);border-radius:0;background:transparent;
+  color:var(--bs-ink-3);font-family:var(--font-display);font-weight:600;font-size:.72rem;
+}
+.layout.bs .nreader-toc-item.current .nreader-toc-no{
+  background:transparent;border-color:var(--bs-ink);color:var(--bs-ink);
+}
+.layout.bs .nreader-toc-name{font-family:var(--font-display);font-size:14px;letter-spacing:.04em}
+.layout.bs .nreader-toc-wc{font-size:9.5px;letter-spacing:.1em;color:var(--bs-ink-3)}
+.layout.bs .nreader-toc-part{
+  margin:16px 0 6px;padding:4px 0 4px 10px;border-radius:0;border-left:2px solid var(--accent);
+  background:transparent;color:var(--bs-ink-2);
+  font-size:10px;font-weight:600;letter-spacing:.2em;
+}
+.layout.bs .nreader-toc-part:first-child{margin-top:2px}
+
+/* ── ④ 设置面板 → 底部「排印设置」条 ──────────────────────────────────────── */
+.layout.bs .nreader-sheet{
+  max-width:620px;padding:16px 24px 30px;border:1px solid var(--bs-ink);border-radius:0;
+  background:var(--bs-paper);color:var(--bs-ink);box-shadow:none;
+}
+.layout.bs .nreader-sheet-grip{width:42px;height:1px;border-radius:0;background:var(--bs-hair);margin:0 auto 12px}
+.layout.bs .nreader-sheet-label{
+  font-family:var(--font-display);font-weight:600;font-size:12.5px;letter-spacing:.16em;color:var(--bs-ink);
+}
+.layout.bs .nreader-size-val{min-width:44px;font-size:11px;letter-spacing:.14em;color:var(--bs-ink-2)}
+.layout.bs .nreader-pill{
+  min-width:64px;padding:6px 14px;border:1px solid var(--bs-hair);border-radius:0;
+  background:transparent;color:var(--bs-ink);font-size:11.5px;letter-spacing:.12em;transition:none;
+}
+.layout.bs .nreader-pill:hover{background:transparent;border-color:var(--bs-ink)}
+.layout.bs .nreader-pill.on{background:var(--bs-ink);color:var(--bs-paper);border-color:var(--bs-ink)}
+
+/* ── ⑤ 阅读器里的评论区（这一族不带页面前缀：详情页那份见 P4 段）─────────────── */
+.layout.bs .comment-section{margin-top:0}
+.layout.bs .comment-title{
+  display:block;font-family:var(--font-body,inherit);font-weight:400;
+  font-size:10.5px;letter-spacing:.24em;color:var(--bs-ink-2);margin:0 0 16px;
+}
+.layout.bs .comment-form{background:transparent;border:0;border-radius:0;box-shadow:none;padding:0;gap:12px;margin:0 0 24px}
+.layout.bs .comment-content{
+  border:0;border-bottom:1px solid var(--bs-ink);border-radius:0;background:transparent;
+  padding:8px 0;font-size:.95rem;color:var(--bs-ink);
+}
+.layout.bs .comment-content:focus{box-shadow:none;border-bottom-color:var(--accent)}
+.layout.bs .reply-target{
+  background:transparent;border:0;border-left:2px solid var(--bs-hair);border-radius:0;
+  padding:4px 0 4px 12px;font-size:.82rem;color:var(--bs-ink-2);
+}
+.layout.bs .reply-cancel{color:var(--coral-ink);font-size:.78rem}
+.layout.bs .comment-login-tip{
+  background:transparent;border:1px dashed var(--bs-hair);border-radius:0;
+  color:var(--bs-ink-2);font-size:.86rem;letter-spacing:.06em;padding:12px 14px;
+}
+.layout.bs .comment-list{gap:0}
+.layout.bs .comment-item{
+  background:transparent;border:0;border-top:1px solid var(--bs-hair-2);border-radius:0;
+  box-shadow:none;padding:16px 0 4px;
+}
+.layout.bs .comment-head{gap:9px;margin-bottom:6px}
+.layout.bs .comment-avatar{
+  border:1px solid var(--bs-ink);border-radius:0;background:transparent;
+  color:var(--bs-ink);font-family:var(--font-display);font-weight:600;
+}
+.layout.bs .comment-name-label{
+  font-family:var(--font-display);font-weight:600;font-size:14px;letter-spacing:.08em;color:var(--bs-ink);
+}
+.layout.bs .comment-date{font-size:9.5px;letter-spacing:.14em;color:var(--bs-ink-2)}
+.layout.bs .comment-body{color:var(--bs-ink-2);line-height:1.85;font-size:.95rem}
+.layout.bs .comment-reply,.layout.bs .comment-delete{
+  background:none;border:0;border-bottom:1px solid var(--bs-hair);border-radius:0;
+  color:var(--bs-ink-2);font-size:.78rem;letter-spacing:.06em;padding:0 0 1px;transition:none;
+}
+.layout.bs .comment-reply:hover,.layout.bs .comment-delete:hover{
+  background:none;color:var(--bs-ink);border-bottom-color:var(--bs-ink);
+}
+.layout.bs .comment-children{gap:4px;margin-top:6px}
+.layout.bs .comment-reply-row,.layout.bs .comment-fold{
+  border-left:1px solid var(--bs-hair);border-radius:0;margin-left:14px;padding-left:14px;
+}
+.layout.bs .comment-fold-btn{
+  background:none;border:0;border-bottom:1px dashed var(--bs-hair);border-radius:0;
+  color:var(--bs-ink-2);font-size:.78rem;padding:2px 0;letter-spacing:.06em;
+}
+.layout.bs .comment-fold-btn:hover{background:none;color:var(--bs-ink)}
+.layout.bs .empty-tip{color:var(--bs-ink-2);font-size:12px;letter-spacing:.1em}
+.layout.bs .submit-ok{color:var(--bs-ink-2);font-size:.8rem;letter-spacing:.1em}
+
+/* ── ⑥ 手机档 ─────────────────────────────────────────────────────────────── */
+@media (max-width:860px){
+  .layout.bs .nreader-cover-hero{grid-template-columns:112px minmax(0,1fr);gap:16px;padding-bottom:16px}
+  .layout.bs .nreader-hero-cover{width:112px}
+  .layout.bs .nreader-book-title{font-size:24px;letter-spacing:.1em;margin-top:8px}
+  .layout.bs .nreader-book-meta{gap:9px;font-size:9.5px}
+  .layout.bs .nreader-synopsis{font-size:12px;line-height:1.85}
+  .layout.bs .nreader-shelf-actions{gap:16px;margin-top:18px}
+  .layout.bs .nreader-chapter{padding:66px 0 30px}
+  .layout.bs .nreader-toc{width:min(340px,90vw)}
+}

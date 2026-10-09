@@ -119,7 +119,8 @@ export default function NovelComposer() {
     const msg = '即将创建小说《' + article.title + '》\n作者：' + (article.novel?.author || '（未填写）') + '\n第一章 · ' + (chapter.wordCount || 0) + ' 字\n\n点击「确定」发布。';
     if (!window.confirm(msg)) return;
     addArticle(article);
-    navigate('/article/' + article.id);
+    // 发布后落到书架族的阅读界面（2026-10-09「小说界面绑定到书架」）
+    navigate('/novels/' + article.id);
   };
 
   const saveExisting = () => {
@@ -140,7 +141,8 @@ export default function NovelComposer() {
     const msg = '即将向《' + book.title + '》追加「' + newCh.title + '」\n现在共 ' + chapters.length + ' 章。\n\n点击「确定」发布。';
     if (!window.confirm(msg)) return;
     updateArticle(updated);
-    navigate('/article/' + bookId);
+    // 追加完一章直接进**阅读界面**的那一章（2026-10-09 第二轮：正文单独一页）
+    navigate('/novels/' + bookId + '/read?ch=' + newCh.id);
   };
 
   const switchBook = (id: string) => { setBookId(id); setChTitle(''); };

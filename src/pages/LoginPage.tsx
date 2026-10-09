@@ -110,124 +110,157 @@ export default function LoginPage() {
     }
   };
 
-  const switchMode = () => {
-    setMode(mode === 'signin' ? 'signup' : 'signin');
+  /* 登录／注册两态互切：报头下面那排 `.seg` 分段键与底部「去注册」文字链都走这里
+     （切态同时清错误、换一道验证码）。 */
+  const goMode = (m: 'signin' | 'signup') => {
+    setMode(m);
     setError(null); setInfo(null);
     setCaptcha(generateMathCaptcha()); setCaptchaInput('');
   };
+  const switchMode = () => goMode(mode === 'signin' ? 'signup' : 'signin');
 
+  /* 显示／隐藏密码：两个密码框（密码 ＋ 确认密码）共用一枚开关。
+     原版是两个框各挂一只眼睛图标（SVG）；N1 这套语汇里没有图标按钮，
+     收成 `.gfoot` 里一枚小字按钮。功能没少，控件少了一只。 */
+  const reveal = () => {
+    const next = !showPassword;
+    setShowPassword(next);
+    setShowConfirm(next);
+  };
+
+  /* ══════════════════════════════════════════════════════════════════════════════
+     页身（2026-10-09「登录，个人主页和翻译界面未统一风格」）
+     ──────────────────────────────────────────────────────────────────────────────
+     这一页原来长在 Layout **之外**（`App.tsx` 里单独一条路由），页身是一整张五色渐变
+     毛玻璃卡（`.login-page/.login-card-*`，index.css 597–642），连报头报尾都没有。
+     本轮：① 路由移进 Layout；② 页身换成样张已有的三件 ——
+       `.pagehead`（页头：kicker ＋ 大标题 ＋ 导语）
+       `.seg`     （分段键：登录／注册，与小说阅读器同款）
+       `.gform`   （留言板那套表单：细下划线输入框 ＋ `.gfoot` 动作行）
+     ⚠️ 刻意去掉的只有装饰：左上角那枚 `.login-card-close`（×）—— 现在报头里本来就有
+        「首页」与「登录」，多一枚 × 是重复；以及输入框里的两只 SVG 图标。
+     回退＝把 `App.tsx` 那条 `<Route path="/login">` 移回 `LayoutRoute` 之外即可
+     （`index.css` 里旧皮肤一行未删，随时能长回来）。
+     ══════════════════════════════════════════════════════════════════════════════ */
   return (
-    <div className="login-page">
-      <div className="login-deco login-deco-1" />
-      <div className="login-deco login-deco-2" />
-      <div className="login-card">
-        <button className="login-card-close" onClick={() => navigate('/')} aria-label={t('login.back')}>×</button>
+    <>
+      <section className="pagehead pagehead-auth">
+        <div className="pagehead-txt">
+          <div className="kicker">{mode === 'signin' ? 'SIGN IN' : 'SIGN UP'}</div>
+          <h1>{mode === 'signin' ? t('login.headSignIn') : t('login.headSignUp')}</h1>
+          <p className="lede">{mode === 'signin' ? t('login.subSignIn') : t('login.subSignUp')}</p>
+        </div>
+      </section>
 
-        <h1 className="login-card-title">{mode === 'signin' ? t('login.cardSignIn') : t('login.cardSignUp')}</h1>
-        <p className="login-card-sub">{mode === 'signin' ? t('login.subSignIn') : t('login.subSignUp')}</p>
+      <section className="sec">
+        {/* 模式切换：照 N1 的 `.seg` 分段键（与小说阅读器的「上一章／目录」同款规格） */}
+        <div className="seg">
+          <button type="button" className={mode === 'signin' ? 'on' : undefined} onClick={() => goMode('signin')}>
+            {t('login.signIn')}
+          </button>
+          <button type="button" className={mode === 'signup' ? 'on' : undefined} onClick={() => goMode('signup')}>
+            {t('login.signUp')}
+          </button>
+        </div>
 
-        {info && <p className="captcha-info">{info}</p>}
-        {error && <p className="auth-error">{error}</p>}
+        <form onSubmit={handleSubmit} className="gform gform-auth">
+          {info && <p className="note-box">{info}</p>}
+          {error && <p className="note-box note-err">{error}</p>}
 
-        <form onSubmit={handleSubmit} className="login-card-form">
-          <div className="login-field">
-            <span className="login-field-icon">
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
-            </span>
-            <input
-              type="email"
-              className="login-input"
-              placeholder={t('login.email')}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
+          {/* 邮箱 / 密码：每格左上方一行小字标签（`.glabel`，2026-10-09 用户拍板 A）。
+              改前格子里只有 placeholder，一打字那行提示就没了——注册档四格打完就分不清谁是谁。 */}
+          <div className="grow">
+            <div className="fld">
+              <label className="glabel" htmlFor="login-email">{t('login.lblEmail')}</label>
+              <input
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </div>
+            <div className="fld">
+              <label className="glabel" htmlFor="login-password">{t('login.lblPassword')}</label>
+              <input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder={t('login.password')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              />
+            </div>
           </div>
-          <div className="login-field">
-            <span className="login-field-icon">
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            </span>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              className="login-input"
-              placeholder={t('login.password')}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            />
-            <button type="button" className="login-eye" onClick={() => setShowPassword((v) => !v)} aria-label={t('login.togglePassword')} title={showPassword ? t('login.hidePassword') : t('login.showPassword')}>
-              {showPassword ? (
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-              ) : (
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-              )}
+
+          {/* 确认密码：独占一行（`.grow` 的单子元素被 n1-app.css 铺满整行，不留半格空） */}
+          {mode === 'signup' && (
+            <div className="grow">
+              <div className="fld">
+                <label className="glabel" htmlFor="login-confirm">{t('login.lblConfirm')}</label>
+                <input
+                  id="login-confirm"
+                  type={showConfirm ? 'text' : 'password'}
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 人机验证：样张里没有这一件 —— 左＝算术题（`.cap-q`），右＝答案格。
+              标签跨两列（`.fld-cap`），窄屏那档竖排（n1-app.css 的 860px 媒体查询）。 */}
+          {mode === 'signup' && (
+            <div className="grow">
+              <div className="fld fld-cap">
+                <label className="glabel" htmlFor="login-captcha">{t('login.lblCaptcha')}</label>
+                <span className="cap-q">{captcha.text}</span>
+                <input
+                  id="login-captcha"
+                  type="text"
+                  placeholder={t('login.captchaAnswer')}
+                  value={captchaInput}
+                  onChange={(e) => setCaptchaInput(e.target.value)}
+                  required
+                  aria-label={t('login.captchaAnswer')}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="gfoot">
+            {mode === 'signin' && (
+              <label className="gnote login-remember">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                />
+                <span>{t('login.remember')}</span>
+              </label>
+            )}
+            <button type="button" className="tbtn" onClick={reveal}>
+              {showPassword ? t('login.hidePassword') : t('login.showPassword')}
+            </button>
+            <button type="submit" className="btn" disabled={loading}>
+              {loading ? t('login.submitting') : (mode === 'signin' ? t('login.signIn') : t('login.signUp'))}
             </button>
           </div>
-          {mode === 'signup' && (
-            <div className="login-field">
-              <span className="login-field-icon">
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            </span>
-              <input
-                type={showConfirm ? 'text' : 'password'}
-                className="login-input"
-                placeholder={t('login.confirmPassword')}
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                required
-                minLength={6}
-                autoComplete="new-password"
-              />
-              <button type="button" className="login-eye" onClick={() => setShowConfirm((v) => !v)} aria-label={t('login.togglePassword')} title={showConfirm ? t('login.hidePassword') : t('login.showPassword')}>
-                {showConfirm ? (
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                )}
-              </button>
-            </div>
-          )}
-
-          {mode === 'signin' && (
-            <label className="login-remember">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-              />
-              <span>{t('login.remember')}</span>
-            </label>
-          )}
-
-          {mode === 'signup' && (
-            <div className="captcha-row">
-              <span className="captcha-question">{captcha.text}</span>
-              <input
-                type="text"
-                className="login-input captcha-input"
-                placeholder={t('login.captchaAnswer')}
-                value={captchaInput}
-                onChange={(e) => setCaptchaInput(e.target.value)}
-                required
-              />
-            </div>
-          )}
-
-          <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? t('login.submitting') : (mode === 'signin' ? t('login.signIn') : t('login.signUp'))}
-          </button>
         </form>
 
-        <p className="login-switch">
-          {mode === 'signin' ? t('login.noAccount') : t('login.haveAccount')}
-          <button type="button" onClick={switchMode} className="login-switch-btn">
+        <p className="auth-switch">
+          <span>{mode === 'signin' ? t('login.noAccount') : t('login.haveAccount')}</span>
+          <button type="button" onClick={switchMode} className="tbtn">
             {mode === 'signin' ? t('login.goSignUp') : t('login.goSignIn')}
           </button>
         </p>
-      </div>
-    </div>
+      </section>
+    </>
   );
 }

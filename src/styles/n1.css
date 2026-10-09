@@ -1,0 +1,459 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   n1.css —— N1 大报样张「直接做真前端」的样式层
+   生成时间：2026-10-09 05:41
+   来源：design-mockups\g\n1-broadsheet\index.html 的内联 <style>（415 行，设计值一字未改）
+
+   ⚠️ 本文件由脚本生成，不要手改 —— 改完样张重跑：
+        node first\n1-as-frontend\build-n1-css.mjs
+   机械改写只有 5 条：① 选择器加 .n1 作用域；② :root/body → .n1、html.dark → html[data-theme='dark'] .n1；
+   ③ 删演示尾签 .tag；④ 4 处写死文案改 CSS 变量（--n1-spine / --n1-meta / --n1-byline / --n1-face）；
+   ⑤ 末尾补一条 html:has(.n1) 底色。
+
+   在 main.tsx 里**最后**引入（排在 index.css / broadsheet.css / buttons.css 之后）：
+   迁移到样张的页面全靠它，没迁移的页面一行都不受它影响。
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+
+
+.n1,.n1 *{box-sizing:border-box;margin:0;padding:0}
+.n1{ --bg:#FFFFFF; --fg:#111111;
+  --sky:#5BA8D8; --honey:#E8C9A0; --coral:#E89B8A; --teal:#4A9BB8; --gray:#8A8F9A; }
+html[data-theme='dark'] .n1{ --bg:#141518; --fg:#E8E4DC; }
+.n1{
+  --fg2:color-mix(in srgb,var(--fg) 60%,var(--bg));
+  --fg3:color-mix(in srgb,var(--fg) 38%,var(--bg));
+  --hair:color-mix(in srgb,var(--fg) 26%,var(--bg));
+  --hair2:color-mix(in srgb,var(--fg) 13%,var(--bg));
+  --disp:'Murmurs Title','Noto Serif TC',serif;
+  --body:'Murmurs Body','Noto Serif TC',serif;
+}
+.n1{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.72;
+  -webkit-font-smoothing:antialiased;font-variant-numeric:lining-nums;padding:26px 22px 40px}
+.n1 a{color:inherit;text-decoration:none}
+/* —— 整页版框：双边（外 2px 实线＋往里 5px 一圈 1px 细线）＋框内左右竖排刊眉＋天头正中鱼尾 —— */
+.n1 .wrap{max-width:1240px;margin:0 auto;padding:14px 44px 42px;position:relative;border:2px solid var(--fg);
+  background-repeat:no-repeat;
+  background-image:
+    linear-gradient(var(--hair),var(--hair)),
+    linear-gradient(var(--hair),var(--hair)),
+    linear-gradient(var(--hair),var(--hair)),
+    linear-gradient(var(--hair),var(--hair));
+  background-position:5px 5px, 5px calc(100% - 6px), 5px 5px, calc(100% - 6px) 5px;
+  background-size:calc(100% - 10px) 1px, calc(100% - 10px) 1px, 1px calc(100% - 10px), 1px calc(100% - 10px)}
+/* 框内左右两条竖排刊眉（左＝刊名·期数，右＝网址），纵向居中 */
+.n1 .wrap::before{content:var(--n1-spine, "呓语集");position:absolute;left:9px;top:50%;
+  transform:translateY(-50%);writing-mode:vertical-rl;font-size:9.5px;letter-spacing:.28em;
+  color:var(--fg3);pointer-events:none;white-space:nowrap}
+.n1 .wrap::after{content:"the-set-of-murmurs.me";position:absolute;right:9px;top:50%;
+  transform:translateY(-50%);writing-mode:vertical-rl;font-size:9.5px;letter-spacing:.24em;
+  color:var(--fg3);pointer-events:none;white-space:nowrap}
+
+/* —— 报头：日期版次在右上角 → 巨幅刊名（＝首页大标题）→ 小标语 → 双线夹版面导航 —— */
+.n1 .nav{display:block;text-align:center;border-top:0;padding:0;position:relative}
+.n1 .nav:not(.nav-mast)::before{content:var(--n1-meta, "");
+  display:block;font-size:10.5px;letter-spacing:.2em;color:var(--fg2);
+  border-bottom:1px solid var(--hair);padding:7px 0 6px}
+/* 大刊名版：日期／版次摆在右上角 */
+.n1 .nav-mast{padding-top:0}
+/* 天头正中挂一个「鱼尾」（古籍版框的做法）：吊在内框线上，上宽下窄再收 */
+.n1 .nav-mast::before{content:"";position:absolute;left:50%;top:-9px;transform:translateX(-50%);
+  width:30px;height:9px;background:var(--fg);pointer-events:none;
+  clip-path:polygon(0 0,50% 62%,100% 0,100% 100%,50% 38%,0 100%)}
+.n1 .navmeta{position:absolute;right:0;top:9px;font-size:10.5px;letter-spacing:.2em;color:var(--fg2);text-align:right}
+.n1 .nameplate{display:flex;align-items:center;justify-content:center;padding:38px 0 8px;margin:0;
+  font-family:var(--disp);font-weight:600;line-height:1}
+.n1 .np-link{display:flex;align-items:center;gap:20px}
+.n1 .nameplate .mark{display:block;width:46px;height:46px}
+.n1 .np-zh{font-size:clamp(54px,7.4vw,104px);letter-spacing:.16em;line-height:1}
+.n1 .npslogan{display:flex;align-items:baseline;justify-content:center;gap:14px;margin:0;padding:2px 0 14px;
+  font-size:11.5px;letter-spacing:.3em;color:var(--fg2)}
+.n1 .npslogan i{font-style:normal;font-size:9px;letter-spacing:.3em;color:var(--fg3)}
+/* 首页报头：拉丁刊名一行（紧贴刊名）＋ 副题一行（标语＋提要句，醒目、不折行） */
+.n1 .npmotto{margin:0;padding:3px 0 0;text-align:center;font-size:9.5px;letter-spacing:.42em;
+  color:var(--fg3);text-indent:.42em}
+.n1 .npdeck{display:flex;align-items:baseline;justify-content:center;gap:14px;flex-wrap:nowrap;
+  margin:0;padding:9px 0 15px;white-space:nowrap;color:var(--fg)}
+.n1 .npdeck b{font-family:var(--disp);font-weight:600;font-size:clamp(12px,1.33vw,17px);letter-spacing:.2em;
+  color:var(--fg);white-space:nowrap}
+.n1 .npdeck-lede{position:relative;padding-left:18px;font-size:clamp(9.5px,1.09vw,14px);letter-spacing:.02em;
+  color:var(--fg2);white-space:nowrap}
+.n1 .npdeck-lede::before{content:"";position:absolute;left:1px;top:50%;width:10px;height:1px;background:var(--fg3)}
+/* 内页报头：刊名退化到左上角的小字，日期仍在右上角 */
+.n1 .nav-inner .nameplate{justify-content:flex-start;padding:16px 0 10px}
+.n1 .nav-inner .np-link{gap:12px}
+.n1 .nav-inner .nameplate .mark{width:22px;height:22px}
+.n1 .nav-inner .np-zh{font-size:23px;letter-spacing:.3em}
+.n1 .nav-inner .npslogan{justify-content:flex-start;padding:0 0 13px;font-size:10.5px;letter-spacing:.24em}
+.n1 .nav-inner .navmeta{top:18px}
+/* 非报头大刊名版式的兜底（已不用于 N1，留作保险） */
+.n1 .brand{display:flex;align-items:center;justify-content:center;gap:11px;padding:12px 0 11px;text-align:center}
+.n1 .brand .mark{display:block;width:18px;height:18px}
+.n1 .brandtxt{display:flex;align-items:baseline;gap:11px}
+.n1 .brandtxt b{font-family:var(--disp);font-weight:600;font-size:clamp(16px,1.6vw,21px);letter-spacing:.34em;line-height:1}
+.n1 .brandtxt i{font-style:normal;font-size:8.5px;letter-spacing:.32em;color:var(--fg3)}
+.n1 .navlinks{display:flex;flex-wrap:nowrap;justify-content:center;white-space:nowrap;font-size:12.5px;
+  border-top:3px double var(--fg);
+  border-bottom:1px solid var(--fg);padding:8px 0}
+.n1 .navlinks a{color:var(--fg2);padding:0 16px;letter-spacing:.08em}
+.n1 .navlinks a + a{border-left:1px solid var(--hair2)}
+.n1 .navlinks a:hover{color:var(--fg)}
+.n1 .navlinks a.on{color:var(--fg);font-weight:600}
+.n1 .dm{position:absolute;right:0;top:34px;border:1px solid var(--hair);background:transparent;color:var(--fg3);
+  cursor:pointer;font-family:var(--body);font-size:10px;letter-spacing:.16em;padding:2px 8px;line-height:1.6}
+.n1 .dm:hover{border-color:var(--fg);color:var(--fg)}
+.n1 .dm .dm-moon{display:none}
+html[data-theme='dark'] .n1 .dm .dm-sun{display:none}
+html[data-theme='dark'] .n1 .dm .dm-moon{display:inline}
+
+/* —— 头条：引题 / 主题 / 副题 / 多栏正文 / 署名 + 报眼方框 —— */
+.n1 .hero{display:grid;grid-template-columns:minmax(0,1fr) 186px;gap:26px;
+  border-bottom:3px double var(--fg);padding:20px 0 18px;align-items:start}
+.n1 .hero-txt{text-align:center}
+.n1 .kicker{font-size:10.5px;letter-spacing:.3em;color:var(--fg2);border-top:1px solid var(--hair2);
+  border-bottom:1px solid var(--hair2);padding:5px 0;display:inline-block;margin-bottom:16px}
+/* 「关于」页那一档：页面自己的标题（凉风凉）为大字，标语退成一行小字 */
+.n1 .hero h1:not(.slogan){font-family:var(--disp);font-weight:600;font-size:clamp(38px,4.8vw,60px);letter-spacing:.2em;
+  color:var(--fg);line-height:1.1;text-align:center;margin:0}
+.n1 .slogan{font-family:var(--disp);font-weight:400;font-size:11.5px;letter-spacing:.3em;
+  color:var(--fg2);line-height:1.7;margin:12px 0 0;display:block}
+.n1 .lede{font-size:13px;color:var(--fg);margin:16px auto 0;max-width:100%;column-count:3;column-gap:24px;
+  column-rule:1px solid var(--hair2);text-align:justify;line-height:1.8;text-justify:inter-ideograph}
+.n1 .lede::first-letter{float:left;font-family:var(--disp);font-weight:600;font-size:3.2em;line-height:.8;margin:3px 7px 0 0}
+/* 首页（大刊名版）：提要就一行居中，不首字下沉、不分栏——短句分栏只会空出一栏 */
+.n1 .hero-mast .lede{column-count:1;text-align:center;font-size:14.5px;line-height:1.9;color:var(--fg2);margin-top:18px}
+.n1 .hero-mast .lede::first-letter{float:none;font-family:inherit;font-weight:inherit;font-size:inherit;
+  line-height:inherit;margin:0;color:inherit}
+.n1 .stats{list-style:none;margin:16px 0 0;padding:8px 0 0;border-top:1px solid var(--fg);display:flex;
+  justify-content:center;flex-wrap:wrap;font-size:10.5px;letter-spacing:.14em;color:var(--fg2)}
+.n1 .stats::before{content:var(--n1-byline, "");flex-basis:100%;font-size:10px;
+  letter-spacing:.2em;color:var(--fg3);margin-bottom:7px}
+.n1 .stats li{display:flex;align-items:baseline;gap:6px;padding:0 16px;border-right:1px solid var(--hair2)}
+.n1 .stats li:last-child{border-right:0}
+.n1 .stats b{font-family:var(--disp);font-weight:600;font-size:15px}
+.n1 .stats span{font-size:10px;color:var(--fg3)}
+.n1 .cta{display:flex;gap:24px;justify-content:center;margin-top:14px}
+.n1 .book .cta{justify-content:flex-start}
+.n1 .pagehead .lede::first-letter{float:none;font-size:inherit;font-family:inherit;font-weight:inherit;margin:0;line-height:inherit}
+/* 「关于」页提要首字是「一」，放大后像一条破折号——这一档也不要下沉 */
+.n1 .about-hero .lede::first-letter{float:none;font-size:inherit;font-family:inherit;font-weight:inherit;margin:0;line-height:inherit}
+.n1 .btn{display:inline-block;font-size:12.5px;letter-spacing:.14em;color:var(--fg);
+  border-bottom:1px solid var(--fg);padding-bottom:2px;background:none;cursor:pointer}
+.n1 .btn.ghost{color:var(--fg2);border-bottom-color:var(--hair)}
+.n1 .btn:hover{color:var(--teal);border-bottom-color:var(--teal)}
+.n1 .btn.wide{display:block;text-align:center;margin-top:14px}
+
+/* 报眼：方框图框 */
+.n1 .hero-face{margin:0;border:1px solid var(--fg);padding:14px 12px;display:flex;flex-direction:column;
+  align-items:center;gap:10px;background:var(--bg)}
+.n1 .hero-face img{width:132px;height:132px;border-radius:50%;display:block;box-shadow:0 0 0 1px var(--hair2)}
+.n1 .hero-face.big img{width:150px;height:150px}
+.n1 .hero-face::after{content:var(--n1-face, "主编");font-size:10px;letter-spacing:.2em;color:var(--fg2);
+  border-top:1px solid var(--hair2);padding-top:8px;width:100%;text-align:center}
+
+/* —— 分区：版次 + 双线 —— */
+.n1 .sec{margin-top:22px;counter-increment:ban}
+.n1{counter-reset:ban}
+.n1 .sec-head{display:flex;align-items:baseline;gap:12px;border-top:3px double var(--fg);
+  border-bottom:1px solid var(--fg);padding:6px 0 5px}
+.n1 .sec-head::before{content:"第 " counter(ban,decimal) " 版";font-size:10px;letter-spacing:.2em;color:var(--fg3);
+  border-right:1px solid var(--hair);padding-right:12px}
+.n1 .sec-head h2{font-family:var(--disp);font-weight:600;font-size:20px;letter-spacing:.18em}
+.n1 .sec-head small{font-size:9.5px;letter-spacing:.26em;color:var(--fg3);margin-left:auto}
+.n1 .pagehead{border-top:4px solid var(--fg);border-bottom:3px double var(--fg);padding:16px 0 14px;text-align:center}
+.n1 .pagehead h1{font-family:var(--disp);font-weight:600;font-size:clamp(42px,5.4vw,68px);letter-spacing:.2em;line-height:1}
+.n1 .pagehead .kicker{margin-bottom:12px}
+.n1 .pagehead .lede{column-count:1;text-align:center;max-width:640px;margin-top:12px}
+
+/* —— 主板块（左）＋副板块（右）：头条占左，其余四篇一栏到底 —— */
+.n1 .latest{display:grid;grid-template-columns:minmax(0,1fr) 336px;gap:0}
+.n1 .lead{display:flex;flex-direction:column;padding:14px 30px 18px 0;border-right:1px solid var(--hair)}
+.n1 .lead-k{display:flex;align-items:center;gap:12px}
+.n1 .lead-k .cat{font-size:10px;letter-spacing:.24em;color:var(--fg2)}
+.n1 .lead-flag{font-size:9.5px;letter-spacing:.2em;color:var(--c);border:1px solid var(--c);padding:1px 7px}
+.n1 .lead h3{font-family:var(--disp);font-weight:600;font-size:clamp(30px,3.4vw,46px);line-height:1.16;
+  letter-spacing:.03em;margin:12px 0 0}
+.n1 .lead h3 a:hover{text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
+.n1 .lead-ex{font-size:14.5px;color:var(--fg2);line-height:1.8;margin:13px 0 0;
+  text-align:justify;text-justify:inter-ideograph}
+.n1 .lead-body{column-count:2;column-gap:24px;column-rule:1px solid var(--hair2);margin-top:15px}
+.n1 .lead-body p{font-size:12.5px;line-height:1.85;color:var(--fg2);margin:0 0 10px;
+  text-align:justify;text-justify:inter-ideograph;break-inside:avoid}
+.n1 .lead .meta{margin-top:auto;padding-top:11px;border-top:1px solid var(--hair2);font-size:10px}
+
+/* —— 副板块：其余最近更新（右栏，一栏到底）—— */
+.n1 .subhead{display:flex;align-items:baseline;gap:10px;padding:0 0 7px;border-bottom:1px solid var(--fg)}
+.n1 .subhead b{font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.2em}
+.n1 .subhead small{font-size:9px;letter-spacing:.26em;color:var(--fg3);margin-left:auto}
+.n1 .recent{padding:14px 0 0 26px}
+.n1 .recent .item{padding:12px 0;border-right:0;border-bottom:1px solid var(--hair2)}
+.n1 .recent .item:last-child{border-bottom:0;padding-bottom:0}
+.n1 .recent .item-txt h3{font-size:17px}
+
+/* —— 三栏纯文字流（无图，栏间竖线）—— */
+.n1 .list{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.n1 .item{padding:12px 18px;border-right:1px solid var(--hair2);border-bottom:1px solid var(--hair2)}
+.n1 .list .item:nth-child(3n){border-right:0}
+.n1 .list .item:nth-last-child(-n+3){border-bottom:0}
+.n1 .list .item:first-child{padding-left:0}
+.n1 .cat{display:block;font-size:9.5px;letter-spacing:.24em;color:var(--fg3)}
+.n1 .cat::before{content:"■ ";color:var(--c)}
+.n1 .item-txt h3{font-family:var(--disp);font-weight:600;font-size:19px;line-height:1.3;letter-spacing:.04em;margin:6px 0 0}
+.n1 .item:hover h3{text-decoration:underline;text-underline-offset:3px}
+.n1 .item-txt p{font-size:11.5px;color:var(--fg2);margin:5px 0 0;line-height:1.7;text-align:justify}
+.n1 .meta{display:flex;gap:10px;font-size:9.5px;color:var(--fg3);letter-spacing:.1em;margin-top:7px}
+.n1 .meta span + span::before{content:"·";margin-right:10px}
+
+/* —— 置顶与收藏：两个方框专栏 —— */
+.n1 .duo{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:12px}
+.n1 .feat{border:1px solid var(--hair);padding:14px 16px}
+.n1 .feat .feat-k{display:flex;gap:9px;align-items:center;font-size:9.5px;letter-spacing:.2em;color:var(--fg3);
+  border-bottom:1px solid var(--hair2);padding-bottom:6px}
+.n1 .feat .feat-k b{font-weight:600;color:var(--c);letter-spacing:.14em}
+.n1 .feat h3{font-family:var(--disp);font-weight:600;font-size:20px;letter-spacing:.06em;margin:10px 0 6px}
+.n1 .feat p{font-size:11.5px;color:var(--fg2);line-height:1.75;text-align:justify}
+
+/* —— 书讯 —— */
+.n1 .book{display:grid;grid-template-columns:104px 1fr;gap:20px;padding:14px 0 16px;border-bottom:1px solid var(--hair);align-items:start}
+.n1 .book.big{grid-template-columns:170px 1fr;gap:30px;padding-top:16px}
+.n1 .book-cover{margin:0}
+.n1 .book-cover img{width:104px;height:148px;object-fit:cover;display:block}
+.n1 .book.big .book-cover img{width:170px;height:240px}
+.n1 .book-txt h3{font-family:var(--disp);font-weight:600;font-size:26px;letter-spacing:.16em}
+.n1 .book-meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:10px;color:var(--fg3);letter-spacing:.12em}
+.n1 .badge{color:var(--teal);border:1px solid var(--teal);padding:2px 7px}
+.n1 .book-txt p{font-size:12px;color:var(--fg2);margin:10px 0 0;max-width:640px;text-align:justify}
+.n1 .book-latest{display:flex;gap:11px;align-items:baseline;margin-top:12px;font-size:11.5px;color:var(--fg2);
+  border-top:1px solid var(--hair2);padding-top:10px}
+.n1 .book-latest b{font-weight:600;font-size:9.5px;letter-spacing:.16em;color:var(--c)}
+.n1 .book-latest .more{margin-left:auto;font-size:11px;color:var(--fg3)}
+
+/* —— 报尾索引条 —— */
+.n1 .tiles{display:flex;flex-wrap:wrap;align-items:baseline;border-top:3px double var(--fg);padding-top:10px;gap:0;margin-top:12px}
+.n1 .tile{display:inline-flex;align-items:baseline;gap:9px;padding:2px 20px;border-right:1px solid var(--hair2)}
+.n1 .tile:first-child{padding-left:0}
+.n1 .tile:last-child{border-right:0}
+.n1 .tile b{font-family:var(--disp);font-weight:600;font-size:16px;letter-spacing:.12em}
+.n1 .tile b::before{content:"";display:inline-block;width:8px;height:8px;background:var(--c);margin-right:10px}
+.n1 .tile .n{font-size:12px;color:var(--fg3)}
+.n1 .tile:hover b{color:var(--teal)}
+
+/* —— 目录：点线索引 —— */
+.n1 .toc{list-style:none;border-top:1px solid var(--fg)}
+.n1 .toc li{display:flex;align-items:baseline;gap:12px;padding:11px 0;border-bottom:1px dotted var(--hair)}
+.n1 .toc .no{font-family:var(--disp);font-weight:600;font-size:15px;color:var(--c);width:24px}
+.n1 .toc .tt{font-family:var(--disp);font-weight:600;font-size:17px;letter-spacing:.06em}
+.n1 .toc .meta{font-size:10px;color:var(--fg3);margin-top:0}
+.n1 .toc .go{margin-left:auto;font-size:11px;color:var(--fg3)}
+.n1 .toc li:hover .go{color:var(--teal)}
+
+/* —— 阅读设置：规格栏 —— */
+.n1 .reader{border-top:1px solid var(--fg);border-bottom:1px solid var(--hair);margin-top:12px;
+  display:grid;grid-template-columns:repeat(4,1fr)}
+.n1 .reader-row{display:flex;flex-direction:column;gap:8px;padding:12px 16px;border-right:1px solid var(--hair2)}
+.n1 .reader-row:last-child{border-right:0}
+.n1 .reader-row .rk{font-size:9.5px;letter-spacing:.22em;color:var(--fg3)}
+.n1 .seg{display:flex}
+.n1 .seg i{font-style:normal;font-size:11.5px;padding:3px 11px;border:1px solid var(--hair);margin-left:-1px;color:var(--fg2)}
+.n1 .seg i:first-child{margin-left:0}
+.n1 .seg i.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.n1 .bar{height:3px;background:var(--hair2);display:block;border:1px solid var(--hair)}
+.n1 .bar i{display:block;height:1px;background:var(--teal)}
+.n1 .reader .meta{margin-top:0;font-size:11px}
+
+/* —— 图版（2026-10-09 重设计 · Saber 点定 B「中」档） ——
+   版式＝瀑布流；布局靠「最短列优先装箱」：.gal 是 N 条并排的弹性列（列数由 JS 按 桌面4／≤860px 3／≤520px 2 决定），
+   追加新图时只塞进当前最短的一列，已显示的一张都不动（CSS columns 会在追加时重排全部已显示的图，故不用）。
+   图注一律在图片**下方**（不再压图）；分类签整排删掉；四色缩成页底一条小色卡；点图开翻页灯箱。 */
+.n1 .gal{--g-gap:22px;display:flex;align-items:flex-start;gap:var(--g-gap);margin-top:2px}
+.n1 .gcol{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:var(--g-gap)}
+.n1 .shot{margin:0}
+.n1 .shot-link{display:block;cursor:zoom-in;line-height:0}
+.n1 .shot img{width:100%;height:auto;display:block;background:var(--hair2)}
+.n1 .shot figcaption{padding-top:8px}
+.n1 .shot figcaption b{display:block;font-family:var(--disp);font-weight:600;font-size:11.5px;color:var(--fg)}
+.n1 .shot figcaption span{display:block;margin-top:3px;font-size:9px;letter-spacing:.16em;color:var(--fg2);font-variant-numeric:tabular-nums}
+/* 滚到底自动加载的状态行 */
+.n1 .galmore{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:var(--g-gap,22px);
+  padding-top:13px;border-top:1px solid var(--hair2);font-size:10px;letter-spacing:.16em;color:var(--fg2)}
+.n1 .galmore .pulse{width:5px;height:5px;border-radius:50%;background:var(--fg2);animation:gpulse 1.7s ease-in-out infinite}
+@keyframes gpulse{0%,100%{opacity:.22}50%{opacity:1}}
+/* 页面底部一条四色小色卡（只在本页，不动全站报尾） */
+.n1 .palette{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:18px;padding-top:11px;border-top:1px solid var(--hair2)}
+.n1 .palette .plabel{font-size:9.5px;letter-spacing:.22em;color:var(--fg2)}
+.n1 .palette ul{list-style:none;margin:0;padding:0;display:flex;gap:16px;flex-wrap:wrap}
+.n1 .palette li{display:flex;align-items:center;gap:7px}
+.n1 .palette li i{display:block;width:28px;height:14px;background:var(--c);border:1px solid var(--hair)}
+.n1 .palette li b{font-size:10.5px;font-weight:600;color:var(--fg)}
+.n1 .palette li em{font-style:normal;font-size:9.5px;letter-spacing:.06em;color:var(--fg2);font-variant-numeric:tabular-nums}
+.n1 .palette li u{text-decoration:none;font-size:9.5px;color:var(--fg2);opacity:.75}
+/* 点图放大的翻页灯箱（←/→ 换张 · n/N 角标 · Esc 或点背景关闭） */
+.n1 .gview{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;padding:26px 22px;background:color-mix(in srgb,var(--bg) 95%,transparent);backdrop-filter:blur(2px)}
+.n1 .gview[hidden]{display:none}
+.n1 .gview figure{margin:0;display:flex;flex-direction:column;gap:10px;align-items:center;max-width:min(1100px,92vw)}
+.n1 .gview img{display:block;max-width:min(1100px,92vw);max-height:68vh;width:auto;height:auto;
+  object-fit:contain;border:1px solid var(--hair);background:var(--bg)}
+.n1 .gview figcaption{display:flex;align-items:baseline;gap:12px;font-size:11.5px;color:var(--fg2)}
+.n1 .gview figcaption b{font-family:var(--disp);font-weight:600;font-size:13px;color:var(--fg)}
+.n1 .gview figcaption span{font-variant-numeric:tabular-nums}
+.n1 .gview-bar{display:flex;align-items:center;gap:14px;border-top:1px solid var(--hair2);padding-top:10px;
+  font-size:10px;letter-spacing:.16em;color:var(--fg2)}
+.n1 .gview-no{font-family:var(--disp);letter-spacing:.1em;color:var(--fg);font-variant-numeric:tabular-nums}
+.n1 .gview-btn{font-family:var(--body);font-size:10px;letter-spacing:.16em;color:var(--fg2);
+  background:none;border:1px solid var(--hair);padding:4px 12px;cursor:pointer}
+.n1 .gview-btn:hover{color:var(--fg);border-color:var(--fg)}
+
+/* —— 写作台 —— */
+.n1 .bench{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:0;border-top:3px double var(--fg);margin-top:12px}
+.n1 .bench-main{padding:16px 22px 16px 0;border-right:1px solid var(--hair2)}
+.n1 .title-input{width:100%;border:0;border-bottom:2px solid var(--fg);background:transparent;color:var(--fg);
+  font-family:var(--disp);font-weight:600;font-size:28px;letter-spacing:.1em;padding:0 0 10px;outline:none;text-align:center}
+.n1 .bench-meta{display:flex;align-items:center;justify-content:center;gap:11px;padding:10px 0 0;font-size:10.5px;color:var(--fg3)}
+.n1 .mchip{font-size:10px;letter-spacing:.16em;color:var(--c);font-weight:600}
+.n1 .mtag{font-size:11px;color:var(--fg2)}
+.n1 .msp{flex:1}
+.n1 .toolbar{display:flex;justify-content:center;border-top:1px solid var(--hair2);border-bottom:1px solid var(--hair2);margin-top:12px}
+.n1 .toolbar i{font-style:normal;font-size:11.5px;color:var(--fg2);padding:6px 13px;border-right:1px solid var(--hair2)}
+.n1 .toolbar i:last-child{border-right:0}
+.n1 .toolbar i:hover{background:var(--fg);color:var(--bg)}
+.n1 .editor{margin-top:14px;column-count:2;column-gap:24px;column-rule:1px solid var(--hair2)}
+.n1 .editor h2{font-family:var(--disp);font-weight:600;font-size:18px;letter-spacing:.06em;margin:0 0 8px;break-after:avoid}
+.n1 .editor p{font-size:12.5px;line-height:1.8;margin:0 0 11px;text-align:justify;break-inside:avoid}
+.n1 .bench-foot{display:flex;gap:16px;align-items:center;border-top:1px solid var(--hair2);margin-top:14px;padding-top:9px;
+  font-size:10px;color:var(--fg3);letter-spacing:.1em}
+.n1 .bench-side{padding:16px 0 0 20px}
+.n1 .bench-side h4{font-family:var(--disp);font-weight:600;font-size:17px;letter-spacing:.16em;margin-bottom:10px}
+.n1 .side-row{display:flex;justify-content:space-between;font-size:12px;color:var(--fg2);padding:7px 0;border-bottom:1px solid var(--hair2)}
+.n1 .side-row b{font-weight:400;color:var(--fg)}
+.n1 .side-note{font-size:10.5px;color:var(--fg3);line-height:1.8;margin-top:12px}
+
+/* —— 留言 —— */
+.n1 .gform{border-top:3px double var(--fg);padding-top:14px;margin-top:12px}
+.n1 .grow{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.n1 .gform input,.n1 .gform textarea{width:100%;border:0;border-bottom:1px solid var(--hair);background:transparent;
+  font-family:var(--body);font-size:12.5px;color:var(--fg);padding:8px 0;outline:none}
+.n1 .gform textarea{height:78px;resize:none;margin-top:12px;line-height:1.8}
+.n1 .gfoot{display:flex;align-items:center;gap:14px;padding-top:12px}
+.n1 .gnote{font-size:10.5px;color:var(--fg3)}
+.n1 .gfoot .btn{margin-left:auto}
+.n1 .msgs{list-style:none;border-top:1px solid var(--fg);margin-top:12px}
+.n1 .msg{display:grid;grid-template-columns:36px 1fr;gap:14px;padding:13px 0;border-bottom:1px solid var(--hair2)}
+.n1 .gface{width:36px;height:36px;border-radius:50%;display:block;object-fit:cover}
+.n1 .gface.letter{display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:600;
+  font-size:14px;color:var(--fg2);border:1px solid var(--hair)}
+.n1 .mhead{display:flex;align-items:baseline;gap:9px}
+.n1 .mhead b{font-family:var(--disp);font-weight:600;font-size:14.5px;letter-spacing:.08em}
+.n1 .mtagme{font-size:9.5px;letter-spacing:.16em;color:var(--teal);border-bottom:1px solid var(--teal)}
+.n1 .mtime{font-size:10px;color:var(--fg3);margin-left:auto}
+.n1 .mtxt p{font-size:12px;color:var(--fg2);margin:5px 0 0;max-width:720px;text-align:justify}
+
+/* —— 关于 —— */
+.n1 .prose{max-width:none;padding:0;column-count:3;column-gap:26px;column-rule:1px solid var(--hair2)}
+.n1 .prose p{font-size:12px;line-height:1.8;color:var(--fg2);margin:0 0 11px;text-align:justify;break-inside:avoid}
+.n1 .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:6px 0 0}
+.n1 .sw .swatch{display:block;height:78px;background:var(--c);border:1px solid var(--hair)}
+.n1 .sw b{display:block;font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.12em;margin-top:8px}
+.n1 .sw i{display:block;font-style:normal;font-size:10px;color:var(--fg3);letter-spacing:.14em}
+.n1 .sw .sw-note{display:block;font-size:10.5px;color:var(--fg2);margin-top:2px}
+.n1 .facts{margin:12px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:0 30px}
+.n1 .facts>div{display:grid;grid-template-columns:96px 1fr;gap:14px;padding:9px 0;border-bottom:1px solid var(--hair2)}
+.n1 .facts dt{font-size:10px;letter-spacing:.2em;color:var(--fg3)}
+.n1 .facts dd{font-size:12.5px;color:var(--fg2)}
+
+/* —— 报尾 —— */
+.n1 .foot{display:flex;align-items:center;gap:12px;margin-top:26px;border-top:3px double var(--fg);
+  border-bottom:4px solid var(--fg);padding:10px 0}
+.n1 .foot .fmark{display:block}
+.n1 .fname{font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.24em}
+.n1 .fslogan{font-size:10.5px;color:var(--fg3);letter-spacing:.12em}
+.n1 .sp{flex:1}
+.n1 .flabel{font-size:9.5px;letter-spacing:.2em;color:var(--fg3)}
+.n1 .tww{display:block;border:1px solid var(--hair);background:#fff;padding:2px 6px}
+.n1 .tww img{display:block}
+
+@media (max-width:860px){
+.n1{padding:12px 10px 26px}
+.n1 .wrap{padding:10px 18px 32px}
+  /* 手机上放不下竖排刊眉，收掉；鱼尾缩小 */
+.n1 .wrap::before,.n1 .wrap::after{display:none}
+.n1 .nav-mast::before{top:-8px;width:22px;height:7px}
+.n1 .nav:not(.nav-mast)::before{font-size:9px;letter-spacing:.14em}
+.n1 .navmeta{top:7px;font-size:8.5px;letter-spacing:.1em}
+.n1 .navmeta .nm-site{display:none}
+.n1 .nav:not(.nav-inner) .nameplate{padding:30px 0 7px}
+.n1 .nav:not(.nav-inner) .np-link{gap:11px}
+.n1 .nav:not(.nav-inner) .nameplate .mark{width:26px;height:26px}
+.n1 .nav:not(.nav-inner) .np-zh{font-size:38px;letter-spacing:.1em}
+.n1 .nav:not(.nav-inner) .npslogan{font-size:10px;letter-spacing:.22em;padding-bottom:11px}
+.n1 .npslogan i{display:none}
+  /* 报头副题在手机上放不下就折行（桌面端是死守一行的） */
+.n1 .npmotto{font-size:8.5px;letter-spacing:.34em;padding-top:2px}
+.n1 .nav:not(.nav-inner) .npdeck{flex-wrap:wrap;white-space:normal;gap:3px 0;padding:7px 0 11px}
+.n1 .nav:not(.nav-inner) .npdeck b{font-size:12.5px;letter-spacing:.18em;white-space:normal}
+.n1 .nav:not(.nav-inner) .npdeck-lede{padding-left:0;font-size:11px;line-height:1.72;white-space:normal;
+    text-align:center;max-width:300px;margin:0 auto}
+.n1 .nav:not(.nav-inner) .npdeck-lede::before{display:none}
+.n1 .nav-inner .nameplate{padding:12px 0 8px}
+.n1 .nav-inner .np-link{gap:9px}
+.n1 .nav-inner .nameplate .mark{width:15px;height:15px}
+.n1 .nav-inner .np-zh{font-size:16px;letter-spacing:.24em}
+.n1 .nav-inner .npslogan{font-size:9px;letter-spacing:.18em;padding-bottom:10px}
+.n1 .nav-inner .navmeta{top:12px;font-size:8px;letter-spacing:.08em}
+.n1 .brand{padding:10px 0 9px;gap:9px}
+.n1 .brand .mark{width:15px;height:15px}
+.n1 .brandtxt{gap:8px}
+.n1 .brandtxt b{font-size:17px;letter-spacing:.3em}
+.n1 .brandtxt i{display:none}
+.n1 .navlinks{overflow-x:auto;white-space:nowrap;justify-content:flex-start;padding:7px 0}
+.n1 .navlinks a{padding:0 11px}
+.n1 .dm{top:24px;font-size:9px;padding:2px 6px}
+.n1 .hero{grid-template-columns:1fr;gap:16px}
+.n1 .hero h1:not(.slogan){font-size:30px;letter-spacing:.16em}
+.n1 .slogan{font-size:11px;letter-spacing:.24em}
+.n1 .latest{grid-template-columns:1fr}
+.n1 .lead{padding:14px 0 16px;border-right:0;border-bottom:1px solid var(--fg)}
+.n1 .recent{padding:0}
+.n1 .lead h3{font-size:26px;line-height:1.2}
+.n1 .lead-ex{text-align:left;font-size:12.5px}
+.n1 .lead-body{column-count:1;column-rule:0}
+.n1 .lead .meta{margin-top:12px}
+.n1 .recent .item-txt h3{font-size:16px}
+.n1 .lede{column-count:1;text-align:left}
+.n1 .lede::first-letter{font-size:2.6em}
+.n1 .stats li{padding:0 10px}
+.n1 .hero-face{flex-direction:row;align-items:center;gap:14px;padding:12px}
+.n1 .hero-face img{width:72px;height:72px}
+.n1 .hero-face.big img{width:88px;height:88px}
+.n1 .hero-face::after{border-top:0;padding-top:0;width:auto;text-align:left}
+.n1 .list{grid-template-columns:1fr}
+.n1 .item{padding:11px 0;border-right:0}
+.n1 .duo{grid-template-columns:1fr;gap:12px}
+.n1 .book,.n1 .book.big{grid-template-columns:88px 1fr;gap:14px}
+.n1 .book-cover img,.n1 .book.big .book-cover img{width:88px;height:124px}
+.n1 .book-txt h3{font-size:20px}
+.n1 .tiles{gap:0}
+.n1 .tile{padding:2px 12px}
+.n1 .toc li{flex-wrap:wrap;gap:8px}
+.n1 .toc .meta{width:100%;order:3}
+.n1 .reader{grid-template-columns:1fr 1fr}
+.n1 .gal{--g-gap:16px}
+.n1 .gview{padding:18px 12px}
+.n1 .gview img{max-height:60vh}
+.n1 .gview-bar{gap:9px}
+.n1 .gview-btn{padding:4px 8px;letter-spacing:.1em}
+.n1 .bench{grid-template-columns:1fr}
+.n1 .bench-main{border-right:0;padding:14px 0}
+.n1 .title-input{font-size:21px}
+.n1 .editor{column-count:1}
+.n1 .bench-side{padding:16px 0 0;border-top:1px solid var(--hair2)}
+.n1 .grow{grid-template-columns:1fr}
+.n1 .prose{column-count:1}
+.n1 .facts{grid-template-columns:1fr}
+.n1 .swatches{grid-template-columns:1fr 1fr}
+.n1 .foot{flex-wrap:wrap;row-gap:8px;margin-top:22px}
+.n1 .fslogan{display:none}
+}
+
+/* —— ⑤ 迁移页面的最外层底色也交给 N1（过卷到 html 那一层时不露出旧底色） —— */
+html:has(.n1){background:#FFFFFF}
+html[data-theme='dark']:has(.n1){background:#141518}

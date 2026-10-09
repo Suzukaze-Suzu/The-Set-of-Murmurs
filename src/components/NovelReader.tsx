@@ -1,354 +1,156 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Article, Comment, NOVEL_STATUS_META } from '../types';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import type { RefObject } from 'react';
+import { useMemo } from 'react';
+import type { Article, Comment, NovelChapter } from '../types';
 import MarkdownRenderer from './MarkdownRenderer';
-import CommentSection from './CommentSection';
-import { useT, useLocale } from '../i18n';
-import { novelStatusKey } from '../i18n/dict';
-import { formatCountLabel, sumChapterCounts, formatCount } from '../lib/wordCount';
+import N1Comments from './n1/N1Comments';
+import NovelToc from './novel/NovelToc';
+import ReaderSettings, { FONT_SIZES, LINE_HEIGHTS } from './novel/ReaderSettings';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useT } from '../i18n';
+import { novelReadHref } from '../lib/novelPath';
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   小说阅读界面·页身（2026-10-09 第二轮「正文单独开一页」）
+   ──────────────────────────────────────────────────────────────────────────────
+   用户原话：「阅读的时候把文字单独开一个界面，就像之前的阅读器一样，但是要统一风格」
+   并在选项里点名：单独一页（`/novels/<书id>/read?ch=<章id>`）；里面放
+   **本章正文 ＋ 章目录 ＋ 字号/行距/深浅设置 ＋ 本章评论**；不勾「进度」那一行。
+
+   本文件＝那个界面里 `.pagehead` 以下的**页身**（报头由 pages/NovelRead.tsx 给）：
+     ① `.sec` 本章正文   `.prose.prose-read`（单栏，占满整幅）＋ 分卷题头
+     ② `.chnav` 翻章     上一章／下一章（带章名）＋ `3 / 12`
+     ③ `.sec` 章目录      `.toc`（共享零件 components/novel/NovelToc.tsx），当前章 `.on`
+     ④ `.sec` 阅读设置    `.reader`（共享零件 components/novel/ReaderSettings.tsx，**三行**：字号／行距／深浅）
+     ⑤ `.sec` 本章评论    N1Comments（评论串＝`书id::章id`）
+
+   **顺序说明（本轮我自己拍的，汇报里点名让用户删减）**：正文排在目录之前——
+   用户要的是「文字单独一个界面」，点进来第一眼就该是字；目录/设置/评论当工具排在正文后面。
+
+   与上一版（同一文件里的旧实现）的差别：
+     · 撤掉**书讯** `.book.big` 与**整本评论**那一栏 —— 它们跟着书介页 `/novels/<id>` 走；
+     · 撤掉「进度」那一行（用户没勾）；
+     · 章状态与翻章由 `pages/NovelRead.tsx` 持有（地址即真值），本文件只渲染；
+       正文段的滚动锚点由父级通过 `bodyRef` 传进来。
+
+   逻辑一行没丢：字号 `novel-font` 四档、行距 `novel-line` 三档（localStorage，全站共用一份）、
+   夜间模式走站内主题、分卷题头、中英双语字数口径（`formatCountLabel`）、
+   本章评论串 `书id::章id`。**文案全部沿用既有字典键，没加新文案。**
+   回退＝`git checkout -- src/components/NovelReader.tsx`；
+   整块回退＝删 `src/pages/NovelRead.tsx` ＋ `App.tsx` 里 `/novels/:id/read` 那一行。
+   ══════════════════════════════════════════════════════════════════════════════ */
 interface Props {
   article: Article;
+  /** 已按 order 排好的章节（父级给） */
+  chapters: NovelChapter[];
+  /** 当前章序号（0 起）——地址里的 `?ch=` 决定，父级持有 */
+  curIx: number;
+  /** 翻章（父级负责同步地址与存进度） */
+  onGoTo: (ix: number) => void;
   allComments: Comment[];
   onAddComment: (articleId: string, input: { name: string; content: string; parentId?: string; parentName?: string; avatar?: string }) => void;
   onDeleteComment: (id: string) => void;
   currentUserId?: string;
+  /** 正文那一段的锚点（父级翻章后滚到这里） */
+  bodyRef: RefObject<HTMLElement>;
 }
 
-const FONT_SIZES = ['1.05rem', '1.2rem', '1.35rem', '1.5rem'];
-const LINE_HEIGHTS = ['1.8', '2', '2.2'];
-
-export default function NovelReader({ article, allComments, onAddComment, onDeleteComment, currentUserId }: Props) {
+export default function NovelReader({
+  article,
+  chapters,
+  curIx,
+  onGoTo,
+  allComments,
+  onAddComment,
+  onDeleteComment,
+  currentUserId,
+  bodyRef,
+}: Props) {
   const t = useT();
-  const { locale } = useLocale();
-  const novel = article.novel;
-  const chapters = useMemo(
-    () => (novel?.chapters || []).slice().sort((a, b) => a.order - b.order),
-    [novel]
-  );
 
-  const progKey = 'novel-progress-' + article.id;
-  const [progress, setProgress] = useLocalStorage<{ chapterId?: string }>(progKey, {});
+  const [fontIx] = useLocalStorage<number>('novel-font', 1);
+  const [lineIx] = useLocalStorage<number>('novel-line', 1);
 
-  const [fontIx, setFontIx] = useLocalStorage<number>('novel-font', 1);
-  const [lineIx, setLineIx] = useLocalStorage<number>('novel-line', 1);
-  const [theme, setTheme] = useLocalStorage<'light' | 'night'>('novel-theme', 'light');
-
-  const [tocOpen, setTocOpen] = useState(false);
-  const [settingOpen, setSettingOpen] = useState(false);
-  const [view, setView] = useState<'shelf' | 'reader'>('shelf');
-  const [barsVisible, setBarsVisible] = useState(true); // 工具条是否显示
-
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const startIx = Math.max(0, chapters.findIndex((ch) => ch.id === progress.chapterId));
-  const [curIx, setCurIx] = useState(Math.min(startIx, Math.max(0, chapters.length - 1)));
-
-  const cur = chapters[curIx];
   const total = chapters.length;
-  const statusMeta = novel?.status ? NOVEL_STATUS_META[novel.status] : null;
-  const readPct = total > 0 ? Math.round(((curIx + 1) / total) * 100) : 0;
+  const cur = chapters[curIx];
 
-  const saveProgress = (ix: number) => {
-    const ch = chapters[ix];
-    if (ch) setProgress({ chapterId: ch.id });
-  };
-
-  // 保存进度并跳转
-  const goTo = (ix: number) => {
-    const next = Math.max(0, Math.min(total - 1, ix));
-    setCurIx(next);
-    saveProgress(next);
-    setTocOpen(false);
-    setSettingOpen(false);
-    if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    else window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // 开始阅读：进入沉浸阅读页
-  const startReading = (ix = startIx) => {
-    setCurIx(ix);
-    saveProgress(ix);
-    setView('reader');
-    setTocOpen(false);
-    const el = scrollRef.current;
-    if (el) el.scrollTo({ top: 0 });
-    else window.scrollTo({ top: 0 });
-  };
-
-  // 返回书头页
-  const backToShelf = () => {
-    setTocOpen(false);
-    setSettingOpen(false);
-    setView('shelf');
-    setBarsVisible(true);
-  };
-
-  // 工具条自动隐藏：滚动时隐藏，鼠标移动/触摸时短暂显示
-  const showBars = () => {
-    setBarsVisible(true);
-    if (hideTimer.current) clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => {
-      if (!tocOpen && !settingOpen) setBarsVisible(false);
-    }, 2600);
-  };
-
-  // 点屏幕中间唤出/隐藏工具条
-  const toggleBars = () => {
-    setBarsVisible((v) => !v);
-    if (hideTimer.current) clearTimeout(hideTimer.current);
-  };
-
-  // 键盘
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === 'ArrowRight') goTo(curIx + 1);
-      if (e.key === 'ArrowLeft') goTo(curIx - 1);
-      if (e.key === 'Escape') {
-        setTocOpen(false);
-        setSettingOpen(false);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [curIx, total]);
-
-  // 当前章评论
+  // 当前章评论（评论串＝`书id::章id`）
   const curComments = useMemo(
-    () => cur ? allComments.filter((c) => c.articleId === article.id + '::' + cur.id) : [],
+    () => (cur ? allComments.filter((c) => c.articleId === article.id + '::' + cur.id) : []),
     [allComments, article.id, cur]
   );
-  // 整本评论
-  const bookComments = useMemo(
-    () => allComments.filter((c) => c.articleId === article.id),
-    [allComments, article.id]
-  );
 
-  if (total === 0) {
-    return null;
-  }
-
-  const themeCls = theme === 'night' ? 'novel-reader-night' : '';
-  const fullscreenCls = view === 'reader' ? ' nreader-fullscreen' : '';
-  const barsCls = barsVisible ? '' : ' nreader-bars-hidden';
+  if (total === 0 || !cur) return null;
 
   return (
-    <div className={'novel-reader ' + themeCls + fullscreenCls}>
-      {/* ===== 书头详情页 ===== */}
-      {view === 'shelf' && (
-        <div className="nreader-shelf">
-          <div className="nreader-cover-hero">
-            {novel?.cover ? (
-              <img src={novel.cover} alt={article.title} className="nreader-hero-cover" />
-            ) : (
-              <div className="nreader-hero-cover nreader-hero-cover-ph">{article.title.slice(0, 1)}</div>
-            )}
-            <div className="nreader-hero-info">
-              <Link to={`/category/${article.category}`} className="nreader-cat">{t('cat.reading')}</Link>
-              <h1 className="nreader-book-title">{article.title}</h1>
-              {novel?.author && <div className="nreader-book-author">{t('shelf.byAuthor', { name: novel.author })}</div>}
-              {statusMeta && (
-                <span className="nreader-status-badge" style={{ background: statusMeta.color + '22', color: statusMeta.ink }}>
-                  {novel?.status ? t(novelStatusKey(novel.status)) : statusMeta.label}
-                </span>
-              )}
-              <div className="nreader-book-meta">
-                <span>{t('count.chapters', { n: total })}</span>
-                {/* ★ 数字口径（2026-09-22）：整句走 formatCountLabel，中英各自按译文状态说话，
-                    见 lib/wordCount.ts。 */}
-                {(() => {
-                  const body = chapters.map((ch) => ch.content || '').join('\n');
-                  const label =
-                    formatCountLabel(sumChapterCounts(chapters), body, locale, t) ||
-                    t('count.words', { n: formatCount(novel?.wordCount || 0) });
-                  return label ? <span>· {label}</span> : null;
-                })()}
-                {readPct > 0 ? <span>{t('shelf.readPct', { p: readPct })}</span> : null}
-              </div>
-            </div>
-          </div>
-
-          {novel?.synopsis && <p className="nreader-synopsis">{novel.synopsis}</p>}
-
-          <div className="nreader-shelf-actions">
-            <button className="nreader-start-btn" onClick={() => startReading(startIx)}>
-              <span className="nreader-start-ico">▶</span>
-              {readPct > 0 ? t('shelf.continueReading', { title: cur.title }) : t('shelf.startReading')}
-            </button>
-            <button className="nreader-toc-btn" onClick={() => setTocOpen(true)}>{t('shelf.contents')}</button>
-          </div>
-
-          <details className="nreader-book-comments" open>
-            <summary>{t('shelf.bookComments', { n: bookComments.length })}</summary>
-            <CommentSection
-              comments={bookComments}
-              onAdd={(name, content, parentId, parentName, avatar) => onAddComment(article.id, { name, content, parentId, parentName, avatar })}
-              currentUserId={currentUserId}
-              onDelete={(id) => onDeleteComment(id)}
-            />
-          </details>
+    <>
+      {/* ① 本章正文：单栏、占满整幅（用户口径「单栏，类似报纸大版，不变窄」）。
+             字号/行距写在外层 `.prose-read`，由它 inherit 进 Markdown 渲染层。 */}
+      <section className="sec" ref={bodyRef}>
+        <div className="sec-head">
+          <h2>{cur.title}</h2>
+          <small>{curIx + 1} / {total}</small>
         </div>
-      )}
-
-      {/* ===== 沉浸阅读页（Apple Books 风） ===== */}
-      {view === 'reader' && (
-        <div
-          className={'nreader-page' + barsCls}
-          ref={scrollRef}
-          onScroll={() => {
-            if (barsVisible) {
-              if (hideTimer.current) clearTimeout(hideTimer.current);
-              hideTimer.current = setTimeout(() => {
-                if (!tocOpen && !settingOpen) setBarsVisible(false);
-              }, 900);
-            }
-          }}
-          onMouseMove={() => { if (!barsVisible) showBars(); }}
-          onClick={(e) => {
-            // 点击正文中间唤出/隐藏工具条（忽略点击按钮、链接、评论时）
-            const el = e.target as HTMLElement;
-            if (el.closest('button, a, .nreader-toc, .nreader-sheet, textarea, input, .comment-section')) return;
-            const r = e.currentTarget.getBoundingClientRect();
-            const mx = e.clientX - r.left;
-            const midW = r.width / 3;
-            if (mx > midW && mx < r.width - midW) {
-              toggleBars();
-            }
-          }}
+        {cur.part && (curIx === 0 || chapters[curIx - 1]?.part !== cur.part) && (
+          <p className="chap-part"># {cur.part}</p>
+        )}
+        <article
+          className="prose prose-read"
+          style={{ fontSize: FONT_SIZES[fontIx], lineHeight: LINE_HEIGHTS[lineIx] }}
         >
-          {/* 顶栏 */}
-          <div className="nreader-topbar">
-            <div className="nreader-top-left">
-              <button className="nreader-top-btn back" onClick={backToShelf} title={t('shelf.backToBook')}>‹</button>
-            </div>
-            <button className="nreader-top-title" onClick={() => setTocOpen(true)} title={t('shelf.chaptersTitle')}>
-              {cur.title}
-            </button>
-            <div className="nreader-top-right">
-              <span className="nreader-top-progress">{curIx + 1}/{total}</span>
-              <button className="nreader-top-btn" onClick={() => setSettingOpen(true)} title={t('shelf.settings')}>Aa</button>
-            </div>
-          </div>
+          <MarkdownRenderer content={cur.content} />
+        </article>
 
-          {/* 正文 */}
-          <article
-            className="nreader-chapter"
-            style={{ fontSize: FONT_SIZES[fontIx], lineHeight: LINE_HEIGHTS[lineIx] }}
-          >
-            {cur.part && (curIx === 0 || chapters[curIx - 1]?.part !== cur.part) && (
-              <h1 className="nreader-part-title"># {cur.part}</h1>
-            )}
-            <h2 className="nreader-chapter-title">{cur.title}</h2>
-            <MarkdownRenderer content={cur.content} />
-          </article>
-
-          {/* 底部分页导航 */}
-          <div className="nreader-footnav">
-            <button
-              className="nreader-foot-btn"
-              disabled={curIx <= 0}
-              onClick={() => goTo(curIx - 1)}
-            >
-              <span className="nreader-foot-dir">{t('shelf.prevChapter')}</span>
-              <span className="nreader-foot-name">{curIx > 0 ? chapters[curIx - 1].title : ''}</span>
-            </button>
-            <button className="nreader-foot-btn right" disabled={curIx >= total - 1} onClick={() => goTo(curIx + 1)}>
-              <span className="nreader-foot-dir">{t('shelf.nextChapter')}</span>
-              <span className="nreader-foot-name">{curIx < total - 1 ? chapters[curIx + 1].title : ''}</span>
-            </button>
-          </div>
-
-          <div className="nreader-chapter-comments">
-            <h3 className="nreader-comments-ttl">{t('shelf.chapterComments', { n: curComments.length })}</h3>
-            <CommentSection
-              comments={curComments}
-              onAdd={(name, content, parentId, parentName, avatar) => onAddComment(article.id + '::' + cur.id, { name, content, parentId, parentName, avatar })}
-              currentUserId={currentUserId}
-              onDelete={(id) => onDeleteComment(id)}
-            />
-          </div>
-
-          {/* 底部整本进度细线 */}
-          <div className="nreader-book-progress">
-            <div className="nreader-book-progress-fill" style={{ width: readPct + '%' }} />
-          </div>
+        {/* ② 翻章：上一章／下一章（带章名，与沉浸阅读页底部的翻页条同一份信息） */}
+        <div className="chnav">
+          <button className="btn ghost" disabled={curIx <= 0} onClick={() => onGoTo(curIx - 1)}>
+            ‹ {t('shelf.prevChapter')}{curIx > 0 ? ` · ${chapters[curIx - 1].title}` : ''}
+          </button>
+          <span className="gnote">{curIx + 1} / {total}</span>
+          <button className="btn ghost" disabled={curIx >= total - 1} onClick={() => onGoTo(curIx + 1)}>
+            {t('shelf.nextChapter')} ›{curIx < total - 1 ? ` · ${chapters[curIx + 1].title}` : ''}
+          </button>
         </div>
-      )}
+      </section>
 
-      {/* ===== 目录抽屉 ===== */}
-      {tocOpen && (
-        <div className="nreader-toc-mask" onClick={() => setTocOpen(false)}>
-          <div className="nreader-toc" onClick={(e) => e.stopPropagation()}>
-            <div className="nreader-toc-head">
-              <span>{t('shelf.chaptersTitle')}</span>
-              <button className="nreader-top-btn" onClick={() => setTocOpen(false)}>×</button>
-            </div>
-            <div className="nreader-toc-list">
-              {chapters.map((ch, ix) => {
-                const isPartStart = ch.part && (ix === 0 || chapters[ix - 1]?.part !== ch.part);
-                return (
-                  <Fragment key={ch.id}>
-                    {isPartStart && <div className="nreader-toc-part">{ch.part}</div>}
-                    <button
-                      className={'nreader-toc-item' + (ix === curIx ? ' current' : '')}
-                      onClick={() => goTo(ix)}
-                    >
-                      <span className="nreader-toc-no">{ix + 1}</span>
-                      <span className="nreader-toc-name">{ch.title}</span>
-                      {(() => {
-                        /* ★ 2026-09-22：逐章也走 formatCountLabel —— 哪一章译完了就说 words、
-                            还是中文就说 characters、只译了一半就两者并排。 */
-                        const label =
-                          formatCountLabel(ch.counts, ch.content, locale, t) ||
-                          t('count.words', { n: formatCount(ch.wordCount || 0) });
-                        return label ? <span className="nreader-toc-wc">{label}</span> : null;
-                      })()}
-                    </button>
-                  </Fragment>
-                );
-              })}
-            </div>
-          </div>
+      {/* ③ 目录：照样张 `.toc` 点线索引；分卷出一行居中题头。当前章 `.on`（青蓝），
+             点哪儿都是**原地换章**（onSelect 拦下跳转），地址同步由父级做。 */}
+      <section className="sec">
+        <div className="sec-head">
+          <h2>{t('shelf.contents')}</h2>
+          <small>{t('count.chapters', { n: total })}</small>
         </div>
-      )}
+        <NovelToc
+          chapters={chapters}
+          hrefOf={(ch) => novelReadHref(article.id, ch.id)}
+          activeIx={curIx}
+          onSelect={onGoTo}
+          partBreak
+        />
+      </section>
 
-      {/* ===== 设置底部面板 ===== */}
-      {settingOpen && (
-        <div className="nreader-set-mask" onClick={() => setSettingOpen(false)}>
-          <div className="nreader-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="nreader-sheet-grip" />
-            <div className="nreader-sheet-row">
-              <span className="nreader-sheet-label">{t('shelf.nightMode')}</span>
-              <button
-                className={'nreader-pill' + (theme === 'night' ? ' on' : '')}
-                onClick={() => setTheme(theme === 'night' ? 'light' : 'night')}
-              >
-                {theme === 'night' ? t('shelf.on') : t('shelf.off')}
-              </button>
-            </div>
-            <div className="nreader-sheet-row">
-              <span className="nreader-sheet-label">{t('shelf.textSize')}</span>
-              <div className="nreader-sheet-group">
-                <button className="nreader-pill" onClick={() => setFontIx(Math.max(0, fontIx - 1))}>A−</button>
-                <span className="nreader-size-val">{[t('shelf.sizeS'), t('shelf.sizeM'), t('shelf.sizeL'), t('shelf.sizeXL')][fontIx]}</span>
-                <button className="nreader-pill" onClick={() => setFontIx(Math.min(FONT_SIZES.length - 1, fontIx + 1))}>A＋</button>
-              </div>
-            </div>
-            <div className="nreader-sheet-row">
-              <span className="nreader-sheet-label">{t('shelf.lineSpacing')}</span>
-              <div className="nreader-sheet-group">
-                <button className="nreader-pill" onClick={() => setLineIx(Math.max(0, lineIx - 1))}>{t('shelf.tight')}</button>
-                <span className="nreader-size-val">{t('shelf.normal')}</span>
-                <button className="nreader-pill" onClick={() => setLineIx(Math.min(LINE_HEIGHTS.length - 1, lineIx + 1))}>{t('shelf.loose')}</button>
-              </div>
-            </div>
-          </div>
+      {/* ④ 阅读设置：样张 `.reader` 的三行（字号／行距／深浅）。
+             用户本轮**没勾**「进度（章号/百分比）」那一行，所以这里是三行不是四行。 */}
+      <section className="sec">
+        <div className="sec-head">
+          <h2>{t('shelf.settings')}</h2>
+          <small>READER</small>
         </div>
-      )}
-    </div>
+        <ReaderSettings showProgress={false} />
+      </section>
+
+      {/* ⑤ 本章评论（用户点名追加在阅读界面里）：位置在正文之后、设置之后 */}
+      <section className="sec">
+        <div className="sec-head">
+          <h2>{t('shelf.chapterComments', { n: curComments.length })}</h2>
+          <small>LETTERS</small>
+        </div>
+        <N1Comments
+          comments={curComments}
+          onAdd={(name, content, parentId, parentName, avatar) => onAddComment(article.id + '::' + cur.id, { name, content, parentId, parentName, avatar })}
+          currentUserId={currentUserId}
+          onDelete={(cid) => onDeleteComment(cid)}
+        />
+      </section>
+    </>
   );
 }

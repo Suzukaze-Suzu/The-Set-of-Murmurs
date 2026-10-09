@@ -3,6 +3,15 @@
 //   2026-09-30 seo-h1 轮：扩到「所有公开路由」——每页都带**恰好一个 <h1>** + 该页专属
 //   title/description + 站内链接（首页/文章页/分类页顺带把文章 URL 链出去，爬虫不必只靠 sitemap）。
 //
+// ★ 2026-10-09「英文站不依附中文站，先加载英文翻译，然后没上线的话再变为中文」★
+//   改前：/en/ 的静态 HTML 全是中文——因为这里读的是 `article.title_en` / `summary_en`，
+//         而库里根本没有这两列，于是永远回退中文（等于英文站的 SEO 内容依附中文站）。
+//   现在：英文页（详情页＋列表页）**以已审校（reviewed）的英文译文为第一来源**，
+//         正文按段落对齐合并（复用 src/lib/segments.ts 那份纯函数，没译的段显示中文原文）；
+//         某篇没有已上线译文 → 那一篇逐字段回退中文原文（A 口径，不加标记）。
+//         注入给前端的 `window.__PRERENDERED_ARTICLE__` **仍是中文原稿**（前端要拿它做段落对齐）。
+//   中文页产出一个字都没动。
+//
 // 为什么必须做：全站是 CSR，除文章页外爬虫拿到的 HTML 是一具空壳（无 h1、无标题、无内链）。
 //
 // 实现要点：
@@ -24,6 +33,9 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
+// ★ 2026-10-09「英文站不依附中文站」：段落对齐**直接用真前端那份纯函数**（Node 24 原生吃 .ts），
+//   不在这里复制第二份实现——脚本与前端一旦漂移，英文页的正文就会和站内渲染不一致。
+import { splitSegments, alignSegments, mergeContent } from '../src/lib/segments.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -190,10 +202,127 @@ function buildPage({ template, locale, path, title, description, inner }) {
 // ---------------------------------------------------------------------------
 // 文章数据
 // ---------------------------------------------------------------------------
+/**
+ * 取 Supabase REST。**带 3 次重试**（2026-10-09 补）：国内直连 Supabase 经常被 SNI 重置，
+ * 以前一次失败就整批跳过预渲染 → dist 变成 SPA-only（爬虫只拿到空壳）。重试成本极低、收益很大。
+ */
+async function rest(path, label) {
+  let lastErr = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await fetch(`${API}/${path}`, { headers: H });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < 3) await new Promise((r) => setTimeout(r, 600 * attempt));
+    }
+  }
+  throw new Error(`${label || path} 抓取失败（3 次）：${lastErr && lastErr.message}`);
+}
+
 async function fetchArticles() {
-  const res = await fetch(`${API}/articles?select=*&order=date.desc`, { headers: H });
-  if (!res.ok) throw new Error(`articles fetch failed: ${res.status}`);
-  return await res.json();
+  return await rest('articles?select=*&order=date.desc', 'articles');
+}
+
+/**
+ * ★ 2026-10-09「英文站不依附中文站，先加载英文翻译，然后没上线的话再变为中文」★
+ * 已上线（reviewed）的英文译文 ＝ **英文页的第一来源**；某篇没有就逐字段回退中文原文。
+ * 读不到就整体退回「全中文」（构建照常），绝不因为翻译表把整站产物搞挂。
+ */
+async function fetchReviewedTranslations() {
+  const byId = new Map();
+  try {
+    const rows = await rest(
+      'article_translations?select=article_id,title,summary,segments&locale=eq.en&status=eq.reviewed',
+      'article_translations',
+    );
+    for (const r of rows) {
+      byId.set(String(r.article_id), {
+        title: String(r.title ?? ''),
+        summary: String(r.summary ?? ''),
+        segments: Array.isArray(r.segments) ? r.segments : null,
+        chapters: new Map(),
+      });
+    }
+  } catch (err) {
+    console.warn(`[prerender] 英文译文读取失败，英文页整体回退中文：${err.message}`);
+    return byId;
+  }
+  // 小说逐章译文（拿不到就逐章回退中文，不影响其它页）
+  try {
+    const chs = await rest(
+      'article_translation_chapters?select=article_id,chapter_id,title,content,segments&locale=eq.en',
+      'article_translation_chapters',
+    );
+    for (const c of chs) {
+      const t = byId.get(String(c.article_id));
+      if (t) t.chapters.set(String(c.chapter_id), c);
+    }
+  } catch (err) {
+    console.warn(`[prerender] 小说逐章译文读取失败，章节回退中文：${err.message}`);
+  }
+  return byId;
+}
+
+/** 库里的 jsonb 段 → alignSegments 认的形状（与 src/lib/translations.ts 的 toTrSegments 同口径） */
+function asTrSegments(raw) {
+  if (!Array.isArray(raw) || !raw.length) return null;
+  const out = [];
+  raw.forEach((r, i) => {
+    if (!r || typeof r !== 'object') return;
+    const id = String(r.id ?? r.srcHash ?? '');
+    if (!id) return;
+    out.push({
+      id,
+      srcHash: String(r.srcHash ?? id),
+      en: String(r.en ?? ''),
+      i: typeof r.i === 'number' ? r.i : i,
+    });
+  });
+  return out.length ? out : null;
+}
+
+/**
+ * 用译文套中文原文，产出「英文页该显示的那一版」。
+ * 规则与真前端 localizeArticle 一致：逐字段判断、缺什么回退什么（A 口径，不加标记）；
+ * 正文按段落对齐合并（没译的段显示中文原文），小说逐章对齐。
+ */
+function localizeForEn(article, tr) {
+  if (!tr) return article;
+  const segs = asTrSegments(tr.segments);
+  let content = article.content || '';
+  if (segs) content = mergeContent(alignSegments(splitSegments(content), segs));
+
+  let novel = article.novel;
+  if (article.novel && Array.isArray(article.novel.chapters) && article.novel.chapters.length) {
+    const chapters = article.novel.chapters.map((zh) => {
+      const en = tr.chapters.get(String(zh.id));
+      if (!en) return zh; // 这一章整章没译 → 用中文那一章
+      const chSegs = asTrSegments(en.segments);
+      let body = zh.content || '';
+      if (chSegs) body = mergeContent(alignSegments(splitSegments(body), chSegs));
+      else if (String(en.content || '').trim()) body = String(en.content);
+      return {
+        ...zh,
+        title: String(en.title || '').trim() ? String(en.title) : zh.title,
+        content: body,
+      };
+    });
+    novel = {
+      ...article.novel,
+      synopsis: String(tr.summary || '').trim() ? tr.summary : article.novel.synopsis,
+      chapters,
+    };
+  }
+
+  return {
+    ...article,
+    title: String(tr.title || '').trim() ? tr.title : article.title,
+    summary: String(tr.summary || '').trim() ? tr.summary : article.summary,
+    content,
+    novel,
+  };
 }
 
 function mdToHtml(md) {
@@ -225,23 +354,47 @@ function siteName(locale) {
 }
 
 // ---------------------------------------------------------------------------
-// 文章详情页
+// 文章详情页 / 小说阅读界面
+// 2026-10-09「把小说界面直接绑定到小说书架界面」：小说页出在 **/novels/<书id>**
+// （canonical 也指那里），/article/<书id> 不再产出静态页——它由前端 replace 重定向过来，
+// vercel.json 的 `/article/(.*)` rewrite 会兜住旧链接。判据与站内一致：reading 且有章节。
 // ---------------------------------------------------------------------------
-function renderArticlePage({ article, contentHtml, template, locale }) {
-  const isEn = locale === 'en';
-  const title = isEn && article.title_en ? article.title_en : article.title;
-  const summary = isEn && article.summary_en ? article.summary_en : article.summary || '';
+function isNovelArticle(article) {
+  return article.category === 'reading' && !!(article.novel && article.novel.chapters && article.novel.chapters.length);
+}
+
+function renderArticlePage({ article, raw, contentHtml, template, locale, pagePath, chapters }) {
+  /* ★ 2026-10-09：这里拆成两份数据（英文页必需）——
+     · article = **这一页该显示的版本**（英文页＝已套译文的 localizeForEn 结果，缺译文就回退中文）；
+     · raw     = **注入给前端的中文原稿**（前端要拿它做段落对齐，注入英文版会串行）。
+     改前这里读的是 `article.title_en` / `article.summary_en`——库里根本没有这两列，
+     于是 /en/ 的静态 HTML 永远是中文（这就是「英文站依附中文站」最硬的一处）。 */
+  const source = raw || article;
+  const title = article.title;
+  const summary = article.summary || '';
   const metaDesc = summary || `${title} - ${siteName(locale)}`;
 
-  const dataJson = JSON.stringify(article).replace(/</g, '\\u003c');
+  const dataJson = JSON.stringify(source).replace(/</g, '\\u003c');
+  /* 小说页额外列出章节目录（各章 h2 + 正文），让 /novels/<书id> 单页就是完整可读版；
+     章节数据在 novel.chapters 里，content 是各章拼接（写作页写入时就是这么存的）。 */
+  const chaptersHtml = chapters && chapters.length
+    ? chapters
+        .map(
+          (ch) =>
+            `<section class="novel-chapter"><h2>${escapeHtml(ch.title || '')}</h2><div class="markdown-body">${mdToHtml(
+              ch.content || '',
+            )}</div></section>`,
+        )
+        .join('\n')
+    : '';
   const inner = `
-<div class="article-prerendered" data-article-id="${escapeHtml(article.id)}">
+<div class="article-prerendered" data-article-id="${escapeHtml(source.id)}">
   <article class="article-content">
     <header class="article-header">
       <h1>${escapeHtml(title)}</h1>
       ${summary ? `<p class="article-summary">${escapeHtml(summary)}</p>` : ''}
     </header>
-    <div class="markdown-body">${contentHtml}</div>
+    ${chaptersHtml || `<div class="markdown-body">${contentHtml}</div>`}
   </article>
 </div>
 <script>window.__PRERENDERED_ARTICLE__ = ${dataJson};</script>`;
@@ -249,7 +402,7 @@ function renderArticlePage({ article, contentHtml, template, locale }) {
   return buildPage({
     template,
     locale,
-    path: `/article/${article.id}`,
+    path: pagePath || `/article/${source.id}`,
     title: `${title} - ${siteName(locale)}`,
     description: metaDesc,
     inner,
@@ -280,10 +433,13 @@ const STATIC_ROUTES = [
 ];
 
 function articleListItem(article, locale, base) {
-  const title = locale === 'en' && article.title_en ? article.title_en : article.title;
+  // 传进来的 article 已经是「这一页该显示的版本」（英文页＝译文优先，见 main() 的 view()）
+  const title = article.title;
   const date = article.date ? `<time datetime="${escapeHtml(article.date)}">${escapeHtml(article.date)}</time>` : '';
   const summary = article.summary ? `<p>${escapeHtml(article.summary)}</p>` : '';
-  return `<li><a href="${base}/article/${escapeHtml(article.id)}">${escapeHtml(title)}</a> ${date}${summary}</li>`;
+  // 小说条目指向书架族的阅读界面（与站内 lib/novelPath.ts 同一口径）
+  const href = isNovelArticle(article) ? `${base}/novels/${escapeHtml(article.id)}` : `${base}/article/${escapeHtml(article.id)}`;
+  return `<li><a href="${href}">${escapeHtml(title)}</a> ${date}${summary}</li>`;
 }
 
 function staticInner({ route, locale, articles }) {
@@ -408,25 +564,45 @@ async function main() {
   }
   const articles = rows.map(normalizeArticle);
 
-  // 1) 文章详情页
+  /* ★ 2026-10-09「英文站不依附中文站，先加载英文翻译，然后没上线的话再变为中文」★
+     英文线（/en/*）的**第一来源＝已审校的英文译文**；某篇没有译文 → 那一篇逐字段回退中文原文。
+     中文线的产出一个字都不受这里影响（view() 对 zh 原样返回）。 */
+  const trMap = await fetchReviewedTranslations();
+  const enById = new Map();
+  for (const a of articles) {
+    const tr = trMap.get(a.id);
+    if (tr) enById.set(a.id, localizeForEn(a, tr));
+  }
+  const view = (article, locale) => (locale === 'en' ? enById.get(article.id) || article : article);
+  console.log(
+    `[prerender] 英文线：${enById.size}/${articles.length} 篇用审校译文（其余 ${articles.length - enById.size} 篇回退中文）`,
+  );
+
+  // 1) 详情页：文章 → /article/<id>；小说 → /novels/<书id>（书架族，canonical 也指这里）
   const articleStats = [];
   for (const article of articles) {
+    const novel = isNovelArticle(article);
     for (const locale of ['zh', 'en']) {
+      const shown = view(article, locale); // 这一页该显示的版本（英文页＝已套译文）
+      const pagePath = novel ? `/novels/${article.id}` : `/article/${article.id}`;
       const page = renderArticlePage({
-        article,
-        contentHtml: mdToHtml(article.content),
+        article: shown,
+        raw: article,
+        contentHtml: mdToHtml(shown.content),
+        chapters: novel ? shown.novel.chapters : undefined,
         template: templates[locale],
         locale,
+        pagePath,
       });
-      const dir = join(DIST, ...(locale === 'en' ? ['en'] : []), 'article', article.id);
+      const dir = join(DIST, ...(locale === 'en' ? ['en'] : []), ...pagePath.split('/').filter(Boolean));
       mkdirSync(dir, { recursive: true });
       const file = join(dir, 'index.html');
       writeFileSync(file, page);
-      articleStats.push(selfCheck(file, `${locale}/article/${article.id}`, canonicalUrl(`/article/${article.id}`, locale)));
+      articleStats.push({ ...selfCheck(file, `${locale}${pagePath}`, canonicalUrl(pagePath, locale)), pagePath, novel });
     }
   }
   console.log(
-    `[prerender] 文章详情页：${articleStats.length} 个（h1=1 的 ${articleStats.filter((s) => s.h1Count === 1).length} 个，h1>1 的 ${articleStats.filter((s) => s.h1Count > 1).length} 个）`,
+    `[prerender] 详情页：${articleStats.length} 个（h1=1 的 ${articleStats.filter((s) => s.h1Count === 1).length} 个，h1>1 的 ${articleStats.filter((s) => s.h1Count > 1).length} 个；其中小说页 /novels/<id> ${articleStats.filter((s) => s.novel).length} 个）`,
   );
 
   // 2) 静态路由页 + 分类页
@@ -439,14 +615,16 @@ async function main() {
   const staticStats = [];
   for (const route of routes) {
     for (const locale of ['zh', 'en']) {
+      // 英文页的列表同样以译文为主源（标题/摘要/正文都走 view()，缺译文那篇回退中文）
+      const rowsLocale = locale === 'en' ? articles.map((a) => view(a, 'en')) : articles;
       const list =
         route.list === 'novels'
-          ? articles.filter((a) => a.novel)
+          ? rowsLocale.filter((a) => a.novel)
           : route.list === 'category'
-            ? articles.filter((a) => a.category === route.category)
+            ? rowsLocale.filter((a) => a.category === route.category)
             : route.list === 'latest'
-              ? [...articles].sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 12)
-              : articles;
+              ? [...rowsLocale].sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 12)
+              : rowsLocale;
 
       const inner = staticInner({ route: { ...route, list: route.list }, locale, articles: list });
       const meta = staticPageMeta({ route, locale, articles: list });

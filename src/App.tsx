@@ -27,6 +27,8 @@ const Home = lazy(() => import('./pages/Home'));
 const Articles = lazy(() => import('./pages/Articles'));
 const SectionPage = lazy(() => import('./pages/SectionPage'));
 const Novels = lazy(() => import('./pages/Novels'));
+const NovelDetail = lazy(() => import('./pages/NovelDetail'));
+const NovelRead = lazy(() => import('./pages/NovelRead'));
 const ArticleDetail = lazy(() => import('./pages/ArticleDetail'));
 const Write = lazy(() => import('./pages/Write'));
 const Translations = lazy(() => import('./pages/Translations'));
@@ -81,12 +83,22 @@ export default function App() {
                           <ErrorBoundary>
                             <Suspense fallback={<RouteLoading />}>
                               <Routes>
-                                <Route path="/login" element={<LoginPage />} />
+                                {/* ★ 2026-10-09「登录界面并入 N1 风格」★
+                                    `/login` 原来挂在 LayoutRoute **之外**（自带一页五色渐变毛玻璃卡），
+                                    于是它连报头报尾都没有、主题切换也不生效。用户点名要它统一风格，
+                                    这里把它移进 Layout —— 与 /profile 同族，一起走 N1 外壳。 */}
                                 <Route element={<LayoutRoute />}>
                                   <Route path="/" element={<HomeRoute />} />
                                   <Route path="/articles" element={<ArticlesRoute />} />
                                   <Route path="/gallery" element={<Gallery />} />
                                   <Route path="/novels" element={<Novels />} />
+                                  {/* 小说阅读界面归书架族（2026-10-09「把小说界面直接绑定到小说书架界面」）：
+                                      具体路由优先于 /novels，地址里带 ?ch=<章id> 直达该章。
+                                      2026-10-09 第二轮：「阅读的时候把文字单独开一个界面」→
+                                      /novels/:id/read 是**正文那一页**（书介页 /novels/:id 不再放正文），
+                                      两条都写出来、具体的那条在前。 */}
+                                  <Route path="/novels/:id/read" element={<NovelRead />} />
+                                  <Route path="/novels/:id" element={<NovelDetail />} />
                                   <Route path="/category/:category" element={<SectionPage />} />
                                   <Route path="/article/:id" element={<ArticleDetail />} />
                                   <Route path="/write" element={<Write />} />
@@ -95,6 +107,7 @@ export default function App() {
                                   <Route path="/write/translations" element={<Translations />} />
                                   <Route path="/write/:id" element={<Write />} />
                                   <Route path="/about" element={<About />} />
+                                  <Route path="/login" element={<LoginPage />} />
                                   <Route path="/profile" element={<ProfilePage />} />
                                   <Route path="/guestbook" element={<Guestbook />} />
                                   <Route path="/friends" element={<Friends />} />

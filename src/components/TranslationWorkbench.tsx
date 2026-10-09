@@ -59,6 +59,8 @@ interface Props {
   /** ↓↓↓ 编辑器里**当前**的中文（可能还没保存）——v2 就是拿这些当对照源 */
   zhTitle: string;
   zhContent: string;
+  /** 编辑器里那份中文摘要（2026-10-09 起可手写）——英文摘要框的占位提示优先用它 */
+  zhSummary?: string;
   zhSynopsis: string;
   zhChapters: NovelChapter[];
   /** 编辑器里有未保存的中文改动 */
@@ -82,6 +84,7 @@ export default function TranslationWorkbench({
   article,
   zhTitle,
   zhContent,
+  zhSummary,
   zhSynopsis,
   zhChapters,
   zhDirty,
@@ -603,7 +606,7 @@ export default function TranslationWorkbench({
                 rows={2}
                 value={meta.summary}
                 onChange={(e) => patchMeta({ summary: e.target.value })}
-                placeholder={isNovel ? zhSynopsis : article.summary || ''}
+                placeholder={isNovel ? zhSynopsis : (zhSummary?.trim() || article.summary || '')}
               />
             </label>
           </div>

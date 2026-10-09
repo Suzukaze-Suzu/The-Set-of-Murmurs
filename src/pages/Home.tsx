@@ -1,106 +1,52 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { CSSProperties } from 'react';
 import { useArticles } from '../context/ArticleContext';
-import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
 import { useTranslations } from '../context/TranslationContext';
 import { CATEGORIES, CATEGORY_META, NOVEL_STATUS_META } from '../types';
 import type { Article } from '../types';
-import ArticleCard from '../components/ArticleCard';
-import NovelCard from '../components/NovelCard';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { useInfiniteList } from '../hooks/useInfiniteList';
-import { searchArticles } from '../lib/search';
 import { useT, useLocale, formatDate } from '../i18n';
 import { catKey } from '../i18n/dict';
-import { formatCountLabel, sumChapterCounts, formatCount } from '../lib/wordCount';
+import { formatCountLabel, sumChapterCounts, formatCount, stripForWordCount } from '../lib/wordCount';
+import { articleHref, novelReadHref } from '../lib/novelPath';
 
-/* 空数组常量：useInfiniteList 依赖 items 引用稳定，别在渲染里现造 [] */
-const NO_RESULTS: Article[] = [];
-const SEARCH_PAGE_SIZE = 12;
+/* 报眼方框里的头像（站点既有素材，原样使用）：取不到站长头像时兜底 */
+const AVATAR_FALLBACK = '/avatar-original.png';
 
 interface Props {
   query: string;
 }
 
-/* 2026-09-20 首页改版（用户要求，方案用户已逐条审批：版本 2 / 最新区形态 D / 不去重 / 彩点换序 / 分类分区隐藏）
-   本页最终结构＝hero → 最新更新 → 置顶与收藏 → 分类浏览（5 色块导航）。
-   分类分区整段删掉：分类改从顶栏彩点（.nav-cats）和 /articles 的筛选按钮进，
-   底部再补一排「分类浏览」色块把手机端的入口还回来（顶栏彩点在手机上收进汉堡菜单）。
-   回滚＝把本文件换回 blog\first\home-layout-v1\Home.改动前.tsx。
+/* ══════════════════════════════════════════════════════════════════════════════
+   首页（2026-10-08「N1 样张直接做前端」）
+   ──────────────────────────────────────────────────────────────────────────────
+   版式**逐块照 `design-mockups\g\n1-broadsheet\index.html` 行 450–552**，类名一个不改：
+     ① 报眼      .hero.hero-mast ＝ .hero-txt（.stats 版面统计＋.cta 两个入口）＋ .hero-face 头像方框
+     ② 最新更新  .sec#latest ＝ .lead 本期头条（.lead-k/.lead-ex/.lead-body 两栏正文/.meta）
+                              ＋ .recent 右栏四条（.subhead ＋ .item）
+     ③ 置顶与收藏 .duo 两个 .feat 方框专栏
+     ④ 书籍更新  .book 报讯块（封面＋书名＋状态小签＋章数字数＋最新一章）
+     ⑤ 分类浏览  .tiles 报尾索引带（色块＝分类色卡色，**分类彩点照旧豁免、一字未改**）
+   数据、字数口径（formatCountLabel）、i18n、收藏/置顶逻辑**一行没改**。
 
-   2026-09-20 追加（用户原话「我希望加一个小部分来放书籍更新」+「底下的分类能不能变成一行」）：
-   ① 新增「书籍更新」区块（.book-section，放在「最新更新」**之后**、置顶区之前）：一本小说一张书籍卡
-      （封面 / 书名 / 连载状态 / 章数·字数 / 最新章节名），按 date 倒序，一排最多 3 本；
-      手机上 ≤640 折成单列竖排（书卡是横条形，一列比两列半宽更好读）。
-      当晚第二轮他又说「书籍更新的方块丑，修改一下」→ 卡面在 index.css 里重做成
-      「封面铺满卡高 + 衬线书名 + 状态与章数字数并排 + 最新一章带「阅读 ›」」；
-      第三轮他说「书籍更新板块还是好丑」，定调「只调整方块排版，不要调整整体」→
-      板块不动，只把 .book-* 的方块排布改掉（1 本时不再被钉在 3 列网格的左 1/3，改成居中陈列）。
-   ② 「分类浏览」：第一轮按「变一行」做成恒定 5 列；第二轮他说「手机端可以接受两行的，
-      让按钮根据宽度调整行数」→ 改成 auto-fit 按宽度自适应列数（桌面一行 5 张、手机折 2 行），不再横滑。
-
-    2026-09-20 第四轮（搜索线，独立于上面三条）：顶栏搜索词进来时首页**自己出结果**，
-    不再显示「正在为你跳转到全部文章」的横幅。回滚＝把本文件换回
-    blog\first\home-search-inline\Home.改动前.tsx。 */
+   ⚠️ 样张首页**没有搜索态**（报头也没有搜索框），所以首页不再自己渲染搜索结果；
+      搜索仍在「全部文章」页（旧外壳）里，要不要搬进 N1 等用户点名（见计划书 §6）。
+   ⚠️ 样张首页也没有「开始写作」按钮（那是管理员才有的入口），故本页不出——同样列进 §6。
+   ⚠️ 回退＝`git checkout -- src/pages/Home.tsx`。
+   ══════════════════════════════════════════════════════════════════════════════ */
 export default function Home({ query }: Props) {
   const t = useT();
   const { locale } = useLocale();
-  /* 有搜索词时标签页也跟着变成「搜索：xxx - 呓语集」（与 /articles 的口径一致） */
   usePageTitle(query.trim() ? t('home.titleSearch', { q: query.trim() }) : undefined);
-  const { articles, getByCategory, toggleFavorite } = useArticles();
-  const { isAdmin } = useAuth();
+  const { articles, getByCategory } = useArticles();
   const { profile } = useProfile();
-  /* 英文页：首页这几处自己渲染标题（小清单 / 书籍卡），也要换成已审校的译文 */
   const { localize } = useTranslations();
 
-  /* ===== 首页直接出搜索结果（2026-09-20）=====
-     用户原话：「首页搜索很别扭：搜完只弹一句『正在为你跳转…』，想在首页直接看到搜索结果」。
-     改法：不再把人送去 /articles，首页自己跑同一套数据库全文搜索（lib/search.ts，300ms 防抖），
-     结果用与 /articles 完全相同的卡片 + 滚动加载（useInfiniteList）渲染。
-     搜索时整页只剩搜索结果区（原来那条 .search-banner 横幅不再用它，CSS 保留未删）。 */
-  const [searchResults, setSearchResults] = useState<Article[] | null>(null);
-  const [searching, setSearching] = useState(false);
-
-  useEffect(() => {
-    const q = query.trim();
-    if (!q) {
-      setSearchResults(null);
-      setSearching(false);
-      return;
-    }
-    let cancelled = false;
-    setSearching(true);
-    const timer = setTimeout(() => {
-      searchArticles(q, locale).then((res) => {
-        if (!cancelled) {
-          setSearchResults(res);
-          setSearching(false);
-        }
-      });
-    }, 300);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [query]);
-
-  const searchList = useMemo(() => searchResults ?? NO_RESULTS, [searchResults]);
-  const {
-    visible: searchVisible,
-    hasMore: searchHasMore,
-    total: searchTotal,
-    sentinelRef: searchSentinelRef,
-  } = useInfiniteList(searchList, SEARCH_PAGE_SIZE);
-
-  /* 「最新更新」按 articles.date 倒序（日期是用户自己写的，跟各页原来的排法一致；
-     articles 表没有 updated_at，没有更细的时间戳可用）。
-     与下面「置顶与收藏」**刻意不去重**——用户明确选了「两边都显」。 */
-  const latest = useMemo(
-    () => [...articles].sort((a, b) => b.date.localeCompare(a.date)),
-    [articles]
-  );
+  /* 「最新更新」按 articles.date 倒序（与各页原来的排法一致）；与「置顶与收藏」刻意不去重 */
+  const latest = useMemo(() => [...articles].sort((a, b) => b.date.localeCompare(a.date)), [articles]);
   const latestBig = latest[0];
   const latestSmall = latest.slice(1, 5);
 
@@ -113,9 +59,7 @@ export default function Home({ query }: Props) {
     [articles]
   );
 
-  /* 「书籍更新」（2026-09-20 新增）：只取真正有章节的小说（与 /novels 书架同一个判据），
-     按 date 倒序，一排最多 3 本。章节本身的顺序按 order 排，
-     注意不要原地 sort —— chapters 是从 Context 里拿到的引用，sort 会改到别页的渲染顺序。 */
+  /* 「书籍更新」：只取真正有章节的小说（与书架页同一判据），按 date 倒序，最多 3 本 */
   const novels = useMemo(
     () =>
       articles
@@ -125,241 +69,255 @@ export default function Home({ query }: Props) {
   );
   const bookCards = novels.slice(0, 3);
 
-  /* 有搜索词 → 首页直接给结果（用户 2026-09-20 拍板）。
-     顺序与 /articles 一致：数据库已按 pinned desc, date desc 排好，这里不再重排。
-     整页替换：搜索时首页的 hero / 最新更新 / 书籍更新 / 分类浏览全部不渲染。 */
-  if (query.trim()) {
-    return (
-      <div className="page home">
-        <section className="home-search-section">
-          <div className="cat-section-head">
-            <h2 className="section-title">{t('home.searchResults')}</h2>
-            <Link to="/articles" className="more-link">
-              {t('home.seeAllArticles')}<span className="more-arrow">›</span>
-            </Link>
-          </div>
-          <p className="result-count">
-            {t('search.prefix')}<strong>{query}</strong>
-            {searching ? t('search.suffixIng') : t('search.suffix', { n: searchTotal })}
-          </p>
+  /* 头条的正文（样张的 .lead-body 是**真正文、不是摘要**）：
+     2026-10-09 用户拍板「最新更新的文章直接把大部分的内容显示在主页，把空白占满，
+     放不下的才会到里面去看」——所以这里给出**尽量多**的段落（原来只取前 3 段），
+     由 CSS 按版面高度裁切（`n1-app.css` ⑫ 段：绝对定位铺满左栏 ＋ `column-fill:auto`
+     ＋ 底部渐隐）。上限 80 段只是防超长文把 DOM 撑大，不是内容判据。 */
+  const leadBody = useMemo(() => {
+    if (!latestBig) return [] as string[];
+    const txt = stripForWordCount(localize(latestBig).article.content || '')
+      .replace(/^\s*[-*+]\s+/gm, '')
+      .replace(/[ \t]+/g, ' ');
+    return txt
+      .split(/\n\s*\n/)
+      .map((s) => s.replace(/\s+/g, ' ').trim())
+      .filter((s) => s.length > 1)
+      .slice(0, 80);
+  }, [latestBig, localize]);
 
-          {searchList.length === 0 ? (
-            <div className="empty-state">
-              <span className="empty-icon empty-icon-magnifier" />
-              <p>{searching ? t('search.searching') : t('search.noMatch')}</p>
-            </div>
-          ) : (
-            <>
-              <div className="card-grid wide">
-                {searchVisible.map((a) =>
-                  a.novel?.chapters?.length ? (
-                    <NovelCard key={a.id} article={a} />
-                  ) : (
-                    <ArticleCard key={a.id} article={a} onToggleFavorite={toggleFavorite} />
-                  )
-                )}
-              </div>
-              {searchHasMore ? (
-                <div ref={searchSentinelRef} className="list-loading">{t('count.loadingMore')}</div>
-              ) : (
-                <p className="list-end">{t('count.allLoaded', { n: searchTotal })}</p>
-              )}
-            </>
-          )}
-        </section>
-      </div>
+  /* 一次量尺（只为边界情况）：`scrollWidth > clientWidth` 说明两栏**真的被裁过** → 保持 CSS 的
+     `column-fill:auto`；否则说明这篇填不满版面 → 挂 `.is-short` 回到样张原本的两栏均衡，
+     免得短文只剩左边一栏、右边空掉。量不到就什么都不加，退回纯 CSS 那条路（安全失败）。 */
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [leadShort, setLeadShort] = useState(false);
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const check = () => setLeadShort(el.scrollWidth <= el.clientWidth + 1);
+    check();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : null;
+    ro?.observe(el);
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready.then(check).catch(() => {});
+    }
+    return () => ro?.disconnect();
+  }, [leadBody, locale]);
+
+  /* 版面统计条（样张的 .stats）：篇文章 / 个分类 / 本书 / 双站——全部由真实数据现算 */
+  const statsUnits = t('home.statsUnits').split('|');
+  const stats: { b: string; s: string }[] = [
+    { b: formatCount(articles.length), s: statsUnits[0] || '' },
+    { b: String(CATEGORIES.length), s: statsUnits[1] || '' },
+    { b: String(novels.length), s: statsUnits[2] || '' },
+    { b: t('about.statBilingualVal'), s: statsUnits[3] || '' },
+  ];
+
+  /* 小清单 / 头条 / 索引带共用的取数：本地化 + 分类色卡色 + 计数口径 */
+  const entryOf = (raw: Article) => {
+    const loc = localize(raw);
+    const a = loc.article;
+    const chapters = a.novel?.chapters || [];
+    const label = formatCountLabel(
+      chapters.length ? sumChapterCounts(chapters) : loc.counts,
+      chapters.length ? chapters.map((ch) => ch.content || '').join('\n') : a.content,
+      locale,
+      t
     );
-  }
+    return { a, meta: CATEGORY_META[a.category], label };
+  };
 
   return (
-    <div className="page home">
-      {/* 头部横幅：浅底深字（亮色主题下对比度达标）
-          ★ 英文版：站名用全名；签名与简介在英文页走字典（对应 profile.signature/intro），
-            中文页继续用 Supabase 上站长可编辑的线上文案，中文线一字未改。 */}
-      <section className="hero">
-        <div className="hero-inner">
-          <h1 className="hero-title">{t('brand.full')}</h1>
-          <p className="hero-sub">{locale === 'en' ? t('brand.tagline') : profile.signature}</p>
-          <p className="hero-desc">{locale === 'en' ? t('brand.intro') : profile.intro}</p>
-          <div className="hero-cta">
-            {isAdmin && <Link to="/write" className="btn btn-primary">{t('home.startWriting')}</Link>}
-            <Link to="/articles" className="btn btn-light-outline">{t('home.browseAll')}</Link>
+    <>
+      {/* ===== ① 报眼（.hero.hero-mast）=====
+          站名/标语/提要已由报头承载（N1 也是这样），这里只留「署名统计条 ＋ 两个入口 ＋ 主编头像方框」 */}
+      <section className="hero hero-mast">
+        <div className="hero-txt">
+          <ul className="stats">
+            {stats.map((s) => (
+              <li key={s.s}>
+                <b>{s.b}</b>
+                <span>{s.s}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="cta">
+            <a className="btn" href="#latest">{t('home.startReading')}</a>
+            <Link className="btn ghost" to="/about">{t('home.aboutSite')}</Link>
           </div>
         </div>
+        <figure className="hero-face">
+          <img src={profile.avatar || AVATAR_FALLBACK} alt={locale === 'en' ? t('brand.author') : profile.nickname || t('brand.author')} width={200} height={200} />
+        </figure>
       </section>
 
-      {/* ===== 最新更新 =====
-          形态 D：左边 1 张大卡（最新那一条）+ 右边 4 条小清单（分类彩点 + 标题 + 日期）。
-          排版全走 .latest-*，竖条用默认的天空蓝→青蓝渐变（非分类标题，不传 --sec-color）。 */}
+      {/* ===== ② 最新更新（.sec#latest ＝ .lead 头条 ＋ .recent 右栏四条）===== */}
       {latestBig && (
-        <section className="latest-section">
-          <div className="cat-section-head">
-            <h2 className="section-title">{t('home.latestUpdates')}</h2>
-            <Link to="/articles" className="more-link">
-              {t('home.more')}<span className="more-arrow">›</span>
-            </Link>
+        <section className="sec" id="latest">
+          <div className="sec-head">
+            <h2>{t('home.latestUpdates')}</h2>
+            <small>LATEST</small>
           </div>
-          <div className={`latest-wrap${latestSmall.length ? '' : ' single'}`}>
-            <div className="latest-big">
-              {latestBig.novel?.chapters?.length ? (
-                <NovelCard article={latestBig} />
-              ) : (
-                <ArticleCard article={latestBig} onToggleFavorite={toggleFavorite} />
-              )}
-            </div>
+          <div className="latest">
+            {(() => {
+              const { a, meta, label } = entryOf(latestBig);
+              return (
+                <article className="lead" style={{ '--c': meta.color } as CSSProperties}>
+                  <div className="lead-k">
+                    <span className="cat">{t(catKey(a.category))}</span>
+                    <span className="lead-flag">{t('home.leadFlag')}</span>
+                  </div>
+                  <h3>
+                    <Link to={`/article/${a.id}`}>{a.title}</Link>
+                  </h3>
+                  {a.summary && <p className="lead-ex">{a.summary}</p>}
+                  {leadBody.length > 0 && (
+                    <div className={`lead-body${leadShort ? ' is-short' : ''}`} ref={bodyRef}>
+                      {leadBody.map((p, i) => (
+                        <p key={i}>{p}</p>
+                      ))}
+                    </div>
+                  )}
+                  <div className="meta">
+                    <span>{formatDate(a.date, locale)}</span>
+                    {label && <span>{label}</span>}
+                    {/* 正文被版面裁掉时的出口（内容填不满就不出，避免无意义的「继续阅读」） */}
+                    {!leadShort && (
+                      <Link className="more" to={`/article/${a.id}`}>
+                        {t('home.continueReading')} ›
+                      </Link>
+                    )}
+                  </div>
+                </article>
+              );
+            })()}
+
             {latestSmall.length > 0 && (
-              <ul className="latest-list">
-                {latestSmall.map((a) => {
-                  const meta = CATEGORY_META[a.category];
-                  const loc = localize(a); // 英文页换成译文（标题/正文）
-                  const li = loc.article;
-                  /* ★ 字数（2026-09-22）：右侧小清单也报字数，口径走 formatCountLabel；
-                     小说这一行把所有章节的切分加起来（与书籍卡同一套），其余用文章正文的切分。 */
-                  const liChapters = li.novel?.chapters || [];
-                  const liLabel = formatCountLabel(
-                    liChapters.length ? sumChapterCounts(liChapters) : loc.counts,
-                    liChapters.length ? liChapters.map((ch) => ch.content || '').join('\n') : li.content,
-                    locale,
-                    t,
-                  );
+              <div className="recent">
+                <div className="subhead">
+                  <b>{t('home.recentSubhead')}</b>
+                  <small>MORE RECENT</small>
+                </div>
+                {latestSmall.map((raw) => {
+                  const { a, meta, label } = entryOf(raw);
                   return (
-                    <li key={a.id} className="latest-item">
-                      {/* 小圆点＝该分类的色卡色本身（分类的 ink 只给文字用，不当颜色） */}
-                      <span className="latest-dot" style={{ background: meta.color }} aria-hidden="true" />
-                      <div className="latest-item-main">
-                        <Link to={`/article/${a.id}`} className="latest-item-title">{li.title}</Link>
-                        <span className="latest-item-meta">
-                          {t(catKey(a.category))} · {formatDate(a.date, locale)}
-                          {liLabel && (
-                            <>
-                              <span className="card-meta-sep" aria-hidden="true">·</span>
-                              <span className="latest-item-words">{liLabel}</span>
-                            </>
-                          )}
-                        </span>
+                    <article key={a.id} className="item" style={{ '--c': meta.color } as CSSProperties}>
+                      <div className="item-txt">
+                        <span className="cat">{t(catKey(a.category))}</span>
+                        <h3>
+                          <Link to={`/article/${a.id}`}>{a.title}</Link>
+                        </h3>
+                        {a.summary && <p>{a.summary}</p>}
+                        <div className="meta">
+                          <span>{formatDate(a.date, locale)}</span>
+                          {label && <span>{label}</span>}
+                        </div>
                       </div>
-                      <span className="latest-arrow" aria-hidden="true">›</span>
-                    </li>
+                    </article>
                   );
                 })}
-              </ul>
+              </div>
             )}
           </div>
         </section>
       )}
 
-      {/* ===== 置顶与收藏（原样保留，与最新更新不去重） ===== */}
-      <section className="featured-section">
-        <h2 className="section-title">{t('home.pinnedSaved')}</h2>
-        <div className="card-grid">
-          {featured.map((a) => (
-            <ArticleCard key={a.id} article={a} onToggleFavorite={toggleFavorite} />
-          ))}
+      {/* ===== ③ 置顶与收藏（.duo 两个 .feat 方框）===== */}
+      <section className="sec" id="featured">
+        <div className="sec-head">
+          <h2>{t('home.pinnedSaved')}</h2>
+          <small>PINNED &amp; SAVED</small>
+        </div>
+        <div className="duo">
+          {featured.map((raw) => {
+            const { a, meta, label } = entryOf(raw);
+            return (
+              <article key={a.id} className="feat" style={{ '--c': meta.color } as CSSProperties}>
+                <div className="feat-k">
+                  <b>{a.pinned ? t('cat.pinned') : t('cat.save')}</b>
+                  {t(catKey(a.category))} · {formatDate(a.date, locale)}
+                </div>
+                <h3>
+                  <Link to={`/article/${a.id}`}>{a.title}</Link>
+                </h3>
+                {a.summary && <p>{a.summary}</p>}
+                {label && <div className="meta"><span>{label}</span></div>}
+              </article>
+            );
+          })}
         </div>
       </section>
 
-      {/* ===== 书籍更新（2026-09-20 新增，用户原话「我希望加一个小部分来放书籍更新」）=====
-          一本小说一张书籍卡：封面 + 书名 + 连载状态小签 + 「共 N 章 · M 字」+ 最新章节名。
-          位置放在「最新更新」之后：博文更新仍是首页第一眼，书籍更新是紧随其后的一小块；
-          若用户想让它更靠前，把这一整段移到「最新更新」那个 section 之前即可。
-          配色跟随小说分类的色卡色（蜜金 #E8C9A0，与书架页 /novels 同口径）；
-          状态小签的颜色改由 CSS 变量 --chip-color/--chip-ink 传（不再写 inline color），
-          这样暗色主题才能覆盖——实测 inline 的蜜金系墨色压 13% 淡底在暗色只有 1.81:1，
-          暗色下收敛成天空蓝 #5BA8D8（4.61:1），见 index.css 本段末尾的暗色覆盖。
-          还没有任何章节的小说不进这一块（与书架页判据一致）。 */}
+      {/* ===== ④ 书籍更新（.book 报讯块）===== */}
       {bookCards.length > 0 && (
-        <section className="book-section">
-          <div className="cat-section-head">
-            <h2 className="section-title">{t('home.bookUpdates')}</h2>
-            <Link to="/novels" className="more-link">
-              {t('home.allBooks')}<span className="more-arrow">›</span>
-            </Link>
+        <section className="sec" id="books">
+          <div className="sec-head">
+            <h2>{t('home.bookUpdates')}</h2>
+            <small>BOOKS</small>
           </div>
-          <div className="book-grid">
-            {bookCards.map((raw) => {
-              const loc = localize(raw); // 英文页：书名/章节名换成译文
-              const a = loc.article;
-              const novel = a.novel;
-              const chapters = (novel?.chapters || []).slice().sort((x, y) => x.order - y.order);
-              const latestCh = chapters[chapters.length - 1]; // 不用 .at(-1)：tsconfig 的 lib 只到 ES2020
-              const statusMeta = novel?.status ? NOVEL_STATUS_META[novel.status] : null;
-              return (
-                <Link key={a.id} to={`/article/${a.id}`} className="book-card">
-                  {novel?.cover ? (
-                    <img src={novel.cover} alt={a.title} className="book-cover" loading="lazy" />
-                  ) : (
-                    <span className="book-cover book-cover-ph" aria-hidden="true">{a.title.slice(0, 1)}</span>
-                  )}
-                  <div className="book-body">
-                    <h3 className="book-title">{a.title}</h3>
-                    <div className="book-meta">
-                      {statusMeta && (
-                        <span
-                          className="book-status"
-                          style={{ '--chip-color': statusMeta.color, '--chip-ink': statusMeta.ink } as CSSProperties}
-                        >
-                          {novel?.status ? t(`cat.${novel.status}` as 'cat.serializing') : statusMeta.label}
-                        </span>
-                      )}
-                      {/* ★ 数字口径（2026-09-22）：{m} 现在由 formatCountLabel 算好整句再喂进来 ——
-                          中文站＝`707 字`（与改动前逐字相同），英文站可能是 `707 words` /
-                          `6,765 characters` / `447 words · 6,765 characters`（见 lib/wordCount.ts）。
-                          章节正文缺失时才退回 novel.wordCount 那个存下来的旧数字。 */}
-                      <span className="book-meta-text">
-                        {(() => {
-                          const body = chapters.map((ch) => ch.content || '').join('\n');
-                          const label =
-                            formatCountLabel(sumChapterCounts(chapters), body, locale, t) ||
-                            t('count.words', { n: formatCount(novel?.wordCount || 0) });
-                          return t('count.chaptersWords', {
-                            n: chapters.length,
-                            m: label,
-                          });
-                        })()}
+          {bookCards.map((raw) => {
+            const { a, label } = entryOf(raw);
+            const novel = a.novel;
+            const chapters = (novel?.chapters || []).slice().sort((x, y) => x.order - y.order);
+            const latestCh = chapters[chapters.length - 1]; // 不用 .at(-1)：lib 只到 ES2020
+            const statusMeta = novel?.status ? NOVEL_STATUS_META[novel.status] : null;
+            const words =
+              label || t('count.words', { n: formatCount(novel?.wordCount || 0) });
+            return (
+              <div className="book" key={a.id}>
+                <figure className="book-cover">
+                  {novel?.cover && <img src={novel.cover} alt={t('common.coverAlt', { t: a.title })} loading="lazy" />}
+                </figure>
+                <div className="book-txt">
+                  <h3>
+                    {/* 书籍入口＝书架族的阅读界面（2026-10-09「小说界面绑定到书架」） */}
+                    <Link to={articleHref(a)}>{a.title}</Link>
+                  </h3>
+                  <div className="book-meta">
+                    {statusMeta && (
+                      <span className="badge">
+                        {novel?.status ? t(`cat.${novel.status}` as 'cat.serializing') : statusMeta.label}
                       </span>
-                    </div>
-                    {latestCh && (
-                      <p className="book-latest">
-                        <span className="book-latest-tag">{t('home.newTag')}</span>
-                        <span className="book-latest-text">
-                          {latestCh.part ? `${latestCh.part} · ` : ''}{latestCh.title}
-                        </span>
-                        <span className="book-arrow" aria-hidden="true">{t('article.read')} ›</span>
-                      </p>
                     )}
+                    <span>{t('count.chaptersWords', { n: chapters.length, m: words })}</span>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
+                  {novel?.synopsis && <p>{novel.synopsis}</p>}
+                  {latestCh && (
+                    <div className="book-latest">
+                      <b>{t('home.newTag')}</b>
+                      {latestCh.part ? `${latestCh.part} · ` : ''}
+                      {latestCh.title}
+                      {/* 「最新一章 ›」直接落到那一章（2026-10-09 第二轮起＝阅读界面 `/novels/<id>/read?ch=`） */}
+                      <Link className="more" to={latestCh ? novelReadHref(a.id, latestCh.id) : articleHref(a)}>
+                        {t('article.read')} ›
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </section>
       )}
 
-      {/* ===== 分类浏览 =====
-          替代删掉的 5 个分类分区：每块压该分类的凉风凉色卡色（左竖条 + 淡底），
-          手机端也能一眼点进分类（顶栏彩点在 ≤1199 就藏了）。
-          2026-09-20 用户要求「底下的分类变成一行」+「现在这个太大了，换小一点」：
-          恒定 5 列一行（不再 auto-fill），卡片整体缩小一档；手机端横滑仍是一行。 */}
-      <section className="cat-nav-section">
-        <h2 className="section-title">{t('home.browseByCategory')}</h2>
-        <div className="cat-nav-grid">
+      {/* ===== ⑤ 分类浏览（.tiles 报尾索引带）===== */}
+      <section className="sec" id="cats">
+        <div className="sec-head">
+          <h2>{t('home.browseByCategory')}</h2>
+          <small>BY CATEGORY</small>
+        </div>
+        <div className="tiles">
           {CATEGORIES.map((c) => {
             const meta = CATEGORY_META[c];
-            const count = getByCategory(c).length;
             return (
-              <Link
-                key={c}
-                to={`/category/${c}`}
-                className="cat-nav-card"
-                style={{ '--sec-color': meta.color, '--sec-ink': meta.ink } as CSSProperties}
-              >
-                <span className="cat-nav-name">{t(catKey(c))}</span>
-                <span className="cat-nav-count">{t('count.posts', { n: count })}</span>
+              <Link key={c} to={`/category/${c}`} className="tile" style={{ '--c': meta.color } as CSSProperties}>
+                <b>{t(catKey(c))}</b>
+                <span className="n">{getByCategory(c).length}</span>
               </Link>
             );
           })}
         </div>
       </section>
-    </div>
+    </>
   );
 }

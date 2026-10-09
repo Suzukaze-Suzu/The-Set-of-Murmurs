@@ -144,7 +144,7 @@ export function ArticleProvider({ children }: { children: ReactNode }) {
 
   return (
     <ArticleContext.Provider
-      value={{ articles, addArticle, updateArticle, deleteArticle, toggleFavorite, togglePinned, getByCategory, getById }}
+      value={{ articles, loaded, addArticle, updateArticle, deleteArticle, toggleFavorite, togglePinned, getByCategory, getById }}
     >
       {children}
     </ArticleContext.Provider>

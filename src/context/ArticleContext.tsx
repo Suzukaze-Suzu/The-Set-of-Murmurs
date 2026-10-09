@@ -103,6 +103,8 @@ $$ e^{i\\pi} = \\cos\\pi + i\\sin\\pi = -1 $$
 
 interface ArticleContextType {
   articles: Article[];
+  /** 第一次拉取是否已结束（成功或失败都算结束）。B2 报头用它决定「期号」什么时候信 articles.length */
+  loaded: boolean;
   addArticle: (a: Article) => void;
   updateArticle: (a: Article) => void;
   deleteArticle: (id: string) => void;

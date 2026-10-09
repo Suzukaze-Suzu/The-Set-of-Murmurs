@@ -122,7 +122,12 @@ export default function MarkdownRenderer({ content, onHeadings }: { content: str
                 return <code className={className}>{children}</code>;
               },
               img({ src, alt }: any) {
-                return <img src={src} alt={alt} loading="lazy" style={{ maxWidth: '100%', height: 'auto', display: 'block' }} />;
+                /* ⚠️ 这里**不能**再写内联 `maxWidth`：内联样式的优先级高于任何 CSS 规则，
+                   N1 正文图要限宽（`.n1 .prose-read .markdown-body img` 的 `--img-w`）就会被它压死。
+                   宽度交给 CSS 管：未迁页由 index.css 的 `.markdown-body img{max-width:100%}` 兜底，
+                   N1 页由 n1-app.css 的 `--img-w` 收到 760px。`height/display` 仍写内联，
+                   免得旧层 `.markdown-body img` 只有 max-width、图片回落到 inline 出现基线缝隙。 */
+                return <img src={src} alt={alt} loading="lazy" className="md-img" style={{ height: 'auto', display: 'block' }} />;
               },
               pre({ children }: any) {
                 return <pre className="code-block">{children}</pre>;

@@ -9,9 +9,18 @@
 // 数据：articles × article_translations（+ 逐章表），全部在浏览器里算，
 // 不发新的后端请求。状态判定与工作台同源（articleSourceHash / chapterSourceHash），
 // 所以两边看到的「待复核」永远一致。
+//
+// ★ 2026-10-09「登录，个人主页和翻译界面未统一风格」（用户原话）★
+//   页身从旧皮肤（`.page write-page` ＋ `.tov-list/.tov-row/.tov-chip` 那张自建表）
+//   换成 N1 样张已有的语汇：
+//     `.pagehead` 页头（kicker ＋ 大标题 ＋ 导语）
+//     `.tiles`    汇总带（首页「分类索引带」那件：色点方块 ＋ 名字 ＋ 数字）
+//     `.list`/`.item` 条目流（档案页那套三栏纯文字条目）＋ `.bar` 细进度线
+//   判定逻辑、排序、数据来源**一行未改**；`--c` 只用来给状态点取四色之一。
 // ============================================================================
 
 import { useEffect, useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { useArticles } from '../context/ArticleContext';
 import { useAuth } from '../context/AuthContext';
@@ -39,6 +48,14 @@ interface Row {
   updatedAt: string;
   enTitle: string;
 }
+
+/* 状态 → 文案（色点由 `n1-app.css` 第⑤段的 `.tov-<state> .st` 给：四色取站点色卡） */
+const STATE_LABEL: Record<RowState, string> = {
+  none: '未译',
+  stale: '待复核',
+  reviewed: '已上线',
+  draft: '草稿',
+};
 
 export default function Translations() {
   const { isAdmin } = useAuth();
@@ -121,67 +138,96 @@ export default function Translations() {
     return c;
   }, [rows]);
 
+  /* 汇总带：照首页 `.tiles`（色点方块 ＋ 名字 ＋ 数字），色号取站点四色，不新增 */
+  const tiles: { label: string; n: number; c: string }[] = [
+    { label: '共', n: rows.length, c: 'var(--sky)' },
+    { label: '已上线', n: sum.reviewed, c: 'var(--teal)' },
+    { label: '草稿', n: sum.draft, c: 'var(--honey)' },
+    { label: '未译', n: sum.none, c: 'var(--gray)' },
+    { label: '待复核', n: sum.stale, c: 'var(--coral)' },
+  ];
+
   if (!isAdmin) {
     return (
-      <div className="page">
-        <p style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>
-          无权访问，请以博主身份登录后使用。
-        </p>
-      </div>
+      <>
+        <section className="pagehead">
+          <div className="pagehead-txt">
+            <div className="kicker">TRANSLATIONS</div>
+            <h1>翻译进度</h1>
+          </div>
+        </section>
+        <section className="sec">
+          <p className="gnote">无权访问，请以博主身份登录后使用。</p>
+        </section>
+      </>
     );
   }
 
   return (
-    <div className="page write-page">
-      <h1 className="page-title">翻译进度（English）</h1>
-      <div className="tov-wrap">
-        <div className="tov-sum">
-          <span className="tov-chip">共 <b>{rows.length}</b> 篇</span>
-          <span className="tov-chip tov-chip-done">已上线 <b>{sum.reviewed}</b></span>
-          <span className="tov-chip">草稿 <b>{sum.draft}</b></span>
-          <span className="tov-chip">未译 <b>{sum.none}</b></span>
-          <span className="tov-chip tov-chip-stale">待复核 <b>{sum.stale}</b></span>
-          <Link className="btn btn-light btn-sm" to="/write">回写作页</Link>
+    <>
+      <section className="pagehead">
+        <div className="pagehead-txt">
+          <div className="kicker">TRANSLATIONS</div>
+          <h1>翻译进度（English）</h1>
+          <p className="lede">
+            「待复核」＝中文原稿在译文之后改过（整篇级别或某一章级别）。
+            点一行进工作台，里面会精确标出是哪几段改了。
+          </p>
+        </div>
+      </section>
+
+      <section className="sec">
+        <div className="tiles">
+          {tiles.map((x) => (
+            <span className="tile" key={x.label} style={{ '--c': x.c } as CSSProperties}>
+              <b>{x.label}</b>
+              <span className="n">{x.n}</span>
+            </span>
+          ))}
+        </div>
+        <p className="tov-back">
+          <Link className="btn" to="/write">回写作页</Link>
+        </p>
+      </section>
+
+      <section className="sec">
+        <div className="sec-head">
+          <h2>文章</h2>
+          <small>{rows.length} ARTICLES</small>
         </div>
 
-        <p className="tr-hint">
-          「待复核」＝中文原稿在译文之后改过（整篇级别或某一章级别）。点一行进工作台，
-          里面会精确标出是哪几段改了。
-        </p>
-
         {!trs ? (
-          <div className="tov-loading">正在读取…</div>
+          <p className="gnote">正在读取…</p>
+        ) : !sorted.length ? (
+          <p className="gnote">还没有文章。</p>
         ) : (
-          <div className="tov-list">
+          <div className="list tov-list">
             {sorted.map((r) => {
               const pct = r.total ? Math.round((r.done / r.total) * 100) : 0;
               return (
-                <div className={'tov-row tov-row-' + (r.state === 'reviewed' ? 'review' : r.state === 'stale' ? 'stale' : r.state === 'draft' ? 'draft' : 'none')} key={r.article.id}>
-                  <div style={{ minWidth: 0 }}>
-                    <div className="tov-title">{r.article.title}</div>
-                    {r.enTitle && <div className="tov-title-en">{r.enTitle}</div>}
-                  </div>
-                  <span className={'tov-state tov-state-' + (r.state === 'none' ? 'none' : r.state)}>
-                    {r.state === 'none' ? '未译' : r.state === 'stale' ? '待复核' : r.state === 'reviewed' ? '已上线' : '草稿'}
-                  </span>
-                  <div className="tov-col-extra">
-                    <div className="tov-bar"><span style={{ width: pct + '%' }} /></div>
-                    <div className="tov-col">{r.done}/{r.total} {r.unit}</div>
-                  </div>
-                  <div className="tov-col tov-col-extra">{r.enWords ? r.enWords + ' words' : '—'}</div>
-                  <div className="tov-col tov-col-extra">
-                    <Link className="tr-mini-btn" to={`/write/${r.article.id}?en=1`}>打开工作台</Link>
+                <div className={`item tov-item tov-${r.state}`} key={r.article.id}>
+                  <div className="item-txt">
+                    <h3>
+                      <Link to={`/write/${r.article.id}?en=1`}>{r.article.title}</Link>
+                    </h3>
+                    {r.enTitle && <p className="en">{r.enTitle}</p>}
+                    <div className="meta">
+                      <span className="st">{STATE_LABEL[r.state]}</span>
+                      <span>{r.done}/{r.total} {r.unit}</span>
+                      <span>{r.enWords ? `${r.enWords} words` : '—'}</span>
+                      {r.updatedAt && <span>{r.updatedAt.slice(0, 10)}</span>}
+                    </div>
+                    <span className="bar"><i style={{ width: `${pct}%` }} /></span>
                   </div>
                 </div>
               );
             })}
-            {!sorted.length && <div className="tov-loading">还没有文章。</div>}
           </div>
         )}
+      </section>
 
-        {/* P5：标签词典。标签是全站共用的，所以放在文章列表下面单独一块 */}
-        <TagGlossary />
-      </div>
-    </div>
+      {/* P5：标签词典。标签是全站共用的，所以放在文章列表下面单独一块 */}
+      <TagGlossary />
+    </>
   );
 }

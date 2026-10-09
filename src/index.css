@@ -138,36 +138,69 @@ button,input,select,textarea{font-family:inherit}
    修法：单行控件把行盒钉回改动前的高度（1.09em ≈ Arial 的 normal），多行 textarea 不动（中文行高本来就该大些）；
    搜索框（顶栏 v3 的 .nav-search-input 同理）放开 min-width，让它按 flex 分宽度、而不是按字体固有宽度撑开。
    注意 .nav-search-input input{min-width:60px} 在文件更靠后，仍然赢，这是期望行为。 */
-input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),select{line-height:1.09}
+/* ★ 2026-10-08 · S2（报纸版迁移 P1：拆第二颗特异性炸弹）★
+   原样＝ input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),select{line-height:1.09}
+   特异性 **(0,8,1)**，是全文件天花板：这条之后的任何「写单行控件」的新规则（单类 (0,1,0)、(0,2,0)…）
+   都**静默失效**。实测（probe-s2.mjs）：在 32 个单行控件上注入 .probe-s2{line-height:3}，**32/32 全被压掉**。
+   现改用 :where() 把整段选择器归零：(0,8,1) → **(0,0,0)**，单行控件回到「自己的类说了算」。
+   副作用已盘点（静态审计 audit-s2.mjs：1105 条规则 × 77 条含 line-height × TSX 全部 13 个 input/select 类名）：
+   拆墙后**唯一**新解禁的规则是 `.tr-input,.tr-textarea{…line-height:1.75}`（译文作台 /write/translations
+   的 2 个 <input type="text">，行高 1.09→1.75，盒子高约 +9.7px）。本步判据要求「逐像素不变」，
+   故下面用 (0,2,0) 显式把它钉回 1.09 —— **P7 重排后台时再按报纸风统一决定，要放开删掉这一行即可**。
+   回滚＝把下面第 2 行改回原样并删掉第 3 行。 */
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),select){line-height:1.09}
+.tr-input.tr-input{line-height:1.09}   /* S2 像素补偿：见上，P7 放开 */
 .search-box,.nav-search-input{min-width:0}
 .search-box input,.nav-search-input input{min-width:0}
-a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{color:var(--coral-ink)}
+a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}
+/* ★ 2026-10-08 · S1（报纸版迁移 P1：拆炸弹）★
+   原样是 a:hover{color:var(--coral-ink)}，特异性 (0,1,1)。它是全站头号地雷：凡是用 <a> 写的、
+   自己没写 :hover 字色的组件（.btn-primary / .btn-light-outline / .card-title / 卡片本身 /
+   .cat-nav-card / 导航项…），鼠标一悬停字就被它抢成珊瑚墨 #A8482F。历史上为它打过两次补丁
+   （2026-09-22 hero 按钮、2026-09-29 分类浏览卡），都在文件末尾。
+   现降级为 **:where(a):hover** —— :where() 记 0 分，只有 :hover 记分，所以特异性从 (0,1,1) 降到 (0,1,0)：
+     · 任何类规则（.btn-primary (0,1,0)、.card-title:hover (0,2,0)…）无论源码顺序都压得住它，
+       组件回到「自己管自己的悬停色」；
+     · 只有**光秃秃的链接**才吃这条兜底色（青蓝墨 --accent-deep，不再引入珊瑚红）。
+   两处历史补丁因此冗余，已同步删除。回滚＝把下面这行改回 a:hover{color:var(--coral-ink)}。 */
+:where(a):hover{color:var(--accent-deep)}
 ::selection{background:color-mix(in srgb,var(--coral-pink) 26%,transparent)}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:linear-gradient(var(--sky-blue-soft),var(--coral-pink-soft));border-radius:5px}
+::-webkit-scrollbar-thumb{background:linear-gradient(var(--sky-blue-soft),var(--coral-pink-soft));border-radius:var(--radius)}
 ::-webkit-scrollbar-thumb:hover{background:var(--accent)}
 .layout{min-height:100vh;display:flex;flex-direction:column}
-.main{flex:1;width:100%;max-width:1080px;margin:0 auto;padding:28px 20px 64px}
-.page{max-width:920px;margin:0 auto;animation:fadeUp .4s ease}
+/* 2026-10-08 A1「每个页面都保持和首页一样的宽度」（用户原话）：
+   首页（N1 `.wrap`）的内容净宽 = 1240 − 44×2 = **1152**（1440 档），手机档 370 − 18×2 = 334。
+   `.page` 原来写 `max-width:var(--bs-wrap-w)` 是把它当成 border-box 宽用了，加上
+   `.article-detail 800 / .gallery-page 960 / .friends-page 920 / .not-found-inner 520`
+   这几道内收，未迁移页比首页窄 88px 起。改法：
+     ① `.page` 限宽＝父容器内容盒（`max-width:100%`）；
+     ② `.main` 的**内容宽**钉到与首页相同（桌面 1152 / 手机 334，见 A1 段）；
+     ③ 正文栏（`.bs-article-body` 672）也归位到版心宽，见 broadsheet.css ⑦段。
+   回滚＝`first\width-all-pages\index.css.before-a1.css`。 */
+.main{flex:1;width:100%;max-width:calc(var(--bs-wrap-w) + 44px);margin:0 auto;padding:28px 22px 64px}
+/* `.page` 的限宽＝父容器内容盒：不能写 `var(--bs-wrap-w)`——同理那是 border-box 宽，
+   一加内边距就把内容挤窄（`.article-detail` 就是这么被压到 800 的）。 */
+.page{max-width:100%;margin:0 auto;animation:fadeUp .4s ease}
 .page-title{font-family:var(--font-display);font-size:1.9rem;margin-bottom:28px;font-weight:700;letter-spacing:.06em;line-height:1.4}
 .page-title.light{color:var(--text-main)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .navbar{background:color-mix(in srgb,var(--bg-card) 82%,transparent);backdrop-filter:blur(14px);box-shadow:var(--shadow-sm);position:sticky;top:0;z-index:100;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
 /* ===== 顶栏 v2（2026-09-20）=====
-   顶栏压成一行 + 三段分组（品牌 / 主导航 / 分类 / 操作区）。容器宽度仍是 1080px
-   （与 .main、.footer-inner 对齐，logo 与正文左边缘才齐），所以宽度全靠「减东西」腾出来：
-   导航文字精简 + 分类收成彩点 + 搜索与主题切换收成图标。
+   顶栏压成一行 + 三段分组（品牌 / 主导航 / 分类 / 操作区）。容器宽度 2026-10-08 由 1080
+   提到 `--bs-wrap-w` 1152（与 .main、.footer-inner、报头 .bs-mast-inner 同一把尺子，
+   见文件末尾 W1 段），logo 与正文左边缘仍然齐。
    宽度账（静态估算，用来检查每一项有没有放不下；改完请跟着更新）：
-     可用宽：容器 1080 − 48 = 1032（≥1200）；1024px 时 976；390 手机可用 358。
+     可用宽：容器 1240 → 可用 **1152**（≥1200；旧账 1080 容器的可用宽 = 1032，余量 +120）；1024px 档可用 976；390 手机可用 326。
      元素估算：品牌 105（≤640 时 87，只留 logo 时约 37）、导航 7 项 ≈375（管理员加「写作」≈429）、
              彩点条 104、操作区 图标 3 枚 124 ＋ 登录按钮 55 或 登录态按钮+头像 138。
-     ≥1200 访客：813 / 1032，余 219
-     ≥1200 管理员：950 / 1032，余 82（悬停展开最长项 +70 由导航区吸收，最紧约 12 —— 真顶就收
-                   1px 内边距或把展开字号降到 .78rem，不许改结构）
+     ≥1200 访客：813 / 1152，余 339
+     ≥1200 管理员：950 / 1152，余 202（悬停展开最长项 +70 由 `.nav-links`(flex:1) 吸收，余 132，很松）
+                   1px 内边距或把展开字号降到 .78rem，不许改结构 —— 这一档余量已回到 132，不再紧张）
      1024~1199 管理员（用下拉）：916 / 976，余 60
      390 管理员（登录态收成头像）：345 / 358，余 45
      ≤480 管理员（只留 logo）：295 / 358，余 95 */
-.nav-inner{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;flex-wrap:nowrap;gap:14px}
+.nav-inner{max-width:var(--bs-wrap-w);margin:0 auto;padding:12px 24px;display:flex;align-items:center;flex-wrap:nowrap;gap:14px}
 .nav-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:1.25rem;color:var(--text-main);flex-shrink:0}
 .brand-dot{width:16px;height:16px;border-radius:50%;background:var(--grad-warm);box-shadow:0 0 0 4px color-mix(in srgb,var(--coral-pink) 20%,transparent)}
 .brand-logo{width:34px;height:34px;flex-shrink:0;display:block;object-fit:contain}
@@ -213,15 +246,15 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nav-cat-caret{font-size:.68rem;line-height:1;transition:transform .18s ease}
 .nav-cat-toggle.open .nav-cat-caret{transform:rotate(180deg)}
 .nav-cat-panel{position:absolute;top:calc(100% + 8px);right:0;min-width:152px;padding:8px;background:var(--bg-card);border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:2px;z-index:10}
-.nav-cat-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--text-main);font-size:.88rem;font-weight:500;white-space:nowrap;transition:background .18s}
+.nav-cat-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius);color:var(--text-main);font-size:.88rem;font-weight:500;white-space:nowrap;transition:background .18s}
 .nav-cat-item:hover,.nav-cat-item.active{background:var(--bg-soft)}
-.nav-cat-bar{width:4px;height:16px;border-radius:2px;flex-shrink:0}
+.nav-cat-bar{width:4px;height:16px;border-radius:var(--radius);flex-shrink:0}
 /* ===== 顶栏操作区（搜索 / 主题切换 / 预留按钮 / 登录或头像）=====
    2026-09-13 顶栏改造：原来顶栏下面单独一行 .topbar（全文搜索框 + 「切换暗色」按钮）被删掉，
    搜索收成放大镜图标（点开是从顶栏下方展开的浮层，不占顶栏宽度），主题切换收成图标按钮，
    空出来的位置留给以后要加的新按钮。 */
 .nav-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.nav-icon-btn{width:36px;height:36px;border:none;background:transparent;border-radius:10px;color:var(--text-secondary);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,color .2s}
+.nav-icon-btn{width:36px;height:36px;border:none;background:transparent;border-radius:var(--radius);color:var(--text-secondary);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,color .2s}
 .nav-icon-btn:hover{background:var(--bg-soft);color:var(--accent-deep)}
 .nav-icon-btn.active{background:var(--accent);color:var(--accent-on)}
 /* ===== ≤1023px 的头像按钮 + 小菜单 =====
@@ -229,7 +262,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
    个人主页 / 退出登录。Esc 关闭 + 点外部关闭写在组件里。≥1024 两档不渲染这套结构。 */
 .nav-user{position:relative;display:flex;align-items:center}
 .nav-user-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:158px;padding:8px;background:var(--bg-card);border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:2px;z-index:10}
-.nav-user-item{display:flex;align-items:center;gap:9px;width:100%;padding:10px 12px;border:none;background:transparent;border-radius:8px;color:var(--text-main);font-size:.9rem;font-weight:500;text-align:left;white-space:nowrap;cursor:pointer;transition:background .18s}
+.nav-user-item{display:flex;align-items:center;gap:9px;width:100%;padding:10px 12px;border:none;background:transparent;border-radius:var(--radius);color:var(--text-main);font-size:.9rem;font-weight:500;text-align:left;white-space:nowrap;cursor:pointer;transition:background .18s}
 .nav-user-item:hover{background:var(--bg-soft)}
 .nav-user-item.danger{color:var(--coral-ink)}
 .nav-user-item.danger:hover{background:color-mix(in srgb,var(--coral-pink) 14%,transparent)}
@@ -237,33 +270,33 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nav-search{position:absolute;left:0;right:0;top:100%;background:var(--bg-card);border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent);box-shadow:0 12px 28px var(--accent-veil);animation:navSearchIn .22s ease}
 @keyframes navSearchIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 @media (prefers-reduced-motion:reduce){.nav-search{animation:none}}
-.nav-search-inner{max-width:1080px;margin:0 auto;padding:12px 24px;display:flex;align-items:center}
+.nav-search-inner{max-width:var(--bs-wrap-w);margin:0 auto;padding:12px 24px;display:flex;align-items:center}
 .nav-search-input{flex:1;display:flex;align-items:center;background:var(--bg-page);border:1px solid color-mix(in srgb,var(--sky-blue) 15%,transparent);border-radius:var(--radius-pill);padding:9px 16px;transition:border-color .2s,box-shadow .2s}
 .nav-search-input:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-veil)}
 .nav-search-input input{flex:1;border:none;outline:none;background:transparent;color:var(--text-main);font-size:.92rem;min-width:60px}
 /* CSS 画的放大镜（原来搜索框前面是个没有任何图形的空 span） */
 .search-icon{width:14px;height:14px;border:2px solid var(--accent);border-radius:50%;position:relative;margin-right:10px;flex-shrink:0}
-.search-icon::after{content:'';position:absolute;right:-5px;bottom:-3px;width:7px;height:2px;background:var(--accent);transform:rotate(45deg);border-radius:2px}
+.search-icon::after{content:'';position:absolute;right:-5px;bottom:-3px;width:7px;height:2px;background:var(--accent);transform:rotate(45deg);border-radius:var(--radius)}
 .search-clear{border:none;background:color-mix(in srgb,var(--bg-soft) 70%,transparent);width:22px;height:22px;border-radius:50%;color:var(--text-secondary);cursor:pointer;font-size:.8rem;line-height:1;transition:background .2s;flex-shrink:0}
 .search-clear:hover{background:var(--coral-pink);color:var(--coral-on)}
 .footer{background:var(--bg-card);border-top:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent);margin-top:auto}
-.footer-inner{max-width:1080px;margin:0 auto;padding:26px 24px;text-align:center;color:var(--text-secondary)}
+.footer-inner{max-width:var(--bs-wrap-w);margin:0 auto;padding:26px 24px;text-align:center;color:var(--text-secondary)}
 .footer p{margin:4px 0;font-size:.9rem}.footer-links a{margin:0 8px}.footer-copy{font-size:.8rem;opacity:.7}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;padding:10px 26px;border-radius:var(--radius-pill);font-size:.95rem;font-weight:700;letter-spacing:.3px;transition:all .25s cubic-bezier(.22,1,.36,1);color:var(--text-main);background:var(--bg-soft);position:relative;overflow:hidden}
-.btn::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transition:left .5s}
+.btn::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,var(--shine),transparent);transition:left .5s}
 .btn:hover::after{left:100%}.btn:hover{transform:translateY(-2px)}.btn:active{transform:translateY(0) scale(.97)}
 .btn-primary{color:var(--accent-on);background:var(--accent);box-shadow:0 8px 20px var(--accent-shadow-soft)}
 .btn-primary:hover{box-shadow:0 12px 28px var(--accent-shadow)}
-.btn-warm{color:var(--text-main);background:var(--grad-warm);box-shadow:0 8px 20px rgba(232,155,138,.28)}
-.btn-warm:hover{box-shadow:0 12px 28px rgba(232,155,138,.4)}
+.btn-warm{color:var(--text-main);background:var(--grad-warm);box-shadow:var(--shadow)}
+.btn-warm:hover{box-shadow:var(--shadow-lg)}
 .btn-light{color:var(--sky-ink);background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px solid color-mix(in srgb,var(--sky-blue) 38%,transparent);backdrop-filter:none}
 .btn-light-outline{color:var(--sky-ink);background:transparent;border:1px solid color-mix(in srgb,var(--sky-blue) 45%,transparent)}
 .btn-light-outline:hover{background:color-mix(in srgb,var(--sky-blue) 12%,transparent)}
-.btn-danger{color:var(--coral-on);background:linear-gradient(135deg,#E89B8A,#e07a63);box-shadow:0 8px 20px rgba(232,155,138,.35)}
-.btn-danger:hover{box-shadow:0 12px 28px rgba(232,155,138,.45)}
+.btn-danger{color:var(--coral-on);background:var(--coral-solid);box-shadow:var(--shadow)}
+.btn-danger:hover{box-shadow:var(--shadow-lg)}
 .btn-sm{padding:7px 16px;font-size:.85rem}
 /* ===== Hero（首页中心主色块）：浅底留白 + 由凉风凉色卡 mix 出来的缓慢流动渐变 ===== */
-.hero{position:relative;overflow:hidden;border-radius:28px;padding:68px 44px 62px;margin-bottom:40px;text-align:center;color:var(--text-main);background:var(--hero-flow);background-size:260% 260%;animation:heroFlow 26s ease-in-out infinite;box-shadow:var(--shadow);border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
+.hero{position:relative;overflow:hidden;border-radius:var(--radius);padding:68px 44px 62px;margin-bottom:40px;text-align:center;color:var(--text-main);background:var(--hero-flow);background-size:260% 260%;animation:heroFlow 26s ease-in-out infinite;box-shadow:var(--shadow);border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
 .hero::before{content:'';position:absolute;width:420px;height:420px;left:-130px;top:-150px;border-radius:50%;background:radial-gradient(circle,var(--hero-glow-a),transparent 70%);filter:blur(50px);opacity:.7;pointer-events:none;animation:heroDriftA 32s ease-in-out infinite}
 .hero::after{content:'';position:absolute;width:400px;height:400px;right:-120px;bottom:-170px;border-radius:50%;background:radial-gradient(circle,var(--hero-glow-b),transparent 70%);filter:blur(50px);opacity:.75;pointer-events:none;animation:heroDriftB 40s ease-in-out infinite}
 @keyframes heroFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
@@ -330,9 +363,11 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 个人资料卡片 & 关于 ===== */
 .profile-card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:28px 22px;text-align:center;align-self:start;border:1px solid color-mix(in srgb,var(--sky-blue) 8%,transparent);position:relative;overflow:hidden}
 .profile-card::before{content:'';position:absolute;top:0;left:0;right:0;height:80px;background:var(--accent);opacity:.14}
-.profile-avatar{width:92px;height:92px;border-radius:50%;overflow:hidden;margin:12px auto 14px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px var(--accent-shadow-soft);border:4px solid #fff;position:relative}
+.profile-avatar{width:92px;height:92px;border-radius:50%;overflow:hidden;margin:12px auto 14px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px var(--accent-shadow-soft);border:4px solid var(--edge-white);position:relative}
 .profile-avatar img{width:100%;height:100%;object-fit:cover}
-.avatar-placeholder{font-size:2.6rem}
+/* 没设头像的人＝昵称首字（2026-10-08 用户点名「未设置头像人群」统一走首字字面，
+   与 .comment-avatar / .friends-avatar-ph 同口径：头像圆底上白字）——原来是写死的 👤 emoji / 空 span。 */
+.avatar-placeholder{font-size:2.6rem;color:var(--accent-on)}
 .profile-name{font-size:1.25rem;font-weight:800;margin-bottom:4px}
 .profile-signature{color:var(--coral-ink);font-size:.88rem;margin-bottom:10px;font-weight:500}
 .profile-intro{color:var(--text-secondary);font-size:.84rem;line-height:1.7}
@@ -341,7 +376,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .about-content h2:first-child{margin-top:0}
 .about-content p{margin-bottom:12px;line-height:1.9}
 .color-palette{display:flex;gap:12px;margin-top:14px}
-.color-palette span{width:42px;height:42px;border-radius:12px;border:3px solid #fff;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s}
+.color-palette span{width:42px;height:42px;border-radius:var(--radius);border:3px solid var(--edge-white);box-shadow:var(--shadow-sm);cursor:pointer;transition:all .2s}
 .color-palette span:hover{transform:translateY(-4px) rotate(-5deg);box-shadow:var(--shadow)}
 .edit-profile{margin-top:26px;padding:26px}
 .edit-profile h3{margin-bottom:14px}
@@ -396,25 +431,25 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .markdown-body blockquote{border-left:4px solid var(--coral-pink);padding:12px 18px;margin:1.1em 0;background:var(--bg-soft);border-radius:0 var(--radius-sm) var(--radius-sm) 0;color:var(--text-secondary)}
 /* 代码字体仍用等宽，但末尾接上衬线栈：Consolas 没有汉字，手机上会掉回系统黑体，
    接上 --font-serif 后代码块/行内码里的中文也走思源宋（拉丁字符依旧是 Consolas）。 */
-.markdown-body code{background:color-mix(in srgb,var(--coral-pink) 15%,transparent);padding:2px 7px;border-radius:5px;font-size:.88em;color:var(--coral-ink);font-family:'Consolas',var(--font-serif)}
-.markdown-body pre.code-block{background:#1e2430;color:#e2e8f0;padding:20px;border-radius:var(--radius-sm);overflow-x:auto;margin:1.1em 0;border:1px solid #2a3342}
-.markdown-body pre.code-block code{background:transparent;color:#e2e8f0;padding:0}
+.markdown-body code{background:color-mix(in srgb,var(--coral-pink) 15%,transparent);padding:2px 7px;border-radius:var(--radius);font-size:.88em;color:var(--coral-ink);font-family:'Consolas',var(--font-serif)}
+.markdown-body pre.code-block{background:var(--code-bg);color:var(--code-fg);padding:20px;border-radius:var(--radius-sm);overflow-x:auto;margin:1.1em 0;border:1px solid var(--code-line)}
+.markdown-body pre.code-block code{background:transparent;color:var(--code-fg);padding:0}
 .markdown-body table{border-collapse:collapse;width:100%;margin:1.1em 0}
 .markdown-body th,.markdown-body td{border:1px solid color-mix(in srgb,var(--slate-blue) 25%,transparent);padding:10px 14px}
 .markdown-body th{background:var(--accent);color:var(--accent-on);font-weight:600}
 .markdown-body tr:nth-child(even){background:var(--bg-soft)}
-.markdown-body img{max-width:100%;border-radius:10px;box-shadow:var(--shadow-sm)}
+.markdown-body img{max-width:100%;border-radius:var(--radius);box-shadow:var(--shadow-sm)}
 .markdown-body hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--slate-blue),transparent);margin:1.6em 0}
 .math-block-wrap{text-align:center;margin:1.3em 0;overflow-x:auto;padding:10px 0}
 /* ===== LaTeX 公式超长可横向滑动 ===== */
-.markdown-body .katex-display{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:.65em .9em;margin:1.2em 0;position:relative;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--sky-blue) 75%,#fff) transparent;background:color-mix(in srgb,var(--sky-blue) 7%,transparent);border-left:3px solid var(--sky-blue);border-radius:8px}
+.markdown-body .katex-display{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:.65em .9em;margin:1.2em 0;position:relative;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--sky-blue) 75%,var(--edge-white)) transparent;background:color-mix(in srgb,var(--sky-blue) 7%,transparent);border-left:3px solid var(--sky-blue);border-radius:var(--radius)}
 /* 2026-09-17 第3步（衬线收尾）：KaTeX 自带的字体栈是 KaTeX_Main → Times New Roman → generic serif，
    公式里的中文没有衬线兜底，手机上会掉成黑体。把 --font-serif 接在末尾（数学字形仍优先 KaTeX_Main，
    不改变公式排版度量）；本文件排在 katex.min.css 之后，同特异性覆盖生效。 */
 .katex{font-family:KaTeX_Main,'Times New Roman',var(--font-serif)}
 .markdown-body .katex-display::-webkit-scrollbar{height:8px}
-.markdown-body .katex-display::-webkit-scrollbar-thumb{background:var(--accent);border-radius:4px;border:2px solid var(--bg-page)}
-.markdown-body .katex-display::-webkit-scrollbar-track{background:rgba(255,255,255,.5);border-radius:4px}
+.markdown-body .katex-display::-webkit-scrollbar-thumb{background:var(--accent);border-radius:var(--radius);border:2px solid var(--bg-page)}
+.markdown-body .katex-display::-webkit-scrollbar-track{background:var(--track-veil);border-radius:var(--radius)}
 .markdown-body .katex-display>.katex{display:inline-block;max-width:100%}
 .markdown-body .katex-display.math-overflow::after{content:"»";position:absolute;right:10px;bottom:6px;color:var(--sky-ink);font-size:15px;font-weight:700;opacity:0;pointer-events:none;animation:katex-swipe-hint 1.8s ease-in-out .4s infinite}
 @keyframes katex-swipe-hint{0%{opacity:0;transform:translateX(10px)}25%{opacity:.85;transform:translateX(4px)}60%{opacity:.1;transform:translateX(-4px)}100%{opacity:0;transform:translateX(-10px)}}
@@ -456,15 +491,16 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
    亮色主题的强调色已经统一成青蓝，而且 inline 样式在暗色主题里改不动——现在换成语义类（走 --accent）。 */
 .nav-avatar.active{box-shadow:0 0 0 3px var(--accent)}
 .nav-avatar img{width:100%;height:100%;object-fit:cover}
-.nav-avatar-placeholder{width:100%;height:100%;background:var(--grad-sky);position:relative}
+/* 没设头像的人＝昵称首字（同上）：这枚 span 铺满整个圆，字要在里面居中 */
+.nav-avatar-placeholder{width:100%;height:100%;background:var(--grad-sky);position:relative;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:var(--accent-on)}
 /* ===== 弹窗（介绍 & 缩放） ===== */
-.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);z-index:1000;overflow:auto;padding:20px}
+.modal-overlay{position:fixed;inset:0;background:var(--scrim-modal);backdrop-filter:blur(4px);z-index:1000;overflow:auto;padding:20px}
 .intro-modal,.zoom-modal{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-lg);position:relative;max-width:420px;width:100%;padding:36px 30px 30px;text-align:center;border:1px solid color-mix(in srgb,var(--sky-blue) 12%,transparent)}
 .modal-close{position:absolute;top:12px;right:14px;border:none;background:color-mix(in srgb,var(--bg-soft) 70%,transparent);width:30px;height:30px;border-radius:50%;cursor:pointer;color:var(--text-secondary);font-size:1.2rem;line-height:1;transition:all .2s}
 .modal-close:hover{background:var(--coral-pink);color:var(--coral-on);transform:rotate(90deg)}
-.intro-avatar{width:96px;height:96px;border-radius:50%;overflow:hidden;margin:0 auto 16px;background:linear-gradient(140deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px var(--accent-shadow-soft);border:4px solid #fff}
+.intro-avatar{width:96px;height:96px;border-radius:50%;overflow:hidden;margin:0 auto 16px;background:linear-gradient(140deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px var(--accent-shadow-soft);border:4px solid var(--edge-white)}
 .intro-avatar img{width:100%;height:100%;object-fit:cover}
-.intro-avatar .avatar-placeholder{font-size:2.6rem;color:#fff}
+.intro-avatar .avatar-placeholder{font-size:2.6rem;color:var(--accent-on)}
 .intro-name{font-size:1.5rem;font-weight:800;margin-bottom:6px}
 .intro-signature{color:var(--coral-ink);font-size:.95rem;margin-bottom:14px;font-weight:500}
 .intro-bio{color:var(--text-secondary);font-size:.9rem;line-height:1.8;margin-bottom:22px;white-space:pre-wrap}
@@ -474,22 +510,22 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 卡片收藏 / 置顶 ===== */
 .card-pin{font-size:.7rem;background:color-mix(in srgb,var(--honey-gold) 25%,transparent);color:var(--honey-ink);padding:2px 8px;border-radius:var(--radius-pill);font-weight:600}
 [data-theme='dark'] .card-pin{color:var(--honey-ink)}
-.fav-btn.fav-on{background:var(--coral-pink);color:#fff;box-shadow:0 4px 12px rgba(232,155,138,.4)}
+.fav-btn.fav-on{background:var(--coral-pink);color:var(--coral-on);box-shadow:var(--shadow-sm)}
 .fav-btn{color:var(--sky-ink);font-size:1.15rem}
-.meta-btn.meta-fav-on{color:#fff;background:var(--coral-pink);box-shadow:0 4px 12px rgba(232,155,138,.4)}
+.meta-btn.meta-fav-on{color:var(--coral-on);background:var(--coral-pink);box-shadow:var(--shadow-sm)}
 .detail-meta-icon{color:var(--sky-ink)}
 .more-arrow{font-size:1.1rem;line-height:1;transform:translateY(-1px)}
 /* ===== 空状态 CSS 图标 ===== */
 .empty-icon-magnifier{position:relative}
 .empty-icon-magnifier::before{content:'';width:30px;height:30px;border-radius:50%;border:3px solid var(--sky-blue)}
-.empty-icon-magnifier::after{content:'';position:absolute;width:14px;height:4px;background:var(--accent);transform:rotate(45deg);border-radius:2px;top:30px;left:calc(50% + 8px)}
+.empty-icon-magnifier::after{content:'';position:absolute;width:14px;height:4px;background:var(--accent);transform:rotate(45deg);border-radius:var(--radius);top:30px;left:calc(50% + 8px)}
 .empty-icon-ghost{position:relative}
-.empty-icon-ghost::before{content:'';width:34px;height:30px;background:var(--sky-blue-soft);border-radius:16px 16px 10px 10px}
+.empty-icon-ghost::before{content:'';width:34px;height:30px;background:var(--sky-blue-soft);border-radius:var(--radius)}
 .empty-icon-ghost::after{content:'';position:absolute;width:26px;height:10px;background:var(--bg-card);border-radius:50%;top:30px}
-.empty-icon-gallery::before{content:'';width:34px;height:26px;border:3px solid var(--coral-pink);border-radius:6px;position:relative}
-.empty-icon-gallery::after{content:'';position:absolute;width:18px;height:12px;background:var(--coral-pink);border-radius:3px;top:8px;left:calc(50% - 1px);transform:rotate(-12deg)}
+.empty-icon-gallery::before{content:'';width:34px;height:26px;border:3px solid var(--coral-pink);border-radius:var(--radius);position:relative}
+.empty-icon-gallery::after{content:'';position:absolute;width:18px;height:12px;background:var(--coral-pink);border-radius:var(--radius);top:8px;left:calc(50% - 1px);transform:rotate(-12deg)}
 /* ===== 评论头像（首字母圆）===== */
-.comment-avatar{width:34px;height:34px;border-radius:50%;background:var(--grad-sky);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:600;flex-shrink:0}
+.comment-avatar{width:34px;height:34px;border-radius:50%;background:var(--grad-sky);color:var(--accent-on);display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:600;flex-shrink:0}
 /* ===== 头像上传按钮 ===== */
 .avatar-upload-hint{display:flex;flex-direction:column;align-items:center;line-height:1.2;color:var(--sky-ink);font-size:1.4rem}
 .avatar-upload-hint small{font-size:.7rem;color:var(--text-secondary)}
@@ -523,7 +559,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 @media (max-width:600px){.cat-section-head{flex-wrap:wrap}}
 /* ===== 分区标题强调条 ===== */
 .section-title{position:relative;padding-left:14px}
-.section-title::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:20px;border-radius:2px;background:linear-gradient(180deg,var(--sky-blue),var(--aqua-blue))}
+.section-title::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:20px;border-radius:var(--radius);background:linear-gradient(180deg,var(--sky-blue),var(--aqua-blue))}
 /* 第2i步（2026-09-14）：分区标题前那根小竖条改成「自己分区的凉风凉色卡色」。
    原来它跟的是 currentColor（＝分类的同色系墨色、60% 透明度）：既是「拿墨色当颜色」，
    第2h步把暗色小标题改成白色之后，它也跟着变白、整条分区头就没了颜色。
@@ -554,9 +590,9 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 
 /* ===== 注册验证码 ===== */
 .captcha-row{display:flex;align-items:center;gap:10px}
-.captcha-question{background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px dashed color-mix(in srgb,var(--sky-blue) 40%,transparent);border-radius:8px;padding:9px 14px;font-weight:600;color:var(--sky-ink);font-size:.95rem;white-space:nowrap;flex-shrink:0}
+.captcha-question{background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px dashed color-mix(in srgb,var(--sky-blue) 40%,transparent);border-radius:var(--radius);padding:9px 14px;font-weight:600;color:var(--sky-ink);font-size:.95rem;white-space:nowrap;flex-shrink:0}
 .captcha-input{flex:1;min-width:0}
-.captcha-info{color:var(--aqua-ink);font-size:.88rem;line-height:1.6;background:color-mix(in srgb,var(--aqua-blue) 10%,transparent);padding:10px 12px;border-radius:8px;margin-bottom:4px}
+.captcha-info{color:var(--aqua-ink);font-size:.88rem;line-height:1.6;background:color-mix(in srgb,var(--aqua-blue) 10%,transparent);padding:10px 12px;border-radius:var(--radius);margin-bottom:4px}
 /* ===== 登录/注册独立页面（美化版） ===== */
 .login-page{
   min-height:100vh;position:relative;overflow:hidden;
@@ -595,20 +631,20 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .login-card-form{display:flex;flex-direction:column;gap:14px}
 .login-field{position:relative;display:flex;align-items:center}
 .login-field-icon{position:absolute;left:14px;font-size:.95rem;color:var(--slate-ink);pointer-events:none}
-.login-input{width:100%;padding:13px 15px 13px 42px;border:2px solid var(--slate-blue);border-radius:12px;background:var(--bg-page);color:var(--text-main);font-size:1rem;box-sizing:border-box;transition:border-color .2s,box-shadow .2s}
+.login-input{width:100%;padding:13px 15px 13px 42px;border:2px solid var(--slate-blue);border-radius:var(--radius);background:var(--bg-page);color:var(--text-main);font-size:1rem;box-sizing:border-box;transition:border-color .2s,box-shadow .2s}
 .login-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
 .login-remember{display:flex;align-items:center;gap:8px;justify-content:flex-start;font-size:.88rem;color:var(--text-secondary);cursor:pointer;user-select:none}
 .login-remember input{width:17px;height:17px;accent-color:var(--sky-ink);cursor:pointer}
-.login-btn{width:100%;margin-top:6px;padding:13px;border:none;border-radius:12px;background:var(--accent);color:var(--accent-on);font-size:1.02rem;font-weight:600;cursor:pointer;letter-spacing:4px;transition:transform .2s,box-shadow .2s}
+.login-btn{width:100%;margin-top:6px;padding:13px;border:none;border-radius:var(--radius);background:var(--accent);color:var(--accent-on);font-size:1.02rem;font-weight:600;cursor:pointer;letter-spacing:4px;transition:transform .2s,box-shadow .2s}
 .login-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 24px color-mix(in srgb,var(--sky-blue) 40%,transparent)}
 .login-btn:disabled{opacity:.6;cursor:not-allowed}
 .login-switch{margin-top:20px;color:var(--text-secondary);font-size:.92rem;display:flex;gap:6px;justify-content:center;align-items:center}
 .login-switch-btn{border:none;background:none;color:var(--sky-ink);cursor:pointer;font-size:.92rem;text-decoration:underline;padding:0}
-.auth-error{color:var(--coral-ink);font-size:.9rem;margin:0 0 8px;background:color-mix(in srgb,var(--coral-pink) 12%,transparent);padding:9px 12px;border-radius:8px}
+.auth-error{color:var(--coral-ink);font-size:.9rem;margin:0 0 8px;background:color-mix(in srgb,var(--coral-pink) 12%,transparent);padding:9px 12px;border-radius:var(--radius)}
 .captcha-row{display:flex;align-items:center;gap:10px}
-.captcha-question{background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px dashed color-mix(in srgb,var(--sky-blue) 40%,transparent);border-radius:8px;padding:9px 14px;font-weight:600;color:var(--sky-ink);font-size:.95rem;white-space:nowrap;flex-shrink:0}
+.captcha-question{background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border:1px dashed color-mix(in srgb,var(--sky-blue) 40%,transparent);border-radius:var(--radius);padding:9px 14px;font-weight:600;color:var(--sky-ink);font-size:.95rem;white-space:nowrap;flex-shrink:0}
 .captcha-input{flex:1;min-width:0}
-.captcha-info{color:var(--aqua-ink);font-size:.88rem;line-height:1.6;background:color-mix(in srgb,var(--aqua-blue) 10%,transparent);padding:10px 12px;border-radius:8px;margin-bottom:12px}
+.captcha-info{color:var(--aqua-ink);font-size:.88rem;line-height:1.6;background:color-mix(in srgb,var(--aqua-blue) 10%,transparent);padding:10px 12px;border-radius:var(--radius);margin-bottom:12px}
 
 /* ===== 圆形头像裁剪弹窗 ===== */
 .avatar-crop-modal{
@@ -621,7 +657,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .avatar-crop-view{
   width:220px;height:220px;margin:0 auto 14px;border-radius:50%;overflow:hidden;position:relative;
   border:3px solid var(--slate-blue);box-shadow:0 0 0 6px color-mix(in srgb,var(--sky-blue) 12%,transparent);
-  background:#111;touch-action:none;user-select:none;
+  background:var(--crop-mat);touch-action:none;user-select:none;
 }
 .avatar-crop-view canvas{width:100%;height:100%;display:block;position:relative;z-index:1}
 .avatar-crop-ring{
@@ -635,7 +671,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 留言/评论删除 与 登录提示 ===== */
 .comment-delete{
   margin-left:auto;background:none;border:1px solid color-mix(in srgb,var(--coral-pink) 40%,transparent);
-  color:var(--coral-ink);font-size:.72rem;padding:2px 8px;border-radius:10px;cursor:pointer;transition:.2s;
+  color:var(--coral-ink);font-size:.72rem;padding:2px 8px;border-radius:var(--radius);cursor:pointer;transition:.2s;
 }
 .comment-delete:hover{background:var(--coral-pink);color:var(--coral-on)}
 .comment-login-tip{
@@ -650,12 +686,12 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nav-hidden{transform:translateY(-105%);box-shadow:none}
 
 .login-input{padding-right:44px}
-.login-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--slate-ink);display:flex;align-items:center;justify-content:center;padding:4px;border-radius:8px;transition:color .2s,background .2s}
+.login-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--slate-ink);display:flex;align-items:center;justify-content:center;padding:4px;border-radius:var(--radius);transition:color .2s,background .2s}
 .login-eye:hover{color:var(--sky-ink);background:color-mix(in srgb,var(--sky-blue) 10%,transparent)}
 
 /* ===== 图集：本地文件预览 ===== */
 .gallery-file-preview{display:flex;align-items:center;gap:12px;background:var(--bg-soft);border-radius:var(--radius-sm);padding:10px 14px}
-.gallery-file-preview img{width:64px;height:64px;object-fit:cover;border-radius:8px;box-shadow:var(--shadow-sm)}
+.gallery-file-preview img{width:64px;height:64px;object-fit:cover;border-radius:var(--radius);box-shadow:var(--shadow-sm)}
 .gallery-file-preview span{font-size:.9rem;color:var(--text-secondary);word-break:break-all}
 
 @keyframes heroBgFlow{
@@ -669,13 +705,13 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 留言板/评论：回复功能 ===== */
 .reply-target{
   background:color-mix(in srgb,var(--sky-blue) 10%,transparent);
-  border-radius:8px;padding:8px 12px;font-size:.88rem;color:var(--text-secondary);
+  border-radius:var(--radius);padding:8px 12px;font-size:.88rem;color:var(--text-secondary);
   display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
 }
 .reply-cancel{border:none;background:none;color:var(--coral-ink);cursor:pointer;font-size:.82rem;text-decoration:underline;padding:0}
 .comment-reply{
   border:1px solid color-mix(in srgb,var(--sky-blue) 40%,transparent);
-  background:none;color:var(--sky-ink);font-size:.72rem;padding:2px 8px;border-radius:10px;
+  background:none;color:var(--sky-ink);font-size:.72rem;padding:2px 8px;border-radius:var(--radius);
   cursor:pointer;transition:.2s;
 }
 .comment-reply:hover{background:var(--sky-blue);color:var(--sky-ink)}
@@ -684,7 +720,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 
 
 /* ===== 留言板/评论：回复嵌套缩进 ===== */
-.comment-avatar{width:34px;height:34px;border-radius:50%;background:var(--grad-sky);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:600;flex-shrink:0;overflow:hidden}
+.comment-avatar{width:34px;height:34px;border-radius:50%;background:var(--grad-sky);color:var(--accent-on);display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:600;flex-shrink:0;overflow:hidden}
 .comment-avatar img{width:100%;height:100%;object-fit:cover}
 .comment-children{margin-top:8px;display:flex;flex-direction:column;gap:6px}
 .comment-reply-row{margin-left:16px;padding-left:14px;border-left:2px solid color-mix(in srgb,var(--sky-blue) 28%,transparent);position:relative}
@@ -692,7 +728,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .comment-reply-row .comment-body{color:var(--text-secondary);line-height:1.7;font-size:.92rem}
 .comment-reply-row .comment-head .comment-avatar{width:26px;height:26px;font-size:.8rem}
 .comment-fold{margin-left:16px;border-left:2px solid color-mix(in srgb,var(--sky-blue) 28%,transparent);padding-left:14px;margin-top:8px;display:flex;flex-direction:column;gap:8px}
-.comment-fold-btn{border:1px dashed color-mix(in srgb,var(--sky-blue) 45%,transparent);background:none;color:var(--sky-ink);font-size:.8rem;padding:4px 10px;border-radius:12px;cursor:pointer;transition:.2s;align-self:flex-start}
+.comment-fold-btn{border:1px dashed color-mix(in srgb,var(--sky-blue) 45%,transparent);background:none;color:var(--sky-ink);font-size:.8rem;padding:4px 10px;border-radius:var(--radius);cursor:pointer;transition:.2s;align-self:flex-start}
 .comment-fold-btn:hover{background:color-mix(in srgb,var(--sky-blue) 12%,transparent)}
 .comment-fold-list{display:flex;flex-direction:column;gap:8px}
 
@@ -718,18 +754,18 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .bug-feedback-head{margin-bottom:14px}
 .bug-feedback-desc{color:var(--text-secondary);font-size:.9rem;margin-top:4px}
 .bug-category{
-  border:1px solid color-mix(in srgb,var(--sky-blue) 30%,transparent);border-radius:8px;padding:8px 12px;
+  border:1px solid color-mix(in srgb,var(--sky-blue) 30%,transparent);border-radius:var(--radius);padding:8px 12px;
   background:var(--bg-card);color:var(--text-main);font-size:.9rem;margin-bottom:10px;width:auto;min-width:140px;
 }
 .bug-actions{display:flex;align-items:center;gap:12px}
 .bug-list{display:flex;flex-direction:column;gap:12px;margin-top:16px}
 .bug-item{
   border:1px solid color-mix(in srgb,var(--coral-pink) 25%,transparent);border-left:4px solid var(--coral-pink);
-  border-radius:10px;padding:12px 14px;background:color-mix(in srgb,var(--bg-card) 60%,transparent);
+  border-radius:var(--radius);padding:12px 14px;background:color-mix(in srgb,var(--bg-card) 60%,transparent);
 }
 .bug-item-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
-.bug-cat-tag{font-size:.72rem;padding:2px 10px;border-radius:12px;color:var(--coral-on);font-weight:600}
-.bug-status{font-size:.72rem;padding:2px 10px;border-radius:12px;background:color-mix(in srgb,var(--coral-pink) 18%,transparent);color:var(--coral-ink);font-weight:600}
+.bug-cat-tag{font-size:.72rem;padding:2px 10px;border-radius:var(--radius);color:var(--coral-on);font-weight:600}
+.bug-status{font-size:.72rem;padding:2px 10px;border-radius:var(--radius);background:color-mix(in srgb,var(--coral-pink) 18%,transparent);color:var(--coral-ink);font-weight:600}
 .bug-status-done{background:color-mix(in srgb,var(--sky-blue) 18%,transparent);color:var(--sky-ink)}
 .bug-item-content{color:var(--text-main);white-space:pre-wrap;line-height:1.6;font-size:.92rem}
 .bug-item-author{color:var(--text-secondary);font-size:.8rem}
@@ -747,7 +783,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 
 .bug-toggle{
   border:1px solid color-mix(in srgb,var(--sky-blue) 40%,transparent);background:none;color:var(--sky-ink);
-  font-size:.72rem;padding:2px 10px;border-radius:12px;cursor:pointer;transition:.2s;
+  font-size:.72rem;padding:2px 10px;border-radius:var(--radius);cursor:pointer;transition:.2s;
 }
 .bug-toggle:hover{background:var(--sky-blue);color:var(--sky-ink)}
 
@@ -776,7 +812,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .media-drop-text{color:var(--text-secondary);font-size:.88rem;margin:0}
 
 /* 音乐兜底链接 */
-.markdown-body a[href*="music.163.com"]{display:inline-block;margin-top:4px;padding:6px 14px;border:1px solid color-mix(in srgb,var(--coral-pink) 40%,transparent);border-radius:20px;color:var(--coral-ink);font-size:.85rem;text-decoration:none}
+.markdown-body a[href*="music.163.com"]{display:inline-block;margin-top:4px;padding:6px 14px;border:1px solid color-mix(in srgb,var(--coral-pink) 40%,transparent);border-radius:var(--radius);color:var(--coral-ink);font-size:.85rem;text-decoration:none}
 .markdown-body a[href*="music.163.com"]:hover{background:var(--coral-pink);color:var(--coral-on)}
 
 
@@ -794,14 +830,14 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .about-editor{min-height:240px}
 .about-actions{display:flex;gap:10px;margin-top:12px}
 .about-controls-row{margin-top:10px;display:flex;gap:8px}
-.about-msg{color:var(--aqua-ink);font-size:.88rem;margin:8px 0 0;background:color-mix(in srgb,var(--aqua-blue) 10%,transparent);padding:8px 12px;border-radius:8px}
+.about-msg{color:var(--aqua-ink);font-size:.88rem;margin:8px 0 0;background:color-mix(in srgb,var(--aqua-blue) 10%,transparent);padding:8px 12px;border-radius:var(--radius)}
 .about-history-overlay .modal{max-width:560px;width:100%}
 .about-history-modal .modal-title{margin:0 0 4px}
 .history-hint{color:var(--text-secondary);font-size:.85rem;margin:0 0 12px}
 .history-list{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow:auto}
 .history-item{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid color-mix(in srgb,var(--sky-blue) 16%,transparent);background:color-mix(in srgb,var(--bg-card) 60%,transparent);padding:10px 14px;border-radius:var(--radius)}
 .history-item-info{display:flex;align-items:center;gap:10px;min-width:0}
-.history-badge{font-size:.72rem;padding:3px 10px;border-radius:12px;background:color-mix(in srgb,var(--sky-blue) 14%,transparent);color:var(--sky-ink);white-space:nowrap}
+.history-badge{font-size:.72rem;padding:3px 10px;border-radius:var(--radius);background:color-mix(in srgb,var(--sky-blue) 14%,transparent);color:var(--sky-ink);white-space:nowrap}
 .history-badge:first-child{font-weight:700}
 .history-date{color:var(--text-secondary);font-size:.82rem}
 .history-actions{display:flex;gap:6px;flex-shrink:0}
@@ -866,8 +902,8 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .attach-progress-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;width:100%}
 .attach-progress-item{display:flex;align-items:center;gap:10px;font-size:.8rem}
 .attach-progress-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-main)}
-.attach-progress-bar{flex:2;height:8px;background:color-mix(in srgb,var(--text-secondary) 18%,transparent);border-radius:6px;overflow:hidden}
-.attach-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-deep));border-radius:6px;transition:width .2s ease}
+.attach-progress-bar{flex:2;height:8px;background:color-mix(in srgb,var(--text-secondary) 18%,transparent);border-radius:var(--radius);overflow:hidden}
+.attach-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-deep));border-radius:var(--radius);transition:width .2s ease}
 .attach-progress-pct{width:40px;text-align:right;color:var(--text-secondary)}
 
 /* 媒体/附件面板内的次要按钮(关闭等)在浅色卡片上清晰可见 */
@@ -885,34 +921,34 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 /* ===== 小说书架 ===== */
 .novel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;margin-top:24px}
 .novel-card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;border:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent);transition:transform .25s,box-shadow .25s}
-.novel-card:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(0,0,0,.15)}
+.novel-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
 .novel-cover{width:100%;aspect-ratio:3/4;object-fit:cover;background:linear-gradient(140deg,var(--accent),var(--accent-deep));display:block}
 .novel-cover-placeholder{display:flex;align-items:center;justify-content:center}
-.novel-cover-char{font-size:72px;color:#fff;font-weight:800}
+.novel-cover-char{font-size:72px;color:var(--accent-on);font-weight:800}
 .novel-card-body{padding:16px;display:flex;flex-direction:column;gap:8px;flex:1}
 .novel-title{font-size:1.18rem;font-weight:700;color:var(--text-main);text-decoration:none;line-height:1.4}
 .novel-title:hover{color:var(--sky-ink)}
 .novel-author{color:var(--text-secondary);font-size:.9rem}
-.novel-status-badge{display:inline-block;padding:2px 11px;border-radius:20px;font-size:.78rem;font-weight:600;align-self:flex-start}
+.novel-status-badge{display:inline-block;padding:2px 11px;border-radius:var(--radius);font-size:.78rem;font-weight:600;align-self:flex-start}
 .novel-synopsis{color:var(--text-secondary);font-size:.85rem;line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;flex:1;margin:0}
 .novel-stats{display:flex;gap:6px;color:var(--text-secondary);font-size:.8rem}
 
 
 /* ===== 小说阅读器（沉浸式） ===== */
 .novel-reader{--reader-bg:var(--bg-card);--reader-text:var(--text-main);--reader-secondary:var(--text-secondary);--reader-soft:var(--bg-soft)}
-.novel-reader-night{--reader-bg:#10151d;--reader-text:#cdd6e4;--reader-secondary:#8b97ab;--reader-soft:#1a2332}
+.novel-reader-night{--reader-bg:var(--reader-night-bg);--reader-text:var(--reader-night-text);--reader-secondary:var(--reader-night-secondary);--reader-soft:var(--reader-night-soft)}
 .novel-reader.nreader-fullscreen{position:fixed;inset:0;z-index:150;background:var(--reader-bg);display:flex;flex-direction:column}
 
 /* --- 书头详情页 --- */
 .nreader-shelf{display:flex;flex-direction:column;gap:22px;padding:8px 0 18px}
 .nreader-cover-hero{display:flex;gap:26px;align-items:flex-start}
 .nreader-hero-cover{width:170px;aspect-ratio:3/4;object-fit:cover;border-radius:var(--radius);box-shadow:var(--shadow);display:block;flex-shrink:0}
-.nreader-hero-cover-ph{display:flex;align-items:center;justify-content:center;font-size:64px;color:#fff;font-weight:800;background:linear-gradient(140deg,var(--accent),var(--accent-deep))}
+.nreader-hero-cover-ph{display:flex;align-items:center;justify-content:center;font-size:64px;color:var(--accent-on);font-weight:800;background:linear-gradient(140deg,var(--accent),var(--accent-deep))}
 .nreader-hero-info{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
-.nreader-cat{align-self:flex-start;padding:3px 12px;border-radius:20px;background:color-mix(in srgb,var(--sky-blue) 16%,transparent);color:var(--sky-ink);font-size:.82rem;text-decoration:none}
+.nreader-cat{align-self:flex-start;padding:3px 12px;border-radius:var(--radius);background:color-mix(in srgb,var(--sky-blue) 16%,transparent);color:var(--sky-ink);font-size:.82rem;text-decoration:none}
 .nreader-book-title{font-size:2rem;font-weight:800;line-height:1.25;color:var(--text-main);margin:0}
 .nreader-book-author{color:var(--text-secondary);font-size:.95rem}
-.nreader-status-badge{display:inline-block;padding:2px 12px;border-radius:20px;font-size:.8rem;font-weight:600;align-self:flex-start}
+.nreader-status-badge{display:inline-block;padding:2px 12px;border-radius:var(--radius);font-size:.8rem;font-weight:600;align-self:flex-start}
 .nreader-book-meta{display:flex;gap:12px;color:var(--text-secondary);font-size:.88rem;flex-wrap:wrap}
 .nreader-synopsis{color:var(--text-secondary);line-height:1.9;font-size:.98rem;padding:16px 18px;background:var(--bg-soft);border-radius:var(--radius-sm);border-left:4px solid var(--sky-blue);margin:0}
 .nreader-shelf-actions{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
@@ -932,7 +968,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-top-left,.nreader-top-right{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .nreader-top-left{justify-content:flex-start}
 .nreader-top-right{justify-content:flex-end}
-.nreader-top-title{flex:0 1 auto;max-width:60%;font-size:1.05rem;font-weight:600;color:var(--reader-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:transparent;border:none;cursor:pointer;padding:4px 10px;border-radius:8px;transition:background .2s;text-align:center}
+.nreader-top-title{flex:0 1 auto;max-width:60%;font-size:1.05rem;font-weight:600;color:var(--reader-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:transparent;border:none;cursor:pointer;padding:4px 10px;border-radius:var(--radius);transition:background .2s;text-align:center}
 .nreader-top-title:hover{background:color-mix(in srgb,var(--reader-secondary) 12%,transparent)}
 .nreader-top-progress{color:var(--reader-secondary);font-size:.82rem;font-weight:500;white-space:nowrap}
 .nreader-top-btn{background:transparent;border:none;color:var(--reader-text);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:background .2s}
@@ -946,7 +982,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-page .markdown-body code{background:color-mix(in srgb,var(--coral-pink) 12%,transparent)}
 .nreader-page .markdown-body table th,.nreader-page .markdown-body td{border-color:color-mix(in srgb,var(--slate-blue) 22%,transparent)}
 .nreader-footnav{position:sticky;bottom:0;z-index:60;display:flex;align-items:stretch;gap:12px;max-width:900px;margin:20px auto 0;padding:14px 26px 12px;background:color-mix(in srgb,var(--reader-bg) 94%,transparent);backdrop-filter:blur(12px);border-top:1px solid color-mix(in srgb,var(--reader-secondary) 16%,transparent)}
-.nreader-foot-btn{flex:1;display:flex;flex-direction:column;gap:3px;padding:14px 18px;background:transparent;border:1px solid color-mix(in srgb,var(--reader-secondary) 18%,transparent);border-radius:14px;cursor:pointer;transition:all .22s;color:var(--reader-text);text-align:left}
+.nreader-foot-btn{flex:1;display:flex;flex-direction:column;gap:3px;padding:14px 18px;background:transparent;border:1px solid color-mix(in srgb,var(--reader-secondary) 18%,transparent);border-radius:var(--radius);cursor:pointer;transition:all .22s;color:var(--reader-text);text-align:left}
 .nreader-foot-btn:hover:not(:disabled){background:color-mix(in srgb,var(--reader-secondary) 8%,transparent);transform:translateY(-1px)}
 .nreader-foot-btn:disabled{opacity:.3;cursor:not-allowed}
 .nreader-foot-btn.right{align-items:flex-end;text-align:right}
@@ -963,12 +999,12 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-bars-hidden .nreader-book-progress{opacity:.35}
 
 /* --- 目录抽屉 --- */
-.nreader-toc-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;justify-content:flex-end;backdrop-filter:blur(2px)}
-.nreader-toc{width:min(360px,86vw);height:100%;background:var(--reader-bg);color:var(--reader-text);box-shadow:-10px 0 36px rgba(0,0,0,.25);display:flex;flex-direction:column;animation:nreader-slide-in .28s ease}
+.nreader-toc-mask{position:fixed;inset:0;background:var(--scrim-toc);z-index:200;display:flex;justify-content:flex-end;backdrop-filter:blur(2px)}
+.nreader-toc{width:min(360px,86vw);height:100%;background:var(--reader-bg);color:var(--reader-text);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;animation:nreader-slide-in .28s ease}
 @keyframes nreader-slide-in{from{transform:translateX(100%)}to{transform:translateX(0)}}
 .nreader-toc-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 16%,transparent);font-weight:700;font-size:1.05rem}
 .nreader-toc-list{overflow-y:auto;flex:1;padding:10px}
-.nreader-toc-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 12px;border:none;background:transparent;color:var(--reader-text);border-bottom:1px solid color-mix(in srgb,var(--slate-blue) 8%,transparent);cursor:pointer;border-radius:8px}
+.nreader-toc-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 12px;border:none;background:transparent;color:var(--reader-text);border-bottom:1px solid color-mix(in srgb,var(--slate-blue) 8%,transparent);cursor:pointer;border-radius:var(--radius)}
 .nreader-toc-item:hover{background:color-mix(in srgb,var(--sky-blue) 8%,transparent)}
 .nreader-toc-item.current{background:color-mix(in srgb,var(--sky-blue) 12%,transparent);color:var(--sky-ink);font-weight:700}
 .nreader-toc-no{width:26px;height:26px;flex-shrink:0;border-radius:50%;background:color-mix(in srgb,var(--slate-blue) 15%,transparent);color:var(--reader-secondary);font-size:.78rem;display:flex;align-items:center;justify-content:center;font-weight:600}
@@ -977,10 +1013,10 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-toc-wc{color:var(--reader-secondary);font-size:.75rem;white-space:nowrap;flex-shrink:0}
 
 /* --- 设置底部面板 --- */
-.nreader-set-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:flex;align-items:flex-end;backdrop-filter:blur(2px)}
-.nreader-sheet{width:100%;max-width:640px;margin:0 auto;background:var(--reader-bg);color:var(--reader-text);border-radius:20px 20px 0 0;padding:14px 24px 30px;box-shadow:0 -10px 40px rgba(0,0,0,.2);animation:nreader-sheet-up .28s ease;display:flex;flex-direction:column;gap:16px}
+.nreader-set-mask{position:fixed;inset:0;background:var(--scrim-sheet);z-index:200;display:flex;align-items:flex-end;backdrop-filter:blur(2px)}
+.nreader-sheet{width:100%;max-width:640px;margin:0 auto;background:var(--reader-bg);color:var(--reader-text);border-radius:var(--radius);padding:14px 24px 30px;box-shadow:var(--shadow-lg);animation:nreader-sheet-up .28s ease;display:flex;flex-direction:column;gap:16px}
 @keyframes nreader-sheet-up{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.nreader-sheet-grip{width:42px;height:4px;border-radius:2px;background:color-mix(in srgb,var(--slate-blue) 30%,transparent);margin:0 auto 6px}
+.nreader-sheet-grip{width:42px;height:4px;border-radius:var(--radius);background:color-mix(in srgb,var(--slate-blue) 30%,transparent);margin:0 auto 6px}
 .nreader-sheet-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
 .nreader-sheet-label{font-size:.92rem;font-weight:600;color:var(--reader-text);min-width:56px}
 .nreader-sheet-group{display:flex;align-items:center;gap:10px}
@@ -995,54 +1031,54 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px}
 .novel-field-full{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
 .novel-field-full label{font-size:.82rem;color:var(--text-secondary)}
-.novel-field-full textarea{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-family:var(--font-serif);resize:vertical}
+.novel-field-full textarea{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:var(--radius);background:var(--bg-page);color:var(--text-main);font-family:var(--font-serif);resize:vertical}
 .novel-ch-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .novel-ch-tools h4{margin:0;margin-right:auto;font-size:.9rem;color:var(--text-secondary)}
 .file-btn{cursor:pointer;margin:0}
 .novel-empty-tip{color:var(--text-secondary);font-size:.86rem;padding:8px 0}
 .novel-ch-list{display:flex;flex-direction:column;gap:16px}
-.novel-ch-item{border:1px solid color-mix(in srgb,var(--slate-blue) 18%,transparent);border-radius:12px;padding:14px;background:color-mix(in srgb,var(--bg-page) 50%,transparent)}
+.novel-ch-item{border:1px solid color-mix(in srgb,var(--slate-blue) 18%,transparent);border-radius:var(--radius);padding:14px;background:color-mix(in srgb,var(--bg-page) 50%,transparent)}
 .novel-ch-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.novel-ch-title-input{flex:1;min-width:160px;padding:8px 10px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-size:.95rem;font-weight:600}
+.novel-ch-title-input{flex:1;min-width:160px;padding:8px 10px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:var(--radius);background:var(--bg-page);color:var(--text-main);font-size:.95rem;font-weight:600}
 .novel-ch-wc{color:var(--text-secondary);font-size:.78rem;white-space:nowrap}
-.novel-ch-content{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 26%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-family:var(--font-serif);resize:vertical;line-height:1.7}
+.novel-ch-content{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 26%,transparent);border-radius:var(--radius);background:var(--bg-page);color:var(--text-main);font-family:var(--font-serif);resize:vertical;line-height:1.7}
 .novel-ch-content:focus,.novel-ch-title-input:focus,.novel-field-full textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
 /* ===== 小说发布提示 ===== */
-.novel-publish-hint{max-width:680px;margin:0 auto 14px;padding:12px 16px;border-radius:10px;background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);color:var(--text-secondary);font-size:.88rem;line-height:1.7;text-align:center}
+.novel-publish-hint{max-width:680px;margin:0 auto 14px;padding:12px 16px;border-radius:var(--radius);background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);color:var(--text-secondary);font-size:.88rem;line-height:1.7;text-align:center}
 .novel-publish-hint strong{color:var(--sky-ink)}
 /* ===== 草稿自动保存状态 ===== */
 .write-actions{flex-wrap:wrap}
 .write-draft-status{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:0 auto 12px;font-size:.85rem;line-height:1.6;text-align:center;color:var(--text-secondary)}
-.write-draft-status .draft-saved{color:var(--aqua-ink,#2a6577);font-weight:600}
+.write-draft-status .draft-saved{color:var(--aqua-ink);font-weight:600}
 .write-draft-status .draft-hint{opacity:.75}
-.write-draft-status .draft-clear{padding:3px 12px;border-radius:14px;border:1px solid color-mix(in srgb,var(--slate-blue) 30%,transparent);background:transparent;color:var(--text-secondary);font-size:.78rem;cursor:pointer;transition:all .2s}
-.write-draft-status .draft-clear:hover{border-color:var(--coral,#e89b8a);color:var(--coral,#e89b8a)}
+.write-draft-status .draft-clear{padding:3px 12px;border-radius:var(--radius);border:1px solid color-mix(in srgb,var(--slate-blue) 30%,transparent);background:transparent;color:var(--text-secondary);font-size:.78rem;cursor:pointer;transition:all .2s}
+.write-draft-status .draft-clear:hover{border-color:var(--coral-pink);color:var(--coral-pink)}
 /* ===== 写作顶部：普通文章 / 小说 切换 ===== */
 .composer-switch{display:flex;gap:8px;margin:0 auto 18px;max-width:680px}
-.composer-switch .mode-tab{flex:1;padding:12px 16px;border-radius:12px;border:1px solid color-mix(in srgb,var(--slate-blue) 25%,transparent);background:var(--bg-card);color:var(--text-secondary);font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s}
+.composer-switch .mode-tab{flex:1;padding:12px 16px;border-radius:var(--radius);border:1px solid color-mix(in srgb,var(--slate-blue) 25%,transparent);background:var(--bg-card);color:var(--text-secondary);font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s}
 .composer-switch .mode-tab.on{background:var(--accent);color:var(--accent-on);border-color:transparent;box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 35%,transparent)}
 
 /* ===== 小说专用发布界面 ===== */
 .novel-composer{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 .novel-composer-desc{color:var(--text-secondary);font-size:.92rem;line-height:1.7;text-align:center;margin:0}
 .novel-switch{display:flex;gap:10px;justify-content:center}
-.novel-switch .mode-tab{padding:9px 18px;border-radius:20px;border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);background:transparent;color:var(--text-secondary);font-size:.92rem;cursor:pointer}
+.novel-switch .mode-tab{padding:9px 18px;border-radius:var(--radius);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);background:transparent;color:var(--text-secondary);font-size:.92rem;cursor:pointer}
 .novel-switch .mode-tab.on{background:var(--accent);color:var(--accent-on);border-color:transparent}
 .novel-newbox,.novel-existingbox{background:var(--bg-card);border:1px solid color-mix(in srgb,var(--accent) 12%,transparent);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:14px}
 .novel-cover-row{display:flex;gap:16px;align-items:center}
-.novel-cover-preview{width:96px;height:128px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--bg-page);display:flex;align-items:center;justify-content:center;border:1px solid color-mix(in srgb,var(--slate-blue) 20%,transparent)}
+.novel-cover-preview{width:96px;height:128px;border-radius:var(--radius);overflow:hidden;flex-shrink:0;background:var(--bg-page);display:flex;align-items:center;justify-content:center;border:1px solid color-mix(in srgb,var(--slate-blue) 20%,transparent)}
 .novel-cover-img{width:100%;height:100%;object-fit:cover;display:block}
 .novel-cover-ph{color:var(--sky-ink);font-size:44px;font-weight:800}
 .novel-cover-actions{display:flex;flex-direction:column;gap:6px}
 .novel-cover-hint{color:var(--text-secondary);font-size:.8rem;margin:0}
-.novel-book-tip{color:var(--text-secondary);font-size:.9rem;line-height:1.7;margin:0;padding:10px 12px;background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:8px}
+.novel-book-tip{color:var(--text-secondary);font-size:.9rem;line-height:1.7;margin:0;padding:10px 12px;background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:var(--radius)}
 .novel-chapter-editor{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px;display:flex;flex-direction:column;gap:14px;border:1px solid color-mix(in srgb,var(--accent) 12%,transparent)}
 /* === 章节草稿恢复横幅（第 3 批）=== */
-.chapter-draft-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;border-radius:8px;background:color-mix(in srgb,var(--honey-gold) 18%,transparent);border:1px solid color-mix(in srgb,var(--honey-gold) 40%,transparent);font-size:.85rem}
+.chapter-draft-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;border-radius:var(--radius);background:color-mix(in srgb,var(--honey-gold) 18%,transparent);border:1px solid color-mix(in srgb,var(--honey-gold) 40%,transparent);font-size:.85rem}
 .chapter-draft-text{color:var(--text-main)}
 .chapter-draft-actions{display:flex;gap:6px;flex-shrink:0}
 .novel-ch-ed-head{display:flex;flex-direction:column;gap:6px}
-.novel-ch-ed-head .novel-ch-title-input{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-size:1rem;font-weight:600}
+.novel-ch-ed-head .novel-ch-title-input{width:100%;padding:10px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 28%,transparent);border-radius:var(--radius);background:var(--bg-page);color:var(--text-main);font-size:1rem;font-weight:600}
 .novel-ch-ed-head .novel-ch-title-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
 
 /* === 小说写作区按钮在浅色卡片上清晰可见（覆盖 btn-light 的白色样式） === */
@@ -1083,14 +1119,14 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .novel-edit-chlist-title{font-size:.98rem;font-weight:700;color:var(--text-main)}
 .novel-edit-chlist-actions{display:flex;gap:8px;flex-wrap:wrap}
 .novel-edit-chitems{display:flex;flex-direction:column;gap:7px;max-height:420px;overflow-y:auto;padding-right:4px}
-.novel-edit-chitem{display:flex;align-items:center;gap:6px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-radius:10px;padding:7px 8px;background:var(--bg-card);transition:all .2s}
+.novel-edit-chitem{display:flex;align-items:center;gap:6px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-radius:var(--radius);padding:7px 8px;background:var(--bg-card);transition:all .2s}
 .novel-edit-chitem:hover{border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
 .novel-edit-chitem.active{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 22%,transparent)}
 .novel-edit-chname{flex:1;display:flex;align-items:center;gap:9px;min-width:0;text-align:left;background:transparent;border:none;cursor:pointer;color:var(--text-main)}
 .novel-edit-ch-order{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--sky-blue-dark);font-size:.74rem;font-weight:700;display:flex;align-items:center;justify-content:center}
 .novel-edit-ch-title-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem;font-weight:600}
 .novel-edit-chops{display:flex;gap:3px;flex-shrink:0}
-.novel-edit-chops button{width:26px;height:26px;border:none;border-radius:7px;background:color-mix(in srgb,var(--accent) 9%,transparent);color:var(--text-secondary);font-size:.9rem;cursor:pointer;transition:all .18s}
+.novel-edit-chops button{width:26px;height:26px;border:none;border-radius:var(--radius);background:color-mix(in srgb,var(--accent) 9%,transparent);color:var(--text-secondary);font-size:.9rem;cursor:pointer;transition:all .18s}
 .novel-edit-chops button:hover:not(:disabled){background:var(--coral-pink);color:var(--coral-on)}
 .novel-edit-chops button:disabled{opacity:.3;cursor:not-allowed}
 .novel-edit-empty,.novel-edit-placeholder{color:var(--text-secondary);font-size:.88rem;line-height:1.7;text-align:center;padding:30px 18px}
@@ -1107,11 +1143,11 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .nreader-part-title{font-size:2rem;font-weight:800;color:var(--reader-text);text-align:center;margin:0 0 34px;line-height:1.4;text-shadow:none;letter-spacing:1px;border:none}
 .nreader-part-title::before{content:"— ";color:var(--reader-secondary);font-weight:400}
 .nreader-part-title::after{content:" —";color:var(--reader-secondary);font-weight:400}
-.nreader-toc-part{margin:14px 6px 6px;padding:5px 12px;font-size:.88rem;font-weight:700;color:var(--sky-blue-dark);background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border-left:3px solid var(--sky-blue);border-radius:6px}
+.nreader-toc-part{margin:14px 6px 6px;padding:5px 12px;font-size:.88rem;font-weight:700;color:var(--sky-blue-dark);background:color-mix(in srgb,var(--sky-blue) 10%,transparent);border-left:3px solid var(--sky-blue);border-radius:var(--radius)}
 .nreader-toc-part:first-child{margin-top:4px}
-.novel-ch-part-input{width:100%;padding:9px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 26%,transparent);border-radius:8px;background:var(--bg-page);color:var(--text-main);font-size:.9rem}
+.novel-ch-part-input{width:100%;padding:9px 12px;border:1px solid color-mix(in srgb,var(--slate-blue) 26%,transparent);border-radius:var(--radius);background:var(--bg-page);color:var(--text-main);font-size:.9rem}
 .novel-ch-part-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
-.novel-edit-ch-part{flex-shrink:0;font-size:.7rem;color:var(--sky-blue-dark);background:color-mix(in srgb,var(--accent) 12%,transparent);padding:1px 8px;border-radius:10px;white-space:nowrap}
+.novel-edit-ch-part{flex-shrink:0;font-size:.7rem;color:var(--sky-blue-dark);background:color-mix(in srgb,var(--accent) 12%,transparent);padding:1px 8px;border-radius:var(--radius);white-space:nowrap}
 
 
 /* ===== 友情链接 ===== */
@@ -1123,19 +1159,19 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .friends-form h3{margin:0 0 4px}
 .friends-form label{font-weight:600;font-size:.88rem;color:var(--text-secondary)}
 .friends-form .form-actions{margin-top:4px}
-.friends-msg{color:var(--aqua-ink);font-size:.9rem;margin:0 0 16px;padding:10px 14px;background:color-mix(in srgb,var(--aqua-blue) 12%,transparent);border-radius:8px}
+.friends-msg{color:var(--aqua-ink);font-size:.9rem;margin:0 0 16px;padding:10px 14px;background:color-mix(in srgb,var(--aqua-blue) 12%,transparent);border-radius:var(--radius)}
 .friends-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
 .friends-card{position:relative;padding:0;overflow:hidden;transition:all .25s cubic-bezier(.22,1,.36,1)}
 .friends-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:color-mix(in srgb,var(--sky-blue) 30%,transparent)}
 .friends-main{display:flex;align-items:center;gap:14px;padding:18px;color:var(--text-main);text-decoration:none}
-.friends-avatar{width:52px;height:52px;border-radius:14px;flex-shrink:0;overflow:hidden;background:var(--grad-sky);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm)}
+.friends-avatar{width:52px;height:52px;border-radius:var(--radius);flex-shrink:0;overflow:hidden;background:var(--grad-sky);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm)}
 .friends-avatar img{width:100%;height:100%;object-fit:cover}
-.friends-avatar-ph{color:#fff;font-size:1.4rem;font-weight:800}
+.friends-avatar-ph{color:var(--accent-on);font-size:1.4rem;font-weight:800}
 .friends-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .friends-name{font-size:1.05rem;font-weight:700;color:var(--text-main)}
 .friends-desc-text{font-size:.84rem;color:var(--text-secondary);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .friends-ops{display:flex;gap:6px;padding:0 18px 14px}
-.friend-op{border:1px solid color-mix(in srgb,var(--sky-blue) 35%,transparent);background:none;color:var(--sky-ink);font-size:.78rem;padding:3px 12px;border-radius:14px;cursor:pointer;transition:.2s}
+.friend-op{border:1px solid color-mix(in srgb,var(--sky-blue) 35%,transparent);background:none;color:var(--sky-ink);font-size:.78rem;padding:3px 12px;border-radius:var(--radius);cursor:pointer;transition:.2s}
 .friend-op:hover{background:var(--sky-blue);color:var(--sky-ink)}
 .friend-op-del{border-color:color-mix(in srgb,var(--coral-pink) 40%,transparent);color:var(--coral-ink)}
 .friend-op-del:hover{background:var(--coral-pink);color:var(--coral-on)}
@@ -1152,18 +1188,18 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 
 /* ===== 导航栏骨架：滚动态 + 汉堡按钮 + 移动端抽屉 =====
    （区块名原来叫「导航栏 v2」，与 2026-09-20 那次顶栏 v2 重做撞名，已改） */
-.navbar-scrolled{box-shadow:0 8px 24px rgba(30,41,59,.14);background:color-mix(in srgb,var(--bg-card) 94%,transparent)}
+.navbar-scrolled{box-shadow:var(--shadow-sm);background:color-mix(in srgb,var(--bg-card) 94%,transparent)}
 
-.nav-burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:40px;height:40px;padding:8px;border:none;background:transparent;cursor:pointer;border-radius:10px;flex-shrink:0}
-.nav-burger span{display:block;height:2px;border-radius:2px;background:var(--text-secondary);transition:transform .28s cubic-bezier(.22,1,.36,1),opacity .2s}
+.nav-burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:40px;height:40px;padding:8px;border:none;background:transparent;cursor:pointer;border-radius:var(--radius);flex-shrink:0}
+.nav-burger span{display:block;height:2px;border-radius:var(--radius);background:var(--text-secondary);transition:transform .28s cubic-bezier(.22,1,.36,1),opacity .2s}
 .nav-burger:hover{background:var(--bg-soft)}
 .nav-burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
 .nav-burger.open span:nth-child(2){opacity:0}
 .nav-burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
 
-.nav-overlay{position:fixed;inset:0;z-index:120;background:rgba(15,23,42,.45);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .28s ease}
+.nav-overlay{position:fixed;inset:0;z-index:120;background:var(--scrim-drawer);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .28s ease}
 .nav-overlay.open{opacity:1;pointer-events:auto}
-.nav-drawer{position:absolute;top:0;left:0;bottom:0;width:min(300px,85vw);background:var(--bg-card);box-shadow:12px 0 32px rgba(30,41,59,.18);transform:translateX(-100%);transition:transform .32s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column;overflow-y:auto}
+.nav-drawer{position:absolute;top:0;left:0;bottom:0;width:min(300px,85vw);background:var(--bg-card);box-shadow:var(--shadow-lg);transform:translateX(-100%);transition:transform .32s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column;overflow-y:auto}
 .nav-drawer.open{transform:translateX(0)}
 .nav-drawer-head{display:flex;align-items:center;gap:9px;padding:18px 22px 14px;font-weight:800;font-size:1.05rem;color:var(--text-main);border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent);letter-spacing:1px}
 .nav-drawer-head .brand-dot{width:10px;height:10px}
@@ -1232,7 +1268,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .toc-toggle:hover{background:var(--bg-soft)}
 .toc[open] .toc-toggle{border-bottom:1px solid color-mix(in srgb,var(--sky-blue) 10%,transparent)}
 .toc-list{display:flex;flex-direction:column;padding:10px 14px 14px}
-.toc-link{padding:7px 12px;border-radius:8px;color:var(--text-secondary);font-size:.92rem;text-decoration:none;transition:all .18s;line-height:1.5}
+.toc-link{padding:7px 12px;border-radius:var(--radius);color:var(--text-secondary);font-size:.92rem;text-decoration:none;transition:all .18s;line-height:1.5}
 .toc-link:hover{color:var(--sky-blue-dark);background:var(--bg-soft)}
 .toc-lv2{padding-left:26px;font-size:.88rem}
 .toc-lv3{padding-left:40px;font-size:.84rem}
@@ -1241,121 +1277,68 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 .markdown-body h1,.markdown-body h2,.markdown-body h3{scroll-margin-top:92px}
 
 
+/* ★ 2026-10-08 · S3（报纸版迁移 P1：拆暗色对抗性覆写墙）★
+   这里原本是 1266–1427 行的「暗色主题还原块」——为抵消第 1/2/2c/2e/2f/2g/2h/2l 步的**亮色**改动
+   而写的约 60 条 [data-theme='dark'] X Y 对抗性补丁（分类页头/搜索条/按钮族/头像/小标题/
+   分类小签…）。整段已删除，原文快照＝irst/broadsheet-migration/s3-删除的暗色墙.css。
+   夜版改由「基础规则自身的 token」＋ 下面那段 S3 替补层统一承担（不再逐个组件对抗）。
+   回滚＝把快照内容粘回本行位置；或用 git checkout broadsheet-base -- src/index.css。 */
+
 /* ============================================================
-   暗色主题还原块 —— 2026-09-13「视觉重构第 1 步」遗留
-   第 1 步按用户范围只修亮色主题。分类页头 / 搜索提示条 / 按钮族
-   这几处的新样式是亮色专用常量，若不还原，暗色下会变成
-   「浅底板 + 浅色字」（分类页头会直接看不见字）。
-   所以这里把它们在暗色下的表现逐条还原成改动前的样子。
-   ——将来要一起修暗色时，删掉这一整块即可。
-   注：Hero 已在第 2 步单独重做，不再走这块还原（见下面那一段）。
+   S3 夜版语义层 —— 2026-10-08（替代上面那面墙）
+   ------------------------------------------------------------
+   为什么还需要这几条：亮色设计里有三类值**不会随主题翻转**，夜版必须显式接管——
+     ① **TS 运行时注入的分类色**（--cat-color / --cat-tint / --cat-on / --sec-* / --chip-*，
+        由 src/types/index.ts 的 CATEGORY_META / NOVEL_STATUS_META 内联下发）：它们是亮色档，
+        在暗底上要么太实、要么字底同色；
+     ② **只为亮色选定的「浅实底 + 白字」组合**：--accent 在暗色＝#5BA8D8（浅天蓝），
+        白字只有 2.2:1；--sky-ink 在暗色＝#6ec3ef，压在同为天空蓝的实底上直接 1:1；
+     ③ 少数直接写死的亮色常量。
+   与旧墙的区别：旧墙是**逐条抵消某次亮色改动**（60 条、每个组件一份、谁改了就再补一条）；
+   这里按**语义**归并成 4 组，改成「夜版的这类东西长这样」，以后亮色再改也不用跟着补。
+   实测记录见 `first/broadsheet-migration/` 的 s3-*.json 与 S3 执行日志。
    ============================================================ */
-/* ============================================================
-   暗色主题「中心大块」重做 —— 2026-09-13 视觉重构第 2 步
-   原来暗色 Hero 是一整块亮蓝→亮金的彩色横幅（白字压亮底，廉价且晃眼），
-   现在跟亮色统一成「同一套色卡渐变 + 缓慢流动」，只是底子换成深色：
-   深蓝灰底 + 极淡的青蓝/珊瑚辉光漂移，标题回到主文字色、副标题用天空蓝。
-   其余几条（分类页头/按钮族/浅色搜索条）保持第 1 步的还原，等第 3 步再一起收。
-   ============================================================ */
-/* 注意：这里必须用 background-image 长写，不能用 background 简写——简写会把基础规则里的
-   background-size:260% 260% 重置回 auto，暗色的流动动画就废了（实测踩过）。 */
-[data-theme='dark'] .hero{background-image:var(--hero-flow);border-color:color-mix(in srgb,var(--sky-blue) 20%,transparent);box-shadow:0 18px 46px rgba(0,0,0,.42)}
-[data-theme='dark'] .hero::before{opacity:.5}
-[data-theme='dark'] .hero::after{opacity:.55}
-[data-theme='dark'] .hero-title{color:var(--text-main);text-shadow:none}
-[data-theme='dark'] .hero-sub{color:var(--sky-blue);opacity:1}
-[data-theme='dark'] .hero-desc{color:var(--text-secondary);opacity:1}
-[data-theme='dark'] .hero .btn-primary{color:#0e1c26;background:var(--sky-blue);border:none;backdrop-filter:none;box-shadow:0 8px 22px rgba(0,0,0,.35)}
-[data-theme='dark'] .hero .btn-light-outline{color:var(--sky-blue);background:transparent;border:1px solid color-mix(in srgb,var(--sky-blue) 45%,transparent)}
-[data-theme='dark'] .hero .btn-light-outline:hover{background:color-mix(in srgb,var(--sky-blue) 14%,transparent)}
-[data-theme='dark'] .search-banner{background:var(--grad-warm);color:#fff;border-left-color:transparent}
-[data-theme='dark'] .cat-header{background:linear-gradient(135deg,var(--cat-tint),color-mix(in srgb,var(--cat-tint) 60%,transparent));color:#fff;border-color:transparent;box-shadow:var(--shadow)}
-[data-theme='dark'] .cat-header .page-title.light{color:#fff}
-[data-theme='dark'] .cat-header .cat-count{color:#fff;opacity:.92}
-[data-theme='dark'] .cat-header .back-link{color:#fff;background:rgba(255,255,255,.18)}
-[data-theme='dark'] .cat-header .back-link:hover{background:rgba(255,255,255,.28)}
-[data-theme='dark'] .btn-light{color:#fff;background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.9);backdrop-filter:blur(4px)}
-[data-theme='dark'] .btn-light-outline{color:#fff;background:transparent;border:2px solid rgba(255,255,255,.9)}
-[data-theme='dark'] .btn-light-outline:hover{background:rgba(255,255,255,.15)}
-[data-theme='dark'] .btn-warm{color:#fff}
-[data-theme='dark'] .btn-danger{background:linear-gradient(135deg,#E89B8A,#e07a63);box-shadow:0 8px 20px rgba(232,155,138,.35)}
-[data-theme='dark'] .btn-danger:hover{box-shadow:0 12px 28px rgba(232,155,138,.45)}
-[data-theme='dark'] .page-title.light{color:#fff}
-[data-theme='dark'] .novel-cover,
-[data-theme='dark'] .nreader-hero-cover-ph{background:linear-gradient(140deg,#2A6577,#4A9BB8)}
-/* ===== 第2c步「亮色强调色改青蓝」的暗色还原块（2026-09-13）
-   亮色下把原本「天空蓝渐变 + 白字」的实底组件改成了「青蓝 #4A9BB8 实底 + 墨色字」。
-   暗色主题要求原样不变，所以这一族在这里全部还原成天空蓝渐变 + 白字，
-   与块外那批「亮色改动一律用 var(--accent*)」正好配成一对——将来要一起改暗色时删掉这一段即可。 */
+/* ① 分类小签 / 分类筛选激活态：亮色＝色卡实底 + 白字；夜版＝该色 13% 淡底 + 该色卡色字
+      （5 类实测：天空蓝 4.49 / 珊瑚粉 5.23 / 蜜金 6.84 / 青蓝 3.85 / 灰蓝 3.77:1；
+        青蓝与灰蓝是中调色到不了 4.5，与暗色分类小签是同一处**已知取舍**，已计入 audit-contrast.mjs） */
+[data-theme='dark'] .card-cat,
+[data-theme='dark'] .detail-cat{
+  --cat-chip-bg:color-mix(in srgb,var(--cat-color) 13%,transparent);
+  --cat-fg:var(--cat-color);
+}
+[data-theme='dark'] .filter-chip.active{
+  background:color-mix(in srgb,var(--cat-color,var(--sky-blue)) 13%,transparent);
+  color:var(--cat-color,var(--sky-blue));
+}
+/* ② 主按钮族：夜版实底用天空蓝→青蓝渐变（暗色的 --grad-main）+ --accent-on 白字。
+      亮色那版是 --accent 平底（青蓝 #4A9BB8，白字 3.15:1）；暗色的 --accent 变成浅天蓝，
+      白字只剩 2.2:1，所以这里换回渐变（底色压到 #4A9BB8 一端，白字 3.15:1）。 */
 [data-theme='dark'] .btn-primary,
 [data-theme='dark'] .nav-links a.active,
 [data-theme='dark'] .nav-icon-btn.active,
 [data-theme='dark'] .nav-drawer-links a.active,
 [data-theme='dark'] .login-btn,
 [data-theme='dark'] .nreader-start-btn,
-[data-theme='dark'] .back-to-top{color:#fff;background:var(--grad-main)}
-[data-theme='dark'] .markdown-body th{color:#fff;background:var(--grad-main)}
-[data-theme='dark'] .profile-card::before{background:var(--grad-main);opacity:.12}
-[data-theme='dark'] .profile-avatar,
-[data-theme='dark'] .nav-avatar,
-[data-theme='dark'] .nav-avatar-placeholder,
-[data-theme='dark'] .comment-avatar,
-[data-theme='dark'] .friends-avatar{background:var(--grad-sky)}
-/* ============================================================
-   第2e步「写作页的装饰性蓝色改用亮色强调色」的暗色还原块（2026-09-14）
-   亮色下写作页的实底（普通文章/小说切换、小说「新建/编辑」切换、浅底按钮 hover）
-   由「深蓝实底 #2E6E92 + 白字」改成了「青蓝实底 #4A9BB8 + 白字」；
-   暗色主题要求原样不变，所以这一族在这里还原成天空蓝实底 + 白字。
-   淡档（8%~45% 的浅底/描边/光晕）走的是 var(--accent)——它在暗色下本来就是
-   天空蓝 #5BA8D8，与原来的 --sky-blue #6ec3ef 同族，观感不变。
-   ——将来要一起改暗色时，删掉这一段即可。 */
-[data-theme='dark'] .composer-switch .mode-tab.on,
-[data-theme='dark'] .novel-switch .mode-tab.on,
-[data-theme='dark'] .novel-newbox .btn-light:hover,
-[data-theme='dark'] .novel-existingbox .btn-light:hover,
-[data-theme='dark'] .novel-chapter-editor .btn-light:hover,
-[data-theme='dark'] .novel-ch-tools .btn-light:hover,
-[data-theme='dark'] .media-panel .btn-light:hover{background:var(--sky-fill);color:#fff;border-color:var(--sky-ink)}
-[data-theme='dark'] .chapter-draft-banner{background:color-mix(in srgb,var(--honey-gold) 14%,#1c2433);border-color:color-mix(in srgb,var(--honey-gold) 30%,transparent)}
-
-/* ============================================================
-   第2f步「字用墨色 / 颜色不用墨色」的暗色还原块（2026-09-14）
-   亮色下把「深墨蓝实底 #2E6E92 + 白字」改成了「天空蓝实底 #5BA8D8 + 墨字」；
-   暗色主题里 --sky-blue 与 --sky-fill 本来就是同一个值 #6ec3ef，只有字色不同，
-   所以这里只把这批实底的字色还原成白色（= 改动前的样子）。
-   ——将来要一起改暗色时，删掉这一段即可。 */
-[data-theme='dark'] .filter-chip.active,
-[data-theme='dark'] .comment-reply:hover,
+[data-theme='dark'] .back-to-top{color:var(--accent-on);background:var(--grad-main)}
+[data-theme='dark'] .markdown-body th{color:var(--accent-on);background:var(--grad-main)}
+/* ③ 天空蓝实底上的字：这些组件的底在夜版是 --sky-blue #6ec3ef，而亮色给的字色是 --sky-ink
+      ——它在暗色下**就是同一个 #6ec3ef**，字底同色（实测 1:1）。夜版一律换成 --accent-on。 */
 [data-theme='dark'] .guestbook-tab.active,
+[data-theme='dark'] .comment-reply:hover,
+[data-theme='dark'] .friend-op:hover,
 [data-theme='dark'] .bug-toggle:hover,
 [data-theme='dark'] .about-head-actions .btn-light:hover,
 [data-theme='dark'] .about-history-modal .btn-light:hover,
 [data-theme='dark'] .nreader-toc-item.current .nreader-toc-no,
-[data-theme='dark'] .friend-op:hover{color:#fff}
-[data-theme='dark'] .nreader-pill.on{color:#fff;border-color:var(--sky-ink)}
-
-/* ============================================================
-   第2g步「分类小签用实底」的暗色还原块（2026-09-14）
-   亮色下分类小签（卡片/详情页）改成「该分类色卡色实底 + 能看清的墨色字」；
-   暗色主题里它们原本是「13% 该分类色淡底 + 同色系墨色字」，这里原样还原。
-   ——将来要一起改暗色时，删掉这一段即可。 */
-[data-theme='dark'] .card-cat,
-[data-theme='dark'] .detail-cat{--cat-chip-bg:color-mix(in srgb,var(--cat-color) 13%,transparent);--cat-fg:var(--cat-ink)}
-[data-theme='dark'] .filter-chip.active{background:var(--cat-color,var(--sky-fill));color:var(--cat-ink,#fff)}
-
-/* ============================================================
-   第2h步：暗色下「小标题」一律白色 —— 2026-09-14
-   用户原话：「暗色下能不能把小标题全部变成白色，要不然看不清楚」。
-   暗色主题里这些**要读的小标题**原来都带颜色，压在深底上偏暗、跟正文的白字抢不过对比度：
-   ① 分区标题（首页各分类 / Bug 反馈页）＝该分类的同色系墨色（随笔粉、读后感蓝…）；
-   ② 小节标题（Markdown 正文 h1~h4、关于页 h2、写作页「书籍信息」小节头、
-      阅读器目录折叠头、目录里的分卷名、书评区折叠头）＝--sky-blue-dark #4ba7d6。
-   本步**只改暗色**：上面这一族一律纯白 #fff（页面底 17.29:1 / 卡片 14.71:1 / bg-soft 12.82:1）；
-   亮色主题一个字没动。
-   不动的：大标题（hero / 页面标题 / 卡片标题 / 文章标题）本来就是 --text-main，
-   暗色下已经是白字；「更多」链接、标签、小签、按钮仍属于颜色层/墨色层，不是「标题」。
-   ——将来要撤回这一步：删掉这一段，并把 Home.tsx 里的 --sec-ink 换回 color 即可。
-   ============================================================ */
+[data-theme='dark'] .nreader-pill.on{color:var(--accent-on)}
+/* ④ 导航抽屉里的主按钮：`.nav-drawer-links a` (0,1,1) 会抢走按钮自己的字色，
+      被抢成 --text-secondary 后压在青蓝实底上只有 1.92:1 —— 这里按语义钉回 --accent-on。
+      （同一处**亮色**也有一样的抢色问题，属 S3 之前的既有现象，本次不越界改亮色，只在夜版修。） */
+[data-theme='dark'] .nav-drawer .btn-primary,
+[data-theme='dark'] .nav-drawer .btn-primary:hover{color:var(--accent-on)}
+/* ⑤ 夜版小标题一律白 —— **用户 2026-09-14 原话**：「暗色下能不能把小标题全部变成白色，要不然看不清」。
+      这批标题的亮色字色是 --sky-blue-dark（暗色＝#4ba7d6），压在深底上其实勉强够看，
+      但用户明确要白；且它们本来就是文档结构标题、不该带色。这条不是对抗补丁，是直接的用户指令。 */
 [data-theme='dark'] .section-title,
 [data-theme='dark'] .about-content h2,
 [data-theme='dark'] .markdown-body h1,
@@ -1365,44 +1348,7 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
 [data-theme='dark'] .novel-edit-section-head,
 [data-theme='dark'] .toc-toggle,
 [data-theme='dark'] .nreader-toc-part,
-[data-theme='dark'] .nreader-book-comments summary{color:#fff}
-
-/* ============================================================
-   第2j步：色卡实底上的字一律同色系墨色 —— 2026-09-14
-   用户原话：「你怎么全改成黑色字体了，我让你把字改为同颜色的深色版本」。
-   第2f/2g 步我把一批「实底 + 白字」改成了「天空蓝实底 + --text-main」，
-   分类小签的 onFill 也给了 --text-main —— 那是 #2d3436 **黑字**，不是同色系墨色。
-   本步把这一类字全部换成「同颜色的深色版本」：
-   ① 天空蓝实底上的字 → var(--sky-ink) #2E6E92：.comment-reply:hover、.guestbook-tab.active、
-      .bug-toggle:hover、关于页 .about-head-actions/.about-history-modal .btn-light:hover、
-      .nreader-toc-item.current .nreader-toc-no、.nreader-pill.on、.friend-op:hover；
-      .filter-chip.active 的兜底字色（「全部」那颗）同理。
-   ② 分类小签 onFill（src/types/index.ts）：天空蓝 → var(--sky-ink)、珊瑚粉 → var(--coral-ink)、
-      蜜金 → var(--honey-ink)。数学笔记/学习分享仍是白字（原样）。
-   实测（同色系深色字压在该色实底上）：天空蓝 2.14:1、珊瑚粉 2.61:1、蜜金 3.38:1；
-   黑字那版是 4.85 / 5.73 / 8.03:1。这是「同色系 · 低对比」的取舍，已计入 audit-contrast.mjs 的「已知取舍」。
-   —— 若嫌糊，唯一解法是把实底换成该色卡的浅档（12% 就够：天空蓝 5.04:1、珊瑚粉 5.29:1、蜜金 5.08:1）。
-   暗色主题一个字没动：那批实底的字色仍由「第2f步 / 第2g步暗色还原块」管（= 白字 / --cat-ink）。
-   回滚：把本步的 7+1 处改回 var(--text-main)、onFill 改回 var(--text-main) 即可；快照见 first/ink-on-solid-base/。
-   ============================================================ */
-/* ============================================================
-   第2l步：暗色下分类小签的字＝亮色版的凉风凉色卡色 —— 2026-09-14
-   用户原话：「**让暗色下的这个区域的文字全部变成亮色的凉风凉四色**」。
-   这是第2k步的暗色半边：亮色下小签的字刚改成白字，暗色下原来走 --cat-ink
-   （该分类的同色系墨色，见第2g步暗色还原块），而 ink 里有三类是写死的深色值
-   （#2E6E92 / #8F6220 / #2A6577 / #5C6469）——压在暗色 13% 淡底上只有
-   2.10 / 2.03 / 1.86 / 2.03:1，基本看不见。本步把暗色小签的字改成
-   **该分类的色卡色本身**（＝亮色版那一档）：
-   天空蓝 #5BA8D8 4.49:1、珊瑚粉 #E89B8A 5.23:1、蜜金 #E8C9A0 6.84:1、
-   青蓝 #4A9BB8 3.85:1、灰蓝 #8A8F9A 3.77:1（改前 2.10 / 5.73 / 2.03 / 1.86 / 2.03:1）。
-   只动「字」：底仍是第2g步那条「13% 该分类色淡底」，实底/描边/尺寸一个字没碰。
-   覆盖范围＝文章卡片 .card-cat 与文章详情 .detail-cat（两者共用 --cat-fg）。
-   没动：文章列表的筛选激活态 .filter-chip.active（暗色下它是色卡色**实底**，
-   同色亮字压上去会看不见；要改得连底一起换，等用户点名）、以及「全部」那颗。
-   —— 回滚：删掉这一段即可（第2g步的 --cat-fg:var(--cat-ink) 会重新生效）。
-   ============================================================ */
-[data-theme='dark'] .card-cat,
-[data-theme='dark'] .detail-cat{--cat-fg:var(--cat-color)}
+[data-theme='dark'] .nreader-book-comments summary{color:var(--ink-inverse)}
 
 /* ============================================================
    开往-友链接力 · 页脚官方徽标 —— 2026-09-17
@@ -1548,24 +1494,21 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}a:hover{c
    书名（衬线大字）/ 状态 + 共 N 章 · M 字 / 最新一章 + 「阅读 ›」。
    蜜金只作「细描边 + 7% 淡底」，不再用 v1 那条 5px 粗竖条。 */
 .book-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(288px,1fr));gap:16px;align-items:stretch;justify-items:start}
-.book-card{width:100%;max-width:520px;display:grid;grid-template-columns:88px minmax(0,1fr);gap:16px;padding:0;overflow:hidden;min-width:0;border-radius:var(--radius);border:1px solid color-mix(in srgb,#E8C9A0 26%,transparent);box-shadow:var(--shadow-sm);background:linear-gradient(120deg,color-mix(in srgb,#E8C9A0 7%,var(--bg-card)),var(--bg-card) 52%);transition:all .25s cubic-bezier(.22,1,.36,1)}
-.book-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:color-mix(in srgb,#E8C9A0 44%,transparent)}
-.book-cover{width:88px;height:100%;min-height:112px;align-self:stretch;object-fit:cover;display:block;background:color-mix(in srgb,#E8C9A0 26%,var(--bg-card))}
-.book-cover-ph{display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;font-weight:700;color:#8F6220}
+.book-card{width:100%;max-width:520px;display:grid;grid-template-columns:88px minmax(0,1fr);gap:16px;padding:0;overflow:hidden;min-width:0;border-radius:var(--radius);border:1px solid color-mix(in srgb,var(--honey-gold) 26%,transparent);box-shadow:var(--shadow-sm);background:linear-gradient(120deg,color-mix(in srgb,var(--honey-gold) 7%,var(--bg-card)),var(--bg-card) 52%);transition:all .25s cubic-bezier(.22,1,.36,1)}
+.book-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:color-mix(in srgb,var(--honey-gold) 44%,transparent)}
+.book-cover{width:88px;height:100%;min-height:112px;align-self:stretch;object-fit:cover;display:block;background:color-mix(in srgb,var(--honey-gold) 26%,var(--bg-card))}
+.book-cover-ph{display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;font-weight:700;color:var(--honey-ink)}
 .book-body{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:15px 18px 15px 0}
 .book-title{font-family:var(--font-display);font-size:1.15rem;font-weight:700;letter-spacing:.02em;color:var(--text-main);line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .book-meta{display:flex;align-items:center;gap:9px;flex-wrap:nowrap;min-width:0}
 .book-status{flex-shrink:0;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:var(--radius-pill);line-height:1.6;white-space:nowrap;background:transparent;border:1px solid color-mix(in srgb,var(--chip-color,var(--accent)) 42%,transparent);color:var(--chip-ink,var(--text-secondary))}
 .book-meta-text{font-size:.78rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.book-latest{display:flex;align-items:center;gap:8px;font-size:.84rem;font-weight:600;color:#8F6220;min-width:0}
-.book-latest-tag{flex-shrink:0;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:var(--radius-pill);color:#2A6577;background:color-mix(in srgb,#4A9BB8 10%,transparent)}
+.book-latest{display:flex;align-items:center;gap:8px;font-size:.84rem;font-weight:600;color:var(--honey-ink);min-width:0}
+.book-latest-tag{flex-shrink:0;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:var(--radius-pill);color:var(--aqua-ink);background:color-mix(in srgb,var(--aqua-blue) 10%,transparent)}
 .book-latest-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* 「阅读 ›」做成和站里 .read-more 同一语气的小圆钮：8% 天空蓝淡底、hover 时底色加深并横移 3px */
 .book-arrow{margin-left:auto;flex-shrink:0;font-size:.95rem;font-weight:700;line-height:1;color:var(--sky-blue-dark);padding:5px 10px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--sky-blue) 8%,transparent);transition:all .2s}
 .book-card:hover .book-arrow{background:color-mix(in srgb,var(--sky-blue) 18%,transparent);transform:translateX(3px)}
-[data-theme='dark'] .book-latest,
-[data-theme='dark'] .book-cover-ph{color:#E8C9A0}
-[data-theme='dark'] .book-latest-tag{color:#8CBEDC;background:color-mix(in srgb,#5BA8D8 14%,transparent)}
 /* 暗色下的状态小签修正（2026-09-20 实测）：v1 照抄 NovelCard 的 inline 写法
    （background = 状态色 + '22'、color = NOVEL_STATUS_META 的墨色）在暗色下只剩 **1.81:1**（几乎看不见）。
    修法沿用全站既有口径（同「第2l步」的 .card-cat）：暗色下字色改用色卡色本身（实测 4.57:1）。 */
@@ -1818,7 +1761,7 @@ html[lang='en'] .hero-desc{max-width:none}
 .tr-chapter-item{
   display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer;
   font-family:inherit;font-size:.85rem;color:var(--text-secondary);
-  background:transparent;border:1px solid transparent;border-radius:10px;padding:6px 8px;
+  background:transparent;border:1px solid transparent;border-radius:var(--radius);padding:6px 8px;
 }
 .tr-chapter-item:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
 .tr-chapter-item.active{
@@ -1943,7 +1886,7 @@ html[lang='en'] .hero-desc{max-width:none}
 
 /* 鈹€鈹€ 鍘嗗彶鐗堟湰锛堟诞灞傦級 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 .tr-history-mask{
-  position:fixed;inset:0;z-index:60;background:rgba(45,52,54,.42);
+  position:fixed;inset:0;z-index:60;background:var(--scrim-crop);
   display:flex;align-items:center;justify-content:center;padding:20px;
 }
 .tr-history{
@@ -2167,43 +2110,17 @@ html{font-variant-numeric:lining-nums}
 .nav-user .nav-avatar{width:40px;height:40px}
 
 /* ============================================================================
-   ★ 2026-09-22 第七步：hero 按钮悬停不再变红（用户原话「我只换hero的按钮的红色」）★
+   ★ 2026-10-08 · S1（报纸版迁移 P1）：本块已删除 ★
    ----------------------------------------------------------------------------
-   根因（无头 Chrome 真悬停实测，不是猜的）：本文件第 144 行有一条**全局链接规则**
-       a:hover{color:var(--coral-ink)}
-   它的特异性是 (0,1,1)＝「1 个类型 + 1 个伪类」。而按钮基类：
-       .btn-primary      (0,1,0)  只写了 color，**没有 :hover 版本**
-       .btn-light-outline(0,1,0)  同上
-   于是鼠标一悬停，a:hover 凭更高特异性压掉按钮自己的字色，字当场变成珊瑚墨
-   rgb(168,72,47)＝#A8482F。实测（.tmp-hero-btn-red.mjs）：
-       「开始写作」悬停：底仍 #4A9BB8、字变 #A8482F → 青蓝底压红字
-       「浏览全部」悬停：底 12% 天空蓝、字变 #A8482F
-   全站扫描（.tmp-hover-red-scan.mjs，7 个页面 × 逐元素真 hover）：**只有首页中招**，
-   共 7 处＝hero 两颗按钮 + 分类浏览 5 张卡（.cat-nav-card，也是 <a>）。
-   本步**按用户指定只修 hero 的按钮**，分类浏览那 5 张卡原样保留（他在等着看这一处的效果）。
-   修法：给两颗按钮补上它们本来就该有的 hover 字色——
-     主按钮＝保持白字（底色本来就是 --accent 实底，字必须跟着它走）；**暗色下主按钮**
-     本来静止是深字 #0e1c26，hover 由既有规则变白（那是原来就有的、也没变红，保持不动）。
-     次级按钮＝亮色比静止再压深一档（试过 --sky-blue-dark，实测它与静止字色**完全相同**
-     rgb(46,110,146)，等于没有反馈，故改用 color-mix 派生）；暗色补一条钉成白字，
-     对应它既有那条 hover 底 rgba(255,255,255,.15)。
-   特异性说明：`.hero-cta a`(0,1,1) 与 a:hover(0,1,1) **同分**，本块在文件末尾 → 靠源码顺序取胜；
-   `.btn-primary`/`.btn-light-outline` 是类选择器记 (0,1,0)，比这条高 1 分，同样赢。
-   回滚＝删掉下面这两条规则。
+   这里原本是 2026-09-22 第七步给 hero 两颗按钮钉悬停字色的补丁
+   （`.hero-cta a.btn-primary:hover{color:var(--accent-on)}` 与
+    `.hero-cta a.btn-light-outline:hover{color:color-mix(--sky-ink 78%,#0b2a3a)}`）。
+   它存在的唯一原因是全局 `a:hover{color:var(--coral-ink)}` (0,1,1) 会抢走按钮字色；
+   S1 已把那条全局规则降级为 `:where(a):hover` (0,1,0)，`.btn-primary` / `.btn-light-outline`
+   的类规则此后必然赢它 → 两颗按钮的悬停字色回到各自基类（主按钮＝白字 --accent-on，
+   次级＝--sky-ink），本块冗余，整体删除。判据见执行日志 S1 行（真悬停 computed 色）。
+   回滚＝`git show broadsheet-base:src/index.css` 取回本块，或看 00-基线\src__index.css。
    ========================================================================== */
-.hero-cta a.btn-primary:hover,
-.hero-cta a.btn-primary:focus-visible{color:var(--accent-on)}
-/* 次级按钮：亮色静态字是 --sky-ink(#2E6E92)，而 --sky-blue-dark 恰好在亮色就等于它
-   （实测两者都是 rgb(46,110,146)）→ 直接用它当 hover 字色等于没有反馈。
-   所以亮色用 color-mix 再压深一档；暗色另有 [data-theme='dark'] 那条既有规则
-   （hover 字 #fff / 底 rgba(255,255,255,.15)），这里补一条把字钉成白，
-   免得又被全局 a:hover 的红抢走。 */
-.hero-cta a.btn-light-outline:hover,
-.hero-cta a.btn-light-outline:focus-visible{
-  color:color-mix(in srgb,var(--sky-ink) 78%,#0b2a3a);
-}
-[data-theme='dark'] .hero-cta a.btn-light-outline:hover,
-[data-theme='dark'] .hero-cta a.btn-light-outline:focus-visible{color:#fff}
 
 /* ============================================================================
    ★ 2026-09-22 第六步：hero 去暖色后的验收断言（无头 Chrome 实测，见 .tmp-hero-assert.mjs）★
@@ -2217,23 +2134,17 @@ html{font-variant-numeric:lining-nums}
 /* ============================================================================
    ★ 2026-09-29 第 8 步：试做 1、4（分类浏览悬停去红 + 暗色筛选激活态字色统一）★
    ----------------------------------------------------------------------------
-   1. 分类浏览 5 张卡悬停去红
-      根因：.cat-nav-card 本身是 <a>，全局 a:hover{color:var(--coral-ink)} 会把它自身
-      的字色抢走；其内部 .cat-nav-name/.cat-nav-count 虽有自己的 color，但 <a> 自身
-      若出现直接文本或某些边界情况仍会泛红。补一条 hover/focus-visible 字色钉死。
-      亮色用该分类墨色 --sec-ink；暗色用该分类色卡色本身 --sec-color（与既有暗色口径一致）。
+   1. 分类浏览 5 张卡悬停去红 —— **2026-10-08 S1 后已删除**：
+      当时 `.cat-nav-card:hover{color:var(--sec-ink…)}` 是为了对抗全局 `a:hover{color:var(--coral-ink)}`；
+      S1 把那条降级为 `:where(a):hover` (0,1,0) 后不再抢色（且 .cat-nav-card 内部
+      `.cat-nav-name`/`.cat-nav-count` 本就各有自己的字色，无裸露文本），补丁冗余，已删。
 
-   4. 暗色激活态字色统一（本轮收窄到筛选按钮）
+   4. 暗色激活态字色统一（本轮收窄到筛选按钮）—— **保留**
       现状：.filter-chip.active 暗色下是「分类色卡实底 + --cat-ink」，部分分类的墨档
       在暗色实底上对比度偏低（如天空蓝墨 #2E6E92 压天空蓝实底）。
       改法：暗色下 .filter-chip.active 改成「13% 分类色淡底 + 亮色版分类色卡字」，
       与 .card-cat/.detail-cat 的暗色口径一致。
    ========================================================================== */
-.cat-nav-card:hover,
-.cat-nav-card:focus-visible{color:var(--sec-ink,var(--text-main))}
-[data-theme='dark'] .cat-nav-card:hover,
-[data-theme='dark'] .cat-nav-card:focus-visible{color:var(--sec-color,var(--accent))}
-
 [data-theme='dark'] .filter-chip.active{
   background: color-mix(in srgb, var(--cat-color, var(--sky-blue)) 13%, transparent);
   color: var(--cat-color, var(--sky-blue));
@@ -2270,7 +2181,7 @@ html{font-variant-numeric:lining-nums}
   margin-bottom: 0.6rem;
 }
 .not-found-desc{
-  color: var(--text-secondary, #636e72);
+  color: var(--text-secondary);
   font-size: 0.95rem;
   margin-bottom: 2rem;
 }
@@ -2279,7 +2190,7 @@ html{font-variant-numeric:lining-nums}
   display: inline-flex;
   align-items: center;
   padding: 0.7rem 1.4rem;
-  border-radius: 8px;
+  border-radius:var(--radius);
   font-size: 0.95rem;
   font-weight: 500;
   text-decoration: none;
@@ -2287,7 +2198,150 @@ html{font-variant-numeric:lining-nums}
 }
 .not-found-btn-primary{
   background: var(--aqua-blue);
-  color: #fff;
+  color: var(--accent-on);
 }
 .not-found-btn-primary:hover{ background: var(--accent-deep); }
-[data-theme='dark'] .not-found-desc{ color: #a0a0a0; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   S4 · 报纸 token 层（2026-10-08，P1 第一批第 4 步）
+   ──────────────────────────────────────────────────────────────────────────────
+   口径（`清单-样式层.md` 附录 S4）：**不动现有 token**，只在文件末尾新增一层「报纸 token」，
+   并把圆角 / 阴影三组覆盖为 `0` / `none`；**先只覆盖，不删除**（旧 token 一个字节没改）。
+
+   设计真值来源 = 样张 N1「大报」的 `:root`（`design-mockups\g\n1-broadsheet.mjs` 行 15–22）：
+     纸底 #FFFFFF ／ 墨色 #111111 ／ 次级墨 = 墨 60% ／ 三级墨 = 墨 38%
+     细线 = 墨 26% ／ 更细的线 = 墨 13% ／ 双线 = 3px double ／ 版框 = 外 2px + 内 1px ／ 栏线 1px
+
+   ⚠️ 为什么不把它们写成样张里那几个 hex：全站颜色只能从「凉风凉色卡」四色里取（用户的铁律，
+      `:root` 第 2–4 行写着）。所以这一层**全部由既有 token 派生**——用 `color-mix` 去混
+      `--text-main` / `--bg-card`，**派生比例照抄样张，新色号一个都不引入**；
+      两态（亮 / 暗）靠既有 token 自动跟随，不必再写一个 `[data-theme='dark']` 块。
+   ══════════════════════════════════════════════════════════════════════════════ */
+:root{
+  /* —— 纸与墨（三档墨色，照样张的层级：正文墨 → 次级墨 → 三级墨）—— */
+  --bs-paper: var(--bg-card);      /* 纸面：卡片/版心底 */
+  --bs-paper-2: var(--bg-page);    /* 纸面暗一档：版心外的衬纸 */
+  --bs-ink: var(--text-main);      /* 正文墨 */
+  --bs-ink-2: color-mix(in srgb, var(--bs-ink) 60%, var(--bs-paper));  /* 次级墨：副题、图注、meta */
+  --bs-ink-3: color-mix(in srgb, var(--bs-ink) 38%, var(--bs-paper));  /* 三级墨：刊眉小注、页码 */
+  /* —— 线（细线 / 更细的线）—— */
+  --bs-hair: color-mix(in srgb, var(--bs-ink) 26%, var(--bs-paper));
+  --bs-hair-2: color-mix(in srgb, var(--bs-ink) 13%, var(--bs-paper));
+  /* —— 线的宽度（B1 骨架直接引用这些，别再写裸数字）—— */
+  --bs-rule: 1px;          /* 单线 */
+  --bs-rule-2: 3px;        /* 双线：`border-style: double` 时的总宽（2px 以下画不出两条） */
+  --bs-rule-heavy: 2px;    /* 版框外线 */
+  --bs-rule-inner: 1px;    /* 版框内线 */
+  --bs-col-rule: 1px;      /* 栏线 */
+  --bs-frame-out: 2px;     /* 版框外线宽（与 --bs-rule-heavy 同值，供 .wrap 语义化引用） */
+  --bs-frame-in: 1px;      /* 版框内线宽 */
+}
+/* 圆角清零 + 去投影：**只覆盖，不删任何一条旧规则**。
+   压得住的理由：文件开头 `:root` 把 --radius 等定义在 (0,1,0)，这里同特异性、后出现 → 胜；
+   `[data-theme='dark']` 块**压根没有定义圆角与阴影以外的这三组**（它只在 123 行重定义了
+   --shadow*），而 --shadow* 同样是 (0,1,0)、更靠前 → 这一条对**亮暗两态同时生效**。
+   回退 = 删掉下面这一个块即可（旧规则一条没动）。 */
+:root{
+  --radius: 0; --radius-sm: 0; --radius-pill: 0;
+  --shadow: none; --shadow-sm: none; --shadow-lg: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   S6 · 硬编码颜色归入 token（2026-10-08，P1 第一批第 6 步）
+   ──────────────────────────────────────────────────────────────────────────────
+   口径（`清单-样式层.md` 附录 S6）：把**规则体内**的硬编码 hex / rgb / rgba 搬进 token 层。
+   判据＝`inv-s56.mjs` 报「规则体内硬编码颜色 = 0」（token 块内允许留 hex，那本来就是定义）。
+
+   ⚠️ 值是**原样搬入**的，不是调色：这一步只做「搬家」，观感不变。只有三类例外，汇报里单独列出：
+     ① `.btn-danger` 原来自造了一个不在凉风凉四色里的色号 `#e07a63` → 改用色卡「珊瑚粉实底」`--coral-solid`；
+     ② `.fav-btn.fav-on` / `.meta-btn.meta-fav-on` 的白字压粉底（亮色实测 2.02:1）→ 改用 `--coral-on`（设计上就是粉底压墨字）；
+     ③ 三条**已经被 token 覆盖**的暗色覆写（`.book-cover-ph` / `.book-latest-tag` / `.not-found-desc`）→ 删除，
+        它们引用的 token 本身已随主题变化，留着只会把 token 又钉死回硬编码。
+
+   回退 = 删掉下面这一个块，再 `git checkout broadsheet-base -- src/index.css`。
+   ══════════════════════════════════════════════════════════════════════════════ */
+:root{
+  /* —— 代码块（S13 会重做成报纸风亮暗两套，这里只先把值收进 token）—— */
+  --code-bg:#1e2430; --code-fg:#e2e8f0; --code-line:#2a3342;
+  /* —— 遮罩：原本五处各写各的值（.35/.42/.45/.5/.55），值原样保留，只立名 —— */
+  --scrim-modal:rgba(15,23,42,.55);
+  --scrim-drawer:rgba(15,23,42,.45);
+  --scrim-toc:rgba(0,0,0,.5);
+  --scrim-sheet:rgba(0,0,0,.35);
+  --scrim-crop:rgba(45,52,54,.42);
+  /* —— 局部底色 —— */
+  --crop-mat:#111;                    /* 头像裁剪视口底：要中性暗底，两态都不变 */
+  --edge-white:#fff;                  /* 色块上的一圈白边 + 与色卡混白的底（头像/色卡/滚动条）：**两态都保持白**，值原样搬入 */
+  --shine:rgba(255,255,255,.35);      /* 按钮扫光 */
+  --track-veil:rgba(255,255,255,.5);  /* 滚动条槽 */
+  --ink-inverse:#fff;                 /* 反白墨：夜版小标题（2026-09-14 用户原话要求「暗色下全部变亮色」） */
+  /* —— 阅读器夜版调色板：先立名，S14 收编进 data-theme 时改指站内 token —— */
+  --reader-night-bg:#10151d; --reader-night-text:#cdd6e4;
+  --reader-night-secondary:#8b97ab; --reader-night-soft:#1a2332;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   W1 · 宽度 token（2026-10-08，用户原话「现在阅读宽度太窄了，修改，还有所有界面
+   参照你最开始给我的那一个静态样张修改」）
+   ──────────────────────────────────────────────────────────────────────────────
+   立这一组 token 的**唯一目的**：把「一处一个裸数字」的宽度收成一处可核对的口径，
+   让报头 / 顶栏 / 版心 / 正文栏 / 报尾**同一把尺子**——以后要调窄调宽只动这里。
+
+   真值来自样张 N1（`design-mockups\g\n1-broadsheet.mjs` 行 30）：
+     `.wrap{max-width:1240px;padding:14px 44px 42px}` ⇒ **版心净宽 1240 − 44×2 = 1152px**
+   本站旧账：`.main` 1080（pad 20）→ 净宽 1040；`.page` 又收一档到 920。
+   这次把三层对齐到样张那一档：1152 / 1152 / 1152。
+   `--bs-reading-w` 是**正文阅读栏**（详情页 Markdown、文章副题、书籍简介），
+   与版心不是一回事：报纸正文栏本来就不该跟版心一样宽，但 34em（544px）实测只有
+   约 30 汉字/行、在 1440 屏上只占 38% 宽，**偏窄是用户的直接反馈**，故放到 42em
+   （＝672px，约 38 汉字/行；汉字每行 35–45 字是舒适区）。
+   ⚠️ 值写成 px 不写 em：`em` 会随字号/字体回退漂移，px 才是**可复现、可签收**的数字
+     （栏目里的「栏宽 = 42em」在注释里保留为来历说明）。 */
+:root{
+  --bs-wrap-w: 1152px;      /* 版心净宽（＝样张 .wrap 1240 − 44×2） */
+  --bs-reading-w: 672px;    /* 正文阅读栏宽（＝42em @16px） */
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   A1 · 一把尺子铺满全站（2026-10-08，用户原话「保持宽度不变在每个页面，像首页一样的宽度，」）
+
+   首页＝样张那把尺子：`.n1`（桌面无内边距）＋ `.n1 .wrap{max-width:1240px;padding:14px 44px 42px}`
+   ⇒ 内容净宽 **1152**（1440 档）；手机档 `.n1{padding:12px 10px 26px}` ＋ wrap `padding:10px 18px`
+   ⇒ 内容净宽 **334**（390 档）。未迁移页走 `.layout` 旧外壳，实测每档都不同宽：
+     1440 窄 88px、1024 宽 48px、390 窄 4px。根因：① `*{box-sizing:border-box}` 下把"净宽"
+     当成了 border-box 宽；② `.article-detail 800 / .gallery-page 960 / .friends-page 920 /
+     `.not-found-inner 520` 又各收了一档。
+   本段让旧外壳的**内容盒**在每一档都与首页逐像素相同；设计值（颜色/字号/间距/结构）一字不动。
+   ⚠️ N1 六个页面本来就在样张里，本段对它们零影响（选择器全挂在 `.layout` 下）。
+   回滚＝删本段 ＋ 把 `.main/.page` 两行换回 `var(--bs-wrap-w)`，
+     或整份文件回滚 `blog\first\width-all-pages\index.css.before-a1.css`。 */
+:root{
+  /* 全站横向内边距（唯一来源，桌面/手机两档都从这一处改） */
+  --bs-pad-x: 22px;
+}
+/* ⚠️ 选择器一律写成 `html:root .layout.bs …`（特异性 ≥ (0,3,1)）：旧层
+   broadsheet.css 的 `.layout.bs .main{max-width:calc(var(--bs-wrap-w) + 44px)}` 是 (0,3,0)，
+   与它同权时靠后者胜出——实测那条会把本段的宽度整段压掉（1440 档看起来对、1024/390 档不对）。 */
+html:root .layout.bs > .main{
+  max-width:min(calc(var(--bs-wrap-w) + 44px), calc(100% - 88px));
+  padding-left:var(--bs-pad-x);padding-right:var(--bs-pad-x);
+}
+/* 顶栏 / 搜索浮层 / 报尾：内边距 24px，要写成 24×2 ＋ 净宽，才能让**内容**与版心左右对齐。
+   ⚠️ 不要加 `html:root`——那条 (0,3,1) 会把 index.css 里 `html[lang='en'] .nav-inner`
+   的 1160（英文站专用）也一起压掉；旧层本来就只有 `.nav-inner{max-width:var(--bs-wrap-w)}`，
+   配 24px 内边距正好等于本段的 `+48px`，无需覆盖。 */
+.layout .nav-search-inner,
+.layout .footer-inner{max-width:calc(var(--bs-wrap-w) + 48px)}
+/* 桌面档：`.layout` 的外边距收掉（N1 那套是「外框 0 ＋ 内边距 44」，本站是「外框 0 ＋ 内边距 22」，同宽） */
+@media (min-width:861px){
+  html:root .layout.bs{margin-left:0;margin-right:0}
+}
+/* 手机档：照 N1 的外框 10px ＋ 内边距 18px ⇒ 内容盒 334（与首页同；旧账 330 少 4px）。 */
+@media (max-width:860px){
+  html:root .layout.bs{margin-left:10px;margin-right:10px}
+  html:root .layout.bs > .main{max-width:100%;padding-left:18px;padding-right:18px}
+  html:root .layout.bs .page{max-width:100%}
+}
+/* 404：`.not-found-inner` 的 520px 是页面内又一层内收，与首页不同宽；放开它，
+   宽度交给 `.main`（整页仍居中），文案短句不变。 */
+.not-found-inner{max-width:100%}

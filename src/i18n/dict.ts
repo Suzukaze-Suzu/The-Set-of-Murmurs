@@ -38,6 +38,17 @@ export const dict: Dict = {
   'brand.footerCaption': { zh: '未知的梦话与胡言乱语', en: 'Dreams half-known, words unaccounted for' },
   // 页面标题的分隔符：中文沿用原来的 ' - '（不改中文站行为），英文按词表用 ' · '
   'brand.titleSep': { zh: ' - ', en: ' · ' },
+  /* 站长署名（2026-10-09 用户裁决：「选择 Suzu Suzukaze」）——
+     英文站上的署名一律用拉丁名，中文站仍是资料里的昵称「凉风凉」。
+     用在：N1 报眼那行（主编 凉风凉 → Author Suzu Suzukaze）、关于页大标题与头像 alt、
+     留言板提要句里的人名、首页头像 alt。 */
+  'brand.author': { zh: '凉风凉', en: 'Suzu Suzukaze' },
+
+  // ---- 报头（B2，2026-10-08）----
+  // 「期」＝公开文章总数、「版」＝当前页在导航里的序号，口径见 src/lib/masthead.ts。
+  // 拉丁刊名「THE SET OF MURMURS」两站同一行，是版式元素（不是可翻译文案），写在组件里。
+  'mast.issue': { zh: '第 {n} 期', en: 'No. {n}' },
+  'mast.edition': { zh: '第 {n} 版', en: 'Ed. {n}' },
 
   // ---- 导航（词表 二） ----
   'nav.home': { zh: '首页', en: 'Home' },
@@ -59,8 +70,14 @@ export const dict: Dict = {
   'nav.lightMode': { zh: '切换亮色', en: 'Light mode' },
   'nav.darkMode': { zh: '切换暗色', en: 'Dark mode' },
   'nav.switchTheme': { zh: '切换主题', en: 'Switch theme' },
+  /* 2026-10-09：报头右上角那枚深浅切换按钮上写死的「浅」「深」，英文页不能是汉字。
+     值刻意极短（按钮是 10px 字的小签，装不下 Light mode / Dark mode）。 */
+  'nav.lightShort': { zh: '浅', en: 'Light' },
+  'nav.darkShort': { zh: '深', en: 'Dark' },
   'nav.travellings': { zh: '开往-友链接力', en: 'Travellings' },
   'nav.travellingsTitle': { zh: '开往-友链接力', en: 'Travellings — a Chinese webring' },
+  // 2026-10-09 报头右上角那枚小签用的短名（long 的那条「开往-友链接力」塞不进 10px 的小按钮）
+  'nav.travellingsShort': { zh: '开往', en: 'Travellings' },
   'nav.signIn': { zh: '登录', en: 'Sign in' },
   'nav.signOut': { zh: '退出登录', en: 'Sign out' },
   'nav.account': { zh: '账号', en: 'Account' },
@@ -68,6 +85,9 @@ export const dict: Dict = {
   'nav.myProfile': { zh: '个人主页', en: 'My profile' },
   'nav.write': { zh: '写作', en: 'Write' },
   'nav.footerLinks': { zh: '友链', en: 'Links' },
+  // B3 报尾（2026-10-08）：报尾那一行右侧的「友链 · 开往」标签（N1 样张的 `.flabel`）。
+  // 中文照 N1 写；英文沿用页脚既有的 Links 口径，不另造新词。
+  'foot.travellingsLabel': { zh: '友链 · 开往', en: 'Links · Travellings' },
   // 页脚的「留言板」和顶栏的「留言」在中文里是两个词，英文都是 Guestbook。
   // 单独给一键，避免把中文站页脚原本的「留言板」改掉。
   'nav.footerGuestbook': { zh: '留言板', en: 'Guestbook' },
@@ -99,6 +119,9 @@ export const dict: Dict = {
   'home.bookUpdates': { zh: '书籍更新', en: 'Book Updates' },
   'home.browseByCategory': { zh: '分类浏览', en: 'Browse by Category' },
   'home.more': { zh: '更多', en: 'More' },
+  /* ★ 2026-10-08「N1 样张直接做前端」：报眼方框里那两个入口按钮的文案，照样张原话 */
+  'home.startReading': { zh: '开始阅读', en: 'Start reading' },
+  'home.aboutSite': { zh: '关于本站', en: 'About this site' },
   'home.allBooks': { zh: '全部书籍', en: 'All books' },
   'home.browseAll': { zh: '浏览全部', en: 'Browse all' },
   'home.startWriting': { zh: '开始写作', en: 'Start writing' },
@@ -106,6 +129,18 @@ export const dict: Dict = {
   'home.seeAllArticles': { zh: '在全部文章里看', en: 'See all articles' },
   'home.newTag': { zh: '最新', en: 'New' },
   'home.titleSearch': { zh: '搜索：{q}', en: 'Search: {q}' },
+  /* ★ B4/P2（2026-10-08）报纸版首页新增的四条小字（英文同键，缺键会露键名）：
+       · leadFlag       ＝ 主板块那枚「本期头条」小签（照样张 N1 的 `.lead-flag`）
+       · recentSubhead  ＝ 副板块两行小头「最近更新 / MORE RECENT」（照 N1 的 `.subhead`）
+       · byline         ＝ 署名条「文 / 凉风凉　·　图 / 呓语集」（照 N1 的 `.stats::before`）
+       · statsUnits     ＝ 版面统计条的四个单位（篇文章 / 个分类 / 本书 / 双站），
+                          数字由页面现算后与单位拼接，故这里只放单位。 */
+  'home.leadFlag': { zh: '本期头条', en: 'Lead Story' },
+  // 首页头条正文按版面高度裁断后的出口（2026-10-09）
+  'home.continueReading': { zh: '继续阅读', en: 'Continue reading' },
+  'home.recentSubhead': { zh: '最近更新', en: 'More recent' },
+  'home.byline': { zh: '文 / 凉风凉　·　图 / 呓语集', en: 'TEXT / SUZUKAZE　·　IMAGE / MURMURS' },
+  'home.statsUnits': { zh: '篇文章|个分类|本书|双站', en: 'posts|categories|books|bilingual' },
 
   // ---- 搜索与列表（首页与「全部文章」共用，故不放在 home 下） ----
   'search.prefix': { zh: '搜索 “', en: '“' },
@@ -125,6 +160,8 @@ export const dict: Dict = {
      下面 count.chars 是英文站「中文正文按字数说」时的单位（character / characters）。 */
   'count.chars': { zh: '{n} 字', en: { one: '{n} character', other: '{n} characters' } },
   'count.booksChapters': { zh: '共 {n} 本 · {m} 章', en: '{n:book|books} · {m:chapter|chapters}' },
+  /* 2026-10-09 个人主页档案表用：留言＋留言板的合计条数（中文沿用「N 条」这个站内既有口径） */
+  'count.messages': { zh: '{n} 条', en: { one: '{n} message', other: '{n} messages' } },
   'count.loadingMore': { zh: '滚动加载更多…', en: 'Loading more…' },
   'count.allLoaded': { zh: '已加载全部 {n} 篇', en: 'All {n} posts loaded' },
 
@@ -133,7 +170,7 @@ export const dict: Dict = {
   'article.filterAll': { zh: '全部', en: 'All' },
   'article.read': { zh: '阅读', en: 'Read' },
   'article.backToTop': { zh: '回到顶部', en: 'Back to top' },
-  'article.notFound': { zh: '文章不存在或被删除了', en: "This post doesn't exist, or has been deleted." },
+  'article.notFound': { zh: '文章不存在或被删除了', en: 'This post doesn’t exist, or has been deleted.' },
   'article.backHome': { zh: '返回首页', en: 'Back to Home' },
   'article.savedStar': { zh: '★ 已收藏', en: '★ Saved' },
   'article.saveStar': { zh: '☆ 收藏', en: '☆ Save' },
@@ -181,7 +218,9 @@ export const dict: Dict = {
   'shelf.settings': { zh: '设置', en: 'Settings' },
   'shelf.nightMode': { zh: '夜间模式', en: 'Night mode' },
   'shelf.on': { zh: '已开启', en: 'On' },
-  'shelf.off': { zh: '开启', en: 'Off' },
+  // ★ D5②（2026-10-08 批次③）：中文原值是「开启」，off 态按钮上显示「开启」与语义相反（既有缺陷），
+  //   改成「关闭」。英文 'Off' 本来就是对的，不动。
+  'shelf.off': { zh: '关闭', en: 'Off' },
   'shelf.textSize': { zh: '字号', en: 'Text size' },
   'shelf.lineSpacing': { zh: '行距', en: 'Line spacing' },
   'shelf.loose': { zh: '宽松', en: 'Loose' },
@@ -192,6 +231,11 @@ export const dict: Dict = {
   'shelf.sizeL': { zh: '大', en: 'L' },
   'shelf.sizeXL': { zh: '特大', en: 'XL' },
   'shelf.wordsOnly': { zh: '{n} 字', en: { one: '{n} word', other: '{n} words' } },
+  /* 书架书讯那行「更新于 2026-08-10」（原来前缀写死中文） */
+  'shelf.updatedOn': { zh: '更新于 {d}', en: 'Updated {d}' },
+  /* 书籍页底那栏「同分类文章」＋ 栏题右侧那行 `IN 「小说」` */
+  'shelf.moreInCategory': { zh: '同分类文章', en: 'More in this category' },
+  'shelf.inCategory': { zh: 'IN 「{c}」', en: 'IN “{c}”' },
 
   // ---- 图集（词表 七） ----
   'gallery.title': { zh: '图集', en: 'Gallery' },
@@ -213,6 +257,17 @@ export const dict: Dict = {
   'gallery.removeTitle': { zh: '移除这张图片', en: 'Remove this image' },
   'gallery.wrongType': { zh: '请拖入图片文件（jpg/png/gif 等）', en: 'Please drop an image file (jpg/png/gif …)' },
   'gallery.pickOne': { zh: '请选择或拖入一张图片', en: 'Choose or drop an image' },
+  // N1 图集页（2026-10-09 重设计 · B 档）：滚到底自动加载的状态行、翻页灯箱、页底四色小色卡。
+  // 分类签整排删掉后，旧的 gallery.filterAll（"全部 {n}"）与 gallery.zoomHint 已无引用，一并撤掉。
+  'gallery.loadedMore': {
+    zh: '已显示 {n} 张　·　继续往下滚自动加载（每批 24 张）',
+    en: 'Showing {n} · more loads as you scroll (24 per batch)',
+  },
+  'gallery.allLoaded': { zh: '到底了　·　共 {n} 张', en: 'That’s all · {n} images' },
+  'gallery.prev': { zh: '← 上一张', en: '← Prev' },
+  'gallery.next': { zh: '下一张 →', en: 'Next →' },
+  'gallery.closeEsc': { zh: '关闭（Esc）', en: 'Close (Esc)' },
+  'gallery.paletteLabel': { zh: '本站四色', en: 'SITE PALETTE' },
 
   // ---- 友链（词表 七 / 八） ----
   'friends.title': { zh: '友链', en: 'Friends' },
@@ -253,12 +308,14 @@ export const dict: Dict = {
   // 留言板欢迎语被一个 <a>昵称</a> 切开，所以拆成前后两截
   'comment.gbPrefix': {
     zh: '欢迎在留言板上留下你的足迹～无论是想说的话、推荐的作品，还是给',
-    en: "Leave a note here — anything you'd like to say, a work you'd recommend, or a quiet word for ",
+    en: 'Leave a note here — anything you’d like to say, a work you’d recommend, or a quiet word for ',
   },
   'comment.gbSuffix': { zh: '的悄悄话，都可以写在这里。', en: '.' },
   'comment.tabGuestbook': { zh: '留言区', en: 'Messages' },
   'comment.tabBug': { zh: 'Bug 反馈', en: 'Bug reports' },
   'comment.title': { zh: '留言（{n}）', en: 'Comments ({n})' },
+  // 报纸版：文章详情页把评论区做成「读者来信」栏（栏题），下面那行仍是原来的「留言（N）」
+  'comment.deskTitle': { zh: '读者来信', en: 'Letters' },
   'comment.reply': { zh: '回复', en: 'Reply' },
   'comment.cancelReply': { zh: '取消回复', en: 'Cancel reply' },
   'comment.replyingTo': { zh: '回复 @{name} · ', en: 'Replying to @{name} · ' },
@@ -276,6 +333,15 @@ export const dict: Dict = {
   'comment.saySomething': { zh: '说说你的想法吧…', en: 'Say something please…' },
   'comment.empty': { zh: '还没有留言，来抢沙发吧～', en: 'No comments yet — be the first.' },
   'comment.anonymous': { zh: '匿名路人', en: 'Anonymous' },
+  // N1 留言页（样张 guestbook.html）：版头右侧那枚计数、样张表单里那两个框
+  'comment.count': { zh: '{n} 条留言', en: { one: '{n} message', other: '{n} messages' } },
+  'comment.nickname': { zh: '昵称', en: 'Nickname' },
+  'comment.emailPlaceholder': { zh: '邮箱（不会公开）', en: 'Email (not published)' },
+  // 2026-10-09 用户原话「让留言支持markdown」并去掉后半句：留言**不再需要审核**
+  // （其实也没有审核这一环），这行小注只留「支持 Markdown」。
+  'comment.markdownNote': { zh: '支持 Markdown。', en: 'Markdown supported.' },
+  // 回复别人的留言时，名字后面那枚「回 @谁」小签
+  'comment.replyToTag': { zh: '回 @{name}', en: 'to @{name}' },
 
   // ---- Bug 反馈 ----
   'bug.heading': { zh: 'Bug 反馈 / 报错', en: 'Bug reports' },
@@ -310,6 +376,29 @@ export const dict: Dict = {
     en: 'This page is only available in Chinese for now.',
   },
   'about.themeInspiration': { zh: '主题灵感', en: 'Theme Inspiration' },
+  /* ★ N1 样张直接做前端（2026-10-08）：关于页报眼那三条统计与四色块的**短色名**。
+     原来只有 `about.skyBlue` 那套长版（「天空蓝 · 开衫」），样张上只有颜色名，故另立短键。 */
+  'about.statSince': { zh: '建站', en: 'Founded' },
+  'about.statPosts': { zh: '篇文章', en: 'posts' },
+  'about.statBilingual': { zh: '双站', en: 'bilingual' },
+  /* 统计条第三格的**值**（原来写死 `中 / EN`，英文页会露汉字）。 */
+  'about.statBilingualVal': { zh: '中 / EN', en: 'ZH / EN' },
+  /* 关于页「站点信息」那一块（样张 .facts，写死的站点介绍）。
+     中文栏＝样张/线上原文一字不改；英文栏是 2026-10-09 新写的（等价改写，不改事实）。 */
+  'about.factsTitle': { zh: '站点信息', en: 'Site info' },
+  'about.factFounded': { zh: '建站', en: 'Founded' },
+  'about.factFoundedVal': { zh: '2026 年 8 月', en: 'August 2026' },
+  'about.factStack': { zh: '技术', en: 'Stack' },
+  'about.factWriting': { zh: '写作', en: 'Writing' },
+  'about.factWritingVal': { zh: 'Markdown 与 LaTeX', en: 'Markdown & LaTeX' },
+  'about.factLang': { zh: '语言', en: 'Languages' },
+  'about.factLangVal': { zh: '中文 / English 双站', en: 'Chinese & English' },
+  'about.factContact': { zh: '联系', en: 'Contact' },
+  'about.factContactVal': { zh: '通过留言板，或站内任意一篇文章', en: 'Through the guestbook, or any post on the site' },
+  'about.swatchSky': { zh: '天空蓝', en: 'Sky blue' },
+  'about.swatchHoney': { zh: '蜜金', en: 'Honey gold' },
+  'about.swatchCoral': { zh: '珊瑚粉', en: 'Coral pink' },
+  'about.swatchAqua': { zh: '青蓝', en: 'Teal' },
   'about.skyBlue': { zh: '天空蓝 · 开衫', en: 'Sky blue · cardigan' },
   'about.honeyGold': { zh: '蜜金 · 长发', en: 'Honey gold · hair' },
   'about.coralPink': { zh: '珊瑚粉 · 长发', en: 'Coral pink · hair' },
@@ -327,11 +416,14 @@ export const dict: Dict = {
   'common.refresh': { zh: '刷新页面', en: 'Refresh' },
   'common.delete': { zh: '删除', en: 'Delete' },
   'common.reply': { zh: '回复', en: 'Reply' },
+  'common.close': { zh: '关闭', en: 'Close' },
   'common.post': { zh: '发表', en: 'Post' },
   'common.posted': { zh: '已发表', en: 'Posted' },
   'common.anonymous': { zh: '匿名', en: 'Anonymous' },
   'common.avatar': { zh: '头像', en: 'Avatar' },
   'common.uploading': { zh: '正在上传…', en: 'Uploading…' },
+  /* 书籍封面图的 alt 后缀（首页与书架页各一处，原来写死「封面」） */
+  'common.coverAlt': { zh: '{t} 封面', en: '{t} cover' },
   'common.notAllowed': { zh: '无权限', en: 'Not allowed' },
   'common.chooseImageFile': { zh: '请选择图片文件', en: 'Choose an image file' },
   'common.uploadFailed': { zh: '上传失败：', en: 'Upload failed: ' },
@@ -362,6 +454,10 @@ export const dict: Dict = {
   // 这一页是**访客能碰到的**（顶栏 Sign in、评论「Sign in to leave a comment」都指向它），
   // 所以按词表九的口径「公开呈现部分要翻」处理；中文栏仍是一字未改的线上原文。
   'login.pageTitle': { zh: '登录', en: 'Sign in' },
+  /* 2026-10-09：登录页并进 N1 后，页头那颗大标题不能用 cardSignIn（＝「呓语集」，
+     与报头刊名重复），所以补这一对**页头专用**的标题词。 */
+  'login.headSignIn': { zh: '登录', en: 'Sign in' },
+  'login.headSignUp': { zh: '注册', en: 'Create account' },
   'login.cardSignIn': { zh: '呓语集', en: 'The Set of Murmurs' },
   'login.cardSignUp': { zh: '加入呓语集', en: 'Join The Set of Murmurs' },
   'login.subSignIn': { zh: '登录你的账号，继续书写呓语', en: 'Sign in to your account and keep writing.' },
@@ -386,6 +482,13 @@ export const dict: Dict = {
   'login.errPasswordMismatch': { zh: '两次输入的密码不一致', en: 'The two passwords do not match.' },
   'login.errCaptcha': { zh: '验证码不正确，请重新输入', en: 'Incorrect answer — please try again.' },
   'login.verifySent': { zh: '注册成功！我们已向你的邮箱发送验证链接，请点击验证后再登录。', en: 'You’re registered! We’ve sent a verification link to your email — click it, then sign in.' },
+  /* 2026-10-09「可读性」：表单格子左上方那行**标签**（用户拍板 A）。
+     中文栏是标签的原文；`login.password` / `login.captchaAnswer` 仍是格子里的
+     示例与提示（信息量比标签大，所以留着）。 */
+  'login.lblEmail': { zh: '邮箱', en: 'Email' },
+  'login.lblPassword': { zh: '密码', en: 'Password' },
+  'login.lblConfirm': { zh: '确认密码', en: 'Confirm password' },
+  'login.lblCaptcha': { zh: '人机验证', en: 'Verification' },
 
   // ---- 个人主页（英文版新增，词表 十三） ----
   // 一半是公开的（评论头像点进来看到的「他/她的主页」），一半是博主自己的资料编辑；
@@ -407,6 +510,22 @@ export const dict: Dict = {
   'profile.signature': { zh: '个性签名', en: 'Signature' },
   'profile.introLabel': { zh: '个人介绍', en: 'Introduction' },
   'profile.save': { zh: '保存', en: 'Save' },
+  /* 2026-10-09「可读性」：编辑表单的三行标签 ＋ 档案表（`.facts`）的栏名。
+     档案表按「拿得到数据才显示一行」生成：加入＝本人会话的 `user.created_at`（访客态没有这一行）、
+     文章＝全站总数（`articles` 表没有作者列，只有博主主页出这一行）、留言＝comments＋guestbook 计数。 */
+  'profile.lblNickname': { zh: '昵称', en: 'Nickname' },
+  'profile.lblSignature': { zh: '个性签名', en: 'Signature' },
+  'profile.lblIntro': { zh: '个人介绍', en: 'Introduction' },
+  'profile.secArchive': { zh: '档案', en: 'Archive' },
+  'profile.factName': { zh: '昵称', en: 'Name' },
+  'profile.factRole': { zh: '身份', en: 'Role' },
+  'profile.roleAdmin': { zh: '博主', en: 'Author' },
+  'profile.roleUser': { zh: '读者', en: 'Reader' },
+  'profile.factJoined': { zh: '加入', en: 'Joined' },
+  'profile.factPosts': { zh: '文章', en: 'Posts' },
+  'profile.factComments': { zh: '留言', en: 'Messages' },
+  'profile.needSignIn': { zh: '还没有登录，这里看不到你的主页。', en: 'You are not signed in, so there is nothing to show here yet.' },
+  'profile.goSignIn': { zh: '去登录', en: 'Sign in' },
 
   // ---- 头像裁剪弹窗（英文版新增，词表 十三；入口在个人主页的资料编辑里） ----
   'crop.title': { zh: '调整头像', en: 'Adjust avatar' },
@@ -425,7 +544,7 @@ export const dict: Dict = {
   'notFound.title': { zh: '找不到这个页面', en: 'Page not found' },
   'notFound.desc': {
     zh: '你访问的页面不存在，或者已经搬走了。',
-    en: "The page you're looking for doesn't exist or has moved.",
+    en: 'The page you’re looking for doesn’t exist or has moved.',
   },
   'notFound.home': { zh: '回首页', en: 'Back home' },
 };

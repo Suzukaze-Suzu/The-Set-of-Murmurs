@@ -44,6 +44,8 @@ export interface GalleryImage {
   id: string;
   url: string;
   caption: string;
+  /* 图注第二行用的日期（取 created_at 的年月日）；老数据没这个字段时为空串 */
+  date?: string;
 }
 
 export function galleryUid() {
@@ -73,7 +75,12 @@ export function GalleryProvider({ children }: { children: ReactNode }) {
       .then(({ data, error }) => {
         if (!mounted) return;
         if (!error && data) {
-          setImages(data.map((row) => ({ id: row.id, url: row.url, caption: row.caption || '' })));
+          setImages(data.map((row) => ({
+            id: row.id,
+            url: row.url,
+            caption: row.caption || '',
+            date: String(row.created_at || '').slice(0, 10),
+          })));
         }
         setLoading(false);
       });
@@ -100,7 +107,7 @@ export function GalleryProvider({ children }: { children: ReactNode }) {
     const { data: pub } = supabase.storage.from('gallery').getPublicUrl(path);
     const url = pub.publicUrl;
     const cap = caption.trim();
-    const newImg: GalleryImage = { id, url, caption: cap };
+    const newImg: GalleryImage = { id, url, caption: cap, date: new Date().toISOString().slice(0, 10) };
     const { error } = await supabase.from('gallery').insert({ id, url, caption: cap });
     if (error) return '保存失败：' + error.message;
     setImages((prev) => [newImg, ...prev]);
