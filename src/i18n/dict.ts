@@ -342,6 +342,14 @@ export const dict: Dict = {
   'comment.markdownNote': { zh: '支持 Markdown。', en: 'Markdown supported.' },
   // 回复别人的留言时，名字后面那枚「回 @谁」小签
   'comment.replyToTag': { zh: '回 @{name}', en: 'to @{name}' },
+  // 2026-10-09「留言板发表不了了」：发表**失败**要看得见（老口径是静默假成功）
+  'comment.posting': { zh: '发表中…', en: 'Posting…' },
+  'comment.postFailNet': { zh: '网络没连上数据库', en: 'Could not reach the database' },
+  'comment.postFailDenied': { zh: '数据库没有接受这次写入（登录状态可能过期了，重新登录再试）', en: 'The database refused this write (your session may have expired — sign in again)' },
+  'comment.postFailOther': { zh: '数据库拒绝了这次写入', en: 'The database refused this write' },
+  'comment.postFailed': { zh: '发表失败：{reason}。内容已保留，可以再点一次发表。', en: 'Post failed: {reason}. Your text is kept — try again.' },
+  'comment.postFailDetail': { zh: '技术原因：{msg}', en: 'Technical detail: {msg}' },
+  'comment.postFailedPlain': { zh: '发表失败，内容已保留，可以再点一次发表。', en: 'Post failed — your text is kept, please try again.' },
 
   // ---- Bug 反馈 ----
   'bug.heading': { zh: 'Bug 反馈 / 报错', en: 'Bug reports' },

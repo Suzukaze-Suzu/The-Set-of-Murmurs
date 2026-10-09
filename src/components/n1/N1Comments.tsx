@@ -1,6 +1,8 @@
 import { useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Comment } from '../../types';
+import type { PostResult } from '../../context/CommentContext';
+import { classifyPostError } from '../../context/CommentContext';
 import { useProfile } from '../../context/ProfileContext';
 import { useAuth } from '../../context/AuthContext';
 import { useT, useLocale, formatDate } from '../../i18n';
@@ -8,7 +10,7 @@ import CommentMarkdown from '../CommentMarkdown';
 
 interface Props {
   comments: Comment[];
-  onAdd: (name: string, content: string, parentId?: string, parentName?: string, avatar?: string) => void;
+  onAdd: (name: string, content: string, parentId?: string, parentName?: string, avatar?: string) => void | Promise<PostResult>;
   currentUserId?: string;
   onDelete?: (id: string) => void;
 }
@@ -33,6 +35,9 @@ interface Props {
 const faceLetter = (name: string, fallback: string) => name.trim().charAt(0) || fallback;
 
 type MsgNode = { c: Comment; replyTo?: string; replies: MsgNode[] };
+
+/* 发表失败的三档人话文案（键名）：网络 / 权限 / 其它 —— 与留言板同一口径 */
+const FAIL_KEY = { net: 'comment.postFailNet', denied: 'comment.postFailDenied', other: 'comment.postFailOther' } as const;
 
 /* 往上走到最外层那条评论（父链断掉或成环时就地当顶层） */
 function topOf(node: MsgNode, byId: Map<string, MsgNode>): MsgNode {
@@ -74,15 +79,24 @@ export default function N1Comments({ comments, onAdd, currentUserId, onDelete }:
   const [content, setContent] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
+  /* 2026-10-09「留言板发表不了了」：发表期间与失败都要有状态（老口径点下去什么都不发生） */
+  const [posting, setPosting] = useState(false);
+  const [postError, setPostError] = useState('');
 
   const needLogin = !currentUserId;
   const loginName = (myProfile?.nickname?.trim() || '');
   const loginAvatar = myProfile?.avatar || '';
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
-    onAdd(loginName || t('comment.anonymous'), content.trim(), replyingTo?.id, replyingTo?.name, loginAvatar);
+    if (!content.trim() || posting) return;
+    setPosting(true);
+    setPostError('');
+    /* 与留言板同一口径（2026-10-09「留言板发表不了了」）：只有写库真的成功才清空正文、
+       才提示「已发表」；失败保留正文并把原因显示出来（老口径是静默假成功）。 */
+    const res = await onAdd(loginName || t('comment.anonymous'), content.trim(), replyingTo?.id, replyingTo?.name, loginAvatar) as PostResult | undefined;
+    setPosting(false);
+    if (res && res.ok === false) { setPostError(res.error || ''); return; }
     setContent('');
     setReplyingTo(null);
     setSubmitted(true);
@@ -149,19 +163,29 @@ export default function N1Comments({ comments, onAdd, currentUserId, onDelete }:
           />
           <div className="gfoot">
             <span className="gnote">
-              {replyingTo
-                ? t('comment.replyingTo', { name: replyingTo.name })
-                : submitted
-                  ? t('comment.posted')
-                  : t('comment.markdownNote')}
+              {postError
+                ? t('comment.postFailedPlain')
+                : replyingTo
+                  ? t('comment.replyingTo', { name: replyingTo.name })
+                  : submitted
+                    ? t('comment.posted')
+                    : t('comment.markdownNote')}
             </span>
-            <button type="submit" className="btn">{t('comment.post')}</button>
+            <button type="submit" className="btn" disabled={posting}>
+              {posting ? t('comment.posting') : t('comment.post')}
+            </button>
             {replyingTo && (
               <button type="button" className="btn ghost" onClick={() => setReplyingTo(null)}>
                 {t('comment.cancelReply')}
               </button>
             )}
           </div>
+          {postError && (
+            <p className="note-box note-err">
+              {t('comment.postFailed', { reason: t(FAIL_KEY[classifyPostError(postError)]) })}<br />
+              {t('comment.postFailDetail', { msg: postError })}
+            </p>
+          )}
         </form>
       )}
 

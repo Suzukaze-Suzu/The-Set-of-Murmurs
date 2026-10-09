@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { useComments } from '../context/CommentContext';
+import { useComments, classifyPostError } from '../context/CommentContext';
 import { useProfile } from '../context/ProfileContext';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -39,6 +39,9 @@ import { supabase } from '../lib/supabase';
 /* 数据库状态常量（与既有数据兼容，不随语言切换） */
 const STATUS_OPEN = '待处理';
 const STATUS_DONE = '已处理';
+
+/* 发表失败的三档人话文案（键名）：网络 / 权限 / 其它 —— 见 CommentContext.classifyPostError */
+const FAIL_KEY = { net: 'comment.postFailNet', denied: 'comment.postFailDenied', other: 'comment.postFailOther' } as const;
 
 /* 昵称外圈那枚「字」（样张是「早」「远」「一」「白」）＝ 昵称首字。
    没名字时用字典兜底字（中文「访」／英文 A）——原来写死「访」，英文页会露汉字。 */
@@ -92,6 +95,9 @@ export default function Guestbook() {
   const [content, setContent] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
+  /* 2026-10-09「留言板发表不了了」：发表期间与失败都要有状态 —— 老口径是点下去什么都不发生 */
+  const [posting, setPosting] = useState(false);
+  const [postError, setPostError] = useState('');
 
   const [reports, setReports] = useState<BugReport[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -109,16 +115,23 @@ export default function Guestbook() {
   /* 已登录：昵称框显示登录昵称（真提交时服务端按 userId 反查昵称/头像，口径与 CommentSection 一致）。
      2026-10-08 夜：**邮箱那一格按用户要求删掉**（样张画了、数据库里没有这个字段，原本只是只读占位）——
      `.grow` 只剩昵称一格，靠 `n1-app.css` 的 `.grow > :only-child` 铺满整行。 */
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
-    addGuestbook({
+    if (!content.trim() || posting) return;
+    setPosting(true);
+    setPostError('');
+    /* 只有**写库真的成功**才清空并提示「已发表」（2026-10-09「留言板发表不了了」）：
+       老口径不看回执，写库失败了也照样清空正文、照样往列表里塞，用户看着像发成功、
+       刷新就没了。现在失败一律**保留正文**并在表单下面写明原因。 */
+    const res = await addGuestbook({
       name: loginName || t('comment.anonymous'),
       content: content.trim(),
       parentId: replyingTo?.id,
       parentName: replyingTo?.name,
       avatar: loginAvatar,
     });
+    setPosting(false);
+    if (!res.ok) { setPostError(res.error || ''); return; }
     setContent('');
     setReplyingTo(null);
     setSubmitted(true);
@@ -308,19 +321,31 @@ export default function Guestbook() {
               />
               <div className="gfoot">
                 <span className="gnote">
-                  {replyingTo
-                    ? t('comment.replyingTo', { name: replyingTo.name })
-                    : submitted
-                      ? t('comment.posted')
-                      : t('comment.markdownNote')}
+                  {postError
+                    ? t('comment.postFailedPlain')
+                    : replyingTo
+                      ? t('comment.replyingTo', { name: replyingTo.name })
+                      : submitted
+                        ? t('comment.posted')
+                        : t('comment.markdownNote')}
                 </span>
-                <button type="submit" className="btn">{t('comment.post')}</button>
+                <button type="submit" className="btn" disabled={posting}>
+                  {posting ? t('comment.posting') : t('comment.post')}
+                </button>
                 {replyingTo && (
                   <button type="button" className="btn ghost" onClick={() => setReplyingTo(null)}>
                     {t('comment.cancelReply')}
                   </button>
                 )}
               </div>
+              {/* 失败原因（网络被掐 / 权限 / 约束）：留言板本来就有 .note-box.note-err 这个类，不新增颜色。
+                  先给人话，再把数据库原文挂在「技术原因」里（方便排查，也让用户截图就能说清）。 */}
+              {postError && (
+                <p className="note-box note-err">
+                  {t('comment.postFailed', { reason: t(FAIL_KEY[classifyPostError(postError)]) })}<br />
+                  {t('comment.postFailDetail', { msg: postError })}
+                </p>
+              )}
             </form>
           )
         ) : needLogin ? (
