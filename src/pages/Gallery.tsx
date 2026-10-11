@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import { useGallery } from '../context/GalleryContext';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { useT, useLocale } from '../i18n';
+import { useT, useLocale, formatDate } from '../i18n';
 
 /* ══════════════════════════════════════════════════════════════════════════════
    图集页（2026-10-09 重设计 · Saber 点定 B「中」档）
@@ -20,6 +20,11 @@ import { useT, useLocale } from '../i18n';
    装箱为什么不用 CSS `columns`：多列 CSS 在追加新图时会**重排全部已显示的图**，
    配「滚到底自动加载」会让页面上半部分突然跳动。这里按「最短列优先」把图塞进当前最短的一列，
    已显示的一张都不动——三档实测追加 24 张时「已显示的图 0 张被移动」（对照组 CSS columns 动 4/6 张）。
+
+   ★ 2026-10-11 修（他报「图集的日期英文版不对」）：图注与灯箱原来直接吐 `img.date` 原始串
+   （`created_at` 前 10 位，看着就是 `2026-10-05`），英文页因此没跟着全站的英文日期口径走。
+   现两处都过 `formatDate(value, locale)`（`src\i18n\index.tsx`）：英文页 `5 Oct. 2026`，
+   中文页对 10 字符纯日期串**原样返回**，显示与改前逐字一致。全局只有这两处漏了。
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* 滚到底自动加载的批量（他定的 24）。数据在 GalleryContext 里一次性取回，
@@ -237,7 +242,7 @@ export default function Gallery() {
                   {/* 图注在图片**下方**（他点名要的），标题衬线、日期走二级墨色 */}
                   <figcaption>
                     <b>{capOf(img)}</b>
-                    <span>{img.date || ''}</span>
+                    <span>{img.date ? formatDate(img.date, locale) : ''}</span>
                     {isAdmin && (
                       <button
                         type="button"
@@ -331,7 +336,7 @@ export default function Gallery() {
             <img src={current.url} alt={current.caption || t('gallery.imageAlt')} />
             <figcaption>
               <b>{capOf(current)}</b>
-              <span>{current.date || ''}</span>
+              <span>{current.date ? formatDate(current.date, locale) : ''}</span>
             </figcaption>
           </figure>
           <div className="gview-bar">
