@@ -90,10 +90,34 @@ function isManualSummary(stored: string, content: string): boolean {
 const SITE_ORIGIN = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/+$/, '')
   || 'https://www.the-set-of-murmurs.me';
 
+// 域名同样写死（不走 import.meta.env）：这里是「贴到站外用」的链接，本地预览时也要拿到线上地址。
+const ASSET_BASE = 'https://www.the-set-of-murmurs.me';
+
+/* 外链素材清单（2026-10-11 起按组显示）。
+   ★ 2026-10-11：用户说「给我放到外链素材里面」——把新拍的 8 张主页截屏并进面板。
+     这 8 张的原图在 blog\first\n1-home-shots\（未进库），public\ 里这 8 份是它们随包部署的副本。 */
 const ASSET_FILES = [
-  { key: 'avatar', name: '头像原图（方形）', meta: '1444×1444 PNG', url: 'https://www.the-set-of-murmurs.me/avatar-original.png' },
-  { key: 'home', name: '首页截图', meta: '2497×1469 PNG', url: 'https://www.the-set-of-murmurs.me/home-screenshot.png' },
+  // —— 旧素材（文件名可能已被外部引用，别改名）——
+  { group: '头像与旧素材', key: 'avatar', name: '头像原图（方形）', meta: '1444×1444 PNG', url: `${ASSET_BASE}/avatar-original.png` },
+  { group: '头像与旧素材', key: 'home', name: '首页截图（整站一张）', meta: '2497×1469 PNG', url: `${ASSET_BASE}/home-screenshot.png` },
+  // —— 新版主页截屏（2026-10-11 日报纸版实拍）——
+  { group: '主页截屏（新版）', key: 'home-zh-desktop', name: '中文 · 桌面首屏', meta: '1280×900 PNG', url: `${ASSET_BASE}/home-zh-desktop.png` },
+  { group: '主页截屏（新版）', key: 'home-zh-desktop-full', name: '中文 · 桌面整页', meta: '1280×2450 PNG', url: `${ASSET_BASE}/home-zh-desktop-full.png` },
+  { group: '主页截屏（新版）', key: 'home-zh-mobile', name: '中文 · 手机首屏', meta: '390×844 PNG', url: `${ASSET_BASE}/home-zh-mobile.png` },
+  { group: '主页截屏（新版）', key: 'home-zh-mobile-full', name: '中文 · 手机整页', meta: '390×3855 PNG', url: `${ASSET_BASE}/home-zh-mobile-full.png` },
+  { group: '主页截屏（新版）', key: 'home-en-desktop', name: '英文 · 桌面首屏', meta: '1280×900 PNG', url: `${ASSET_BASE}/home-en-desktop.png` },
+  { group: '主页截屏（新版）', key: 'home-en-desktop-full', name: '英文 · 桌面整页', meta: '1280×2524 PNG', url: `${ASSET_BASE}/home-en-desktop-full.png` },
+  { group: '主页截屏（新版）', key: 'home-en-mobile', name: '英文 · 手机首屏', meta: '390×844 PNG', url: `${ASSET_BASE}/home-en-mobile.png` },
+  { group: '主页截屏（新版）', key: 'home-en-mobile-full', name: '英文 · 手机整页', meta: '390×4104 PNG', url: `${ASSET_BASE}/home-en-mobile-full.png` },
 ];
+
+// 按 group 把清单切成几段（顺序照原数组，不排序），面板里逐段带小标题渲染
+const ASSET_GROUPS = ASSET_FILES.reduce<{ group: string; items: typeof ASSET_FILES }[]>((acc, a) => {
+  const last = acc[acc.length - 1];
+  if (last && last.group === a.group) last.items.push(a);
+  else acc.push({ group: a.group, items: [a] });
+  return acc;
+}, []);
 
 export default function Write() {
   const { isAdmin } = useAuth();
@@ -1076,19 +1100,24 @@ export default function Write() {
       {panel === 'assets' && (
         <div className="media-panel card">
           <h4>外链素材</h4>
-          <p className="media-panel-desc">站点根目录下的两张静态图，给别人填「头像链接 / 首页截图链接」时用。点「复制链接」直接粘走；这两个文件名可能已被外部引用，改名前先确认。</p>
+          <p className="media-panel-desc">站点根目录下的静态图：头像原图、旧版首页整站截图，以及 2026-10-11 实拍的新版主页截屏（中/英 × 桌面/手机 × 首屏/整页）。给别人填「头像链接 / 首页截图链接」时用。点「复制链接」直接粘走；「头像与旧素材」那两个文件名可能已被外部引用，改名前先确认。</p>
           <div className="attach-preview-list">
-            {ASSET_FILES.map((a) => (
-              <div key={a.key} className="attach-preview-item">
-                <span className="attach-preview-name">
-                  {a.name} · {a.meta}
-                  <br />
-                  <code>{a.url}</code>
-                </span>
-                <button className="btn btn-primary btn-sm" onClick={() => copyAsset(a.url, a.key)}>
-                  {copiedAsset === a.key ? '已复制 ✓' : '复制链接'}
-                </button>
-                <a className="btn btn-light btn-sm" href={a.url} target="_blank" rel="noreferrer">打开</a>
+            {ASSET_GROUPS.map(({ group, items }) => (
+              <div className="asset-group" key={group}>
+                <div className="asset-group-title">{group}</div>
+                {items.map((a) => (
+                  <div key={a.key} className="attach-preview-item">
+                    <span className="attach-preview-name">
+                      {a.name} · {a.meta}
+                      <br />
+                      <code>{a.url}</code>
+                    </span>
+                    <button className="btn btn-primary btn-sm" onClick={() => copyAsset(a.url, a.key)}>
+                      {copiedAsset === a.key ? '已复制 ✓' : '复制链接'}
+                    </button>
+                    <a className="btn btn-light btn-sm" href={a.url} target="_blank" rel="noreferrer">打开</a>
+                  </div>
+                ))}
               </div>
             ))}
           </div>

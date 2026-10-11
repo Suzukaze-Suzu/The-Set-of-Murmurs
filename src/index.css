@@ -898,6 +898,10 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}
 .attach-dropzone{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 .attach-dropzone input[type=file]{display:none}
 .attach-preview-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+/* 外链素材面板的分组小标题（2026-10-11 加） */
+.asset-group{display:flex;flex-direction:column;gap:6px}
+.asset-group+.asset-group{margin-top:12px}
+.asset-group-title{font-size:.78rem;letter-spacing:.12em;color:var(--text-secondary)}
 .attach-preview-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid color-mix(in srgb,var(--accent) 18%,transparent);border-radius:var(--radius-sm);font-size:.85rem}
 .attach-preview-name{flex:1;min-width:0;word-break:break-all}
 .attach-remove{cursor:pointer;border:none;background:color-mix(in srgb,var(--coral-pink) 15%,transparent);color:var(--coral-ink);width:22px;height:22px;border-radius:50%;font-size:1rem;line-height:1}

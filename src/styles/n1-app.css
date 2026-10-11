@@ -187,6 +187,13 @@
   font-size:11.5px;color:var(--fg2);flex-wrap:wrap;
 }
 .n1 .attach-progress-item{display:flex;align-items:center;gap:10px;font-size:10.5px;color:var(--fg3);padding:4px 0}
+/* 外链素材面板分组小标题（2026-10-11）：N1 里的行是「细线分隔」，所以段内 gap 收 0 */
+.n1 .asset-group{display:flex;flex-direction:column;gap:0}
+.n1 .asset-group+.asset-group{margin-top:14px}
+.n1 .asset-group-title{
+  font-size:10px;letter-spacing:.2em;color:var(--fg3);
+  border-bottom:1px solid var(--hair);padding-bottom:5px;margin-bottom:2px;
+}
 .n1 .attach-progress-bar{flex:1;height:3px;background:var(--hair2)}
 .n1 .attach-progress-fill{height:3px;background:var(--teal)}
 .n1 .attach-remove{border:0;background:none;color:var(--fg3);cursor:pointer;font-size:13px}
