@@ -190,13 +190,15 @@ function setHreflang(html, path) {
   return stripped.replace(/<\/title>/, `</title>\n    ${block}`);
 }
 
-function buildPage({ template, locale, path, title, description, inner }) {
+function buildPage({ template, locale, path, title, description, inner, payload }) {
   let html = template;
   html = setTitle(html, title);
   html = setDescription(html, description);
   html = setCanonical(html, path, locale);
   html = setHreflang(html, path);
-  return injectIntoRoot(html, inner);
+  // ★ 2026-10-11：文章列表快照（见 articlesPayloadScript 顶部说明）——所有静态页都带，
+  //   这样从任意页面进站、取数不通时也能用构建期的真实内容兜底。
+  return injectIntoRoot(html, payload ? `${inner}\n${payload}` : inner);
 }
 
 // ---------------------------------------------------------------------------
@@ -334,11 +336,10 @@ function mdToHtml(md) {
   return renderToString(el);
 }
 
-function normalizeArticle(row) {
-  return {
+function normalizeArticle(row, lean = false) {
+  const base = {
     id: row.id,
     title: row.title,
-    content: row.content || '',
     category: row.category || 'essay',
     tags: row.tags || [],
     date: row.date,
@@ -347,6 +348,30 @@ function normalizeArticle(row) {
     summary: row.summary || '',
     novel: row.novel ? (typeof row.novel === 'string' ? JSON.parse(row.novel) : row.novel) : undefined,
   };
+  if (lean) return base;
+  return { ...base, content: row.content || '' };
+}
+
+/**
+ * ★ 2026-10-11「打开显示 0 篇文章」★
+ * 静态页里额外注入一份**文章列表快照**（`window.__PRERENDERED_ARTICLES__`）。
+ * 为什么需要：Supabase 不通时 `ArticleProvider` 拉不到东西 → 页面把预渲染块整个换掉后
+ * 只剩空态（首页统计条「0 篇文章」、条目 0 条）。有了这份快照，取数失败时前端手里
+ * 仍有**构建期抓到的真实内容**，页面不再空（线上取数成功时仍以线上为准）。
+ * 体积口径：只有标题/日期/摘要/分类，不含 content；小说只留书名与简介，不含章节正文。
+ */
+function articlesPayloadScript(articles) {
+  const rows = articles.map((a) => {
+    const lean = normalizeArticle(a, true);
+    if (lean.novel) {
+      const { chapters, ...rest } = lean.novel;
+      lean.novel = rest; // 快照不带章节正文（体积）
+      void chapters;
+    }
+    return lean;
+  });
+  const json = JSON.stringify(rows).replace(/</g, '\\u003c');
+  return { script: `<script>window.__PRERENDERED_ARTICLES__ = ${json};</script>`, bytes: Buffer.byteLength(json, 'utf8') };
 }
 
 function siteName(locale) {
@@ -613,10 +638,14 @@ async function main() {
   ];
 
   const staticStats = [];
+  let payloadBytes = 0;
   for (const route of routes) {
     for (const locale of ['zh', 'en']) {
       // 英文页的列表同样以译文为主源（标题/摘要/正文都走 view()，缺译文那篇回退中文）
       const rowsLocale = locale === 'en' ? articles.map((a) => view(a, 'en')) : articles;
+      // 快照永远带**整份**列表（不带筛选后的 list）——前端拿它当离线兜底，各页自己按需过滤
+      const { script: payload, bytes } = articlesPayloadScript(rowsLocale);
+      payloadBytes = bytes;
       const list =
         route.list === 'novels'
           ? rowsLocale.filter((a) => a.novel)
@@ -635,6 +664,7 @@ async function main() {
         title: meta.title,
         description: meta.description,
         inner,
+        payload,
       });
       const dir = join(DIST, ...(locale === 'en' ? ['en'] : []), ...(route.path ? route.path.split('/').filter(Boolean) : []));
       mkdirSync(dir, { recursive: true });
@@ -648,6 +678,7 @@ async function main() {
     }
   }
   console.log(`[prerender] 静态路由页：${staticStats.length} 个（含 ${categories.length} 个分类页 ×2 语言）`);
+  console.log(`[prerender] 文章列表快照 window.__PRERENDERED_ARTICLES__：每页 +${payloadBytes} 字节（${articles.length} 篇，不含正文）`);
 
   // 3) 汇总判据
   const total = articleStats.length + staticStats.length;

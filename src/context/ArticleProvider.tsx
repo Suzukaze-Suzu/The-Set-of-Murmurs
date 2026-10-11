@@ -15,11 +15,38 @@ function getPrerenderedArticle(): Article | null {
   return null;
 }
 
+/**
+ * ★ 2026-10-11「打开显示 0 篇文章」★
+ * 构建期预渲染时，每个静态页都带一份**文章列表快照**（`window.__PRERENDERED_ARTICLES__`，
+ * 见 scripts/prerender.mjs 的 articlesPayloadScript）。
+ *
+ * 改前的问题：`select('*')` 一旦失败（墙内 SNI 重置、断网、热点——实测都能触发），
+ * provider 什么都不做 → `articles` 停在 `[]`，而 React 已经把预渲染块整个换掉，
+ * 于是「构建期明明抓到了 12 篇」的页面变成 0 篇：首页统计条「0 篇文章 / 0 本书」、
+ * 分类计数全 0、置顶区空。有这份快照，取数不通时页面仍显示**上一次构建时的真实内容**。
+ * 线上取数成功时一切照旧（以线上为准，见下面的 useEffect）。
+ */
+function getPrerenderedArticles(): Article[] {
+  try {
+    if (typeof window === 'undefined') return [];
+    const rows = (window as any).__PRERENDERED_ARTICLES__;
+    if (!Array.isArray(rows)) return [];
+    return rows
+      .filter((r) => r && typeof r === 'object' && r.id)
+      .map((r) => rowToArticle(r as Record<string, unknown>));
+  } catch { /* ignore */ }
+  return [];
+}
+
 export function ArticleProvider({ children }: { children: ReactNode }) {
   const { isAdmin } = useAuth();
   // 预渲染页面：用注入的文章作为首屏数据，避免二次请求 Supabase
   const prerendered = getPrerenderedArticle();
-  const [articles, setArticlesState] = useState<Article[]>(prerendered ? [prerendered] : []);
+  // 列表快照（离线兜底）：详情页注入的是整篇、列表页注入的是整份列表，两者互不冲突
+  const snapshot = getPrerenderedArticles();
+  const [articles, setArticlesState] = useState<Article[]>(
+    () => (snapshot.length ? snapshot : prerendered ? [prerendered] : []),
+  );
   const [loaded, setLoaded] = useState(false);
   const [version, setVersion] = useState(0); // 用于刷新
 
@@ -33,9 +60,12 @@ export function ArticleProvider({ children }: { children: ReactNode }) {
       .select('*')
       .then(({ data, error }) => {
         if (!mounted) return;
-        if (!error && data) {
+        if (!error && data && data.length) {
+          // 成功：以线上为准
           setArticlesState(data.map(rowToArticle));
         }
+        /* 失败（或返回空）：**保留手上的数据**——可能是 ctx.prerender 注入的快照，
+           也可能是上一次成功拉取的结果。改前这里是「静默清空成 []」。 */
         setLoaded(true);
       });
     return () => {
