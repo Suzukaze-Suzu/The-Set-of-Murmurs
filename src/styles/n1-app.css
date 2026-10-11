@@ -805,7 +805,7 @@ html[lang='en'] .n1 .prose-read .markdown-body p{text-wrap:pretty}
    ⑩ 留言正文的 Markdown（2026-10-09，用户原话「让留言支持markdown」）
    ──────────────────────────────────────────────────────────────────────────────
    渲染件＝`src/components/CommentMarkdown.tsx`（**单独一支**，与正文的 `MarkdownRenderer`
-   分开：留言层不开 raw HTML、不挂 KaTeX，见那个文件顶部说明）。
+   分开：留言层不开 raw HTML，公式**按需加载**，见那个文件顶部说明）。
    这里只补「样张与 `n1.css` 都没写过」的那些 markdown 元素 —— 段落本身不用管：
    `n1.css` 的 `.n1 .mtxt p{font-size:12px;color:var(--fg2);margin:5px 0 0;max-width:720px;
    text-align:justify}` 是**后代选择器**，包一层 `.comment-md` 后照样命中，
@@ -867,6 +867,48 @@ html[lang='en'] .n1 .prose-read .markdown-body p{text-wrap:pretty}
 .n1 .comment-md a:hover{color:var(--fg)}
 .n1 .comment-md strong{color:var(--fg);font-weight:600}
 .n1 .comment-md del{color:var(--fg3)}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ⑩-b 留言里的公式（2026-10-10 用户原话「给留言板加katex」）
+   ──────────────────────────────────────────────────────────────────────────────
+   渲染件＝`src/components/CommentMarkdown.tsx`，**按需**挂 remark-math ＋ rehype-katex
+   （没有公式的留言根本不拉那个 chunk，渲染与加公式前逐字节相同，见该文件顶部）。
+   KaTeX 自己的 CSS **不用在这里再引**：`index.html` 第 55 行那条全站 `<link>`
+   （jsdelivr `katex@0.16.11`）本来就罩着留言板；`index.css` 第 449 行那条
+   `.katex{font-family:…,var(--font-serif)}`（公式里的中文不掉黑体）也是全局的，同样继承得到。
+
+   这里只补四件样张与 `index.css` 都没替留言管过的事：
+     ① **窄栏不撑破**——留言栏是 12px 小字的一列，行间公式比正文更容易超宽，给一个横向滚动；
+     ② **字号对齐留言档**——留言整体比正文降一档，公式不能独大；
+     ③ **解析失败不引入第五种颜色**——KaTeX 自带 `.katex-error` 是**内联** `color:#cc0000`
+        （自造红，违反四色铁律），只能用 `!important` 压，换成本层的珊瑚＋墨 55% 混色
+        （对比度 5.64:1，与 ⑩ 段同口径；见 `scripts/audit-contrast.mjs`）；
+     ④ **【必须留下的一条】`.mtxt{min-width:0}`** —— `n1.css` 第 340 行把留言做成
+        `.msg{display:grid;grid-template-columns:36px 1fr}`。网格项默认 `min-width:auto`
+        ＝**不小于内容的最小宽度**，而 `.katex-display` 里的公式是 `nowrap` 的 ——
+        一条长公式会把那个 `1fr` 轨道顶宽。2026-10-10 实测：手机 390 档放进一条长公式后，
+        `window.innerWidth` 从 390 **涨到 490**，整页横向溢出（截图见 `shots/math-390.png`
+        改造前）、公式也永远滚不动（轨道自己变宽了，`scrollWidth == clientWidth`）。
+        加 `min-width:0` 后轨道不再被内容顶开，`overflow-x:auto` 才真的生效。
+        （没有写 `grid-template-columns:36px minmax(0,1fr)` 那种等价写法：那样要把
+         `36px` 这个设计值抄一遍，n1.css 改了这里就跟着错。）
+   不新增任何色号：只用 `--teal / --coral / --fg / --hair / --bg`。
+   回退＝删掉本段（公式会退回 KaTeX 默认外观：字略大、超宽不滚动、报错红字，
+   长公式还会把手机版面顶宽）。
+   ══════════════════════════════════════════════════════════════════════════════ */
+.n1 .mtxt{min-width:0}
+.n1 .comment-md .katex{font-size:1.06em}
+.n1 .comment-md .katex-display{
+  max-width:100%;overflow-x:auto;overflow-y:hidden;
+  margin:7px 0 0;padding:2px 0 6px;
+  scrollbar-width:thin;
+  scrollbar-color:color-mix(in srgb,var(--teal) 70%,var(--bg)) transparent;
+}
+.n1 .comment-md .katex-display::-webkit-scrollbar{height:6px}
+.n1 .comment-md .katex-display::-webkit-scrollbar-thumb{background:var(--hair)}
+.n1 .comment-md .katex-display::-webkit-scrollbar-track{background:none}
+.n1 .comment-md .katex-display>.katex{display:inline-block;max-width:100%}
+.n1 .comment-md .katex-error{color:color-mix(in srgb,var(--coral) 55%,var(--fg))!important}
 
 /* ══════════════════════════════════════════════════════════════════════════════
    ⑪ 关于页报眼提要：一句话不分栏、不断行（2026-10-09 用户原话

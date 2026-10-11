@@ -52,7 +52,13 @@
     <link rel="preload" as="font" type="font/woff2" href="/fonts/murmurs-latin/smg-latin-normal.woff2?v=1" crossorigin />
     <link rel="preload" as="font" type="font/woff2" href="/fonts/murmurs-latin/cormorant-latin-normal.woff2?v=1" crossorigin />
     <link rel="stylesheet" href="/fonts/murmurs-latin/murmurs-latin.css?v=1" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+    <!-- 2026-10-10 撤掉 katex.min.css 的那条 jsdelivr <link>（原第 55 行）。两个理由：
+         ① 实测这台机器直连 jsdelivr ＝ ECONNRESET（墙内连不上），而它是一条**渲染阻塞**
+            样式表 —— 连不上时首屏要干等它失败，公式则一条 KaTeX 规则都不生效
+            （`.katex-display` 不是 block，行间公式挤在正文里、分数线不见）。
+         ② 现在 KaTeX 的 CSS 与字体由 `src/lib/katexBundle.ts` import 进构建产物：
+            正文那支随 MarkdownRenderer chunk 走，留言那支**只在真出现公式时**才按需下载。
+         要回退成 CDN：把这条 <link> 加回来，并把 `lib/katexBundle.ts` 的 CSS import 删掉。 -->
     <style>
       html,body{margin:0;padding:0;height:100%;}
       #splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;

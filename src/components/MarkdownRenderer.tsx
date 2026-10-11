@@ -1,10 +1,14 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import 'highlight.js/styles/github.css';
 import { useRef, useEffect } from 'react';
+// 2026-10-10：定界符归一搬去 lib 与留言层共用（留言板加 KaTeX）。
+// 原函数体一字未改，只是换了住处；正文渲染口径不受影响。
+import { normalizeMathDelimiters } from '../lib/mathDelimiters';
+// KaTeX 插件与**它自己的 CSS／字体**一起从这一支取（原先 CSS 靠 index.html 的 jsdelivr <link>，
+// 2026-10-10 实测那条在墙内连不上 → 公式没有一条规则生效）。理由见 lib/katexBundle.ts。
+import { remarkMath, rehypeKatex } from '../lib/katexBundle';
 
 interface CodeProps {
   inline?: boolean;
@@ -17,41 +21,6 @@ export interface Heading {
   id: string;
   text: string;
   level: number;
-}
-
-/**
- * 将 LaTeX 风格的数学定界符统一为 remark-math 能识别的 $ / $$ 形式：
- *   - 块级 \[ ... \]  →  $$ ... $$
- *   - 行内 \( ... \)  →  $ ... $
- * remark-math 底层（micromark-extension-math）只识别 $ 定界符，不识别 \[ \] / \( \)，
- * 导致 \[ 分段函数 \] 这类写法被当成普通文本而不进入 KaTeX。这里在送入 ReactMarkdown
- * 前先做转换。为避免误伤，会先用占位符保护代码块与行内代码，转换完再还原。
- */
-function normalizeMathDelimiters(md: string): string {
-  const placeholders: string[] = [];
-  // 保护围栏代码块 ``` 或 ~~~（含语言标注），整块存为占位符
-  let text = md.replace(
-    /(```|~~~)[^\n]*\n[\s\S]*?\n\1/g,
-    (m) => {
-      placeholders.push(m);
-      return '\u0000CODE' + (placeholders.length - 1) + '\u0000';
-    }
-  );
-  // 保护行内代码 `...`
-  text = text.replace(/(`+)([\s\S]*?)\1/g, (m) => {
-    placeholders.push(m);
-    return '\u0000CODE' + (placeholders.length - 1) + '\u0000';
-  });
-  // 块级 \[ ... \]（起止须各自独占一行，可跨多行）→ $$ ... $$
-  text = text.replace(
-    /(^|\n)(\s*)\\\[([\s\S]*?)\\\](\s*)(?=\n|$)/g,
-    (_m, nl, ws1, inner, ws2) => nl + ws1 + '$$' + inner + '$$'
-  );
-  // 行内 \( ... \)（单行）→ $ ... $
-  text = text.replace(/\\\(([^\r\n]*?)\\\)/g, (_m, inner) => '$' + inner + '$');
-  // 还原代码占位符
-  text = text.replace(/\u0000CODE(\d+)\u0000/g, (_m, i) => placeholders[Number(i)]);
-  return text;
 }
 
 // KaTeX 额外自定义宏（可选扩展）。KaTeX 本身不能加载 LaTeX 宏包，但可在此注册常用自定义命令。

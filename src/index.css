@@ -445,8 +445,12 @@ a{color:var(--sky-blue-dark);text-decoration:none;transition:color .2s}
 .markdown-body .katex-display{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:.65em .9em;margin:1.2em 0;position:relative;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--sky-blue) 75%,var(--edge-white)) transparent;background:color-mix(in srgb,var(--sky-blue) 7%,transparent);border-left:3px solid var(--sky-blue);border-radius:var(--radius)}
 /* 2026-09-17 第3步（衬线收尾）：KaTeX 自带的字体栈是 KaTeX_Main → Times New Roman → generic serif，
    公式里的中文没有衬线兜底，手机上会掉成黑体。把 --font-serif 接在末尾（数学字形仍优先 KaTeX_Main，
-   不改变公式排版度量）；本文件排在 katex.min.css 之后，同特异性覆盖生效。 */
-.katex{font-family:KaTeX_Main,'Times New Roman',var(--font-serif)}
+   不改变公式排版度量）；本文件排在 katex.min.css 之后，同特异性覆盖生效。
+   ⚠️ 2026-10-10 改写选择器 `.katex` → `.katex.katex`（(0,1,0) → (0,2,0)）：
+   那天起 katex.min.css **不再是 <head> 里的 <link>，而是随 JS chunk 按需注入**
+   （见 `lib/katexBundle.ts`），于是它会落在本文件**之后**，同特异性下反过来压掉这条补丁。
+   加倍类名让特异性高于 `katex.min.css` 的 `.katex{font:…}` 简写，**与加载顺序无关**。别改回去。 */
+.katex.katex{font-family:KaTeX_Main,'Times New Roman',var(--font-serif)}
 .markdown-body .katex-display::-webkit-scrollbar{height:8px}
 .markdown-body .katex-display::-webkit-scrollbar-thumb{background:var(--accent);border-radius:var(--radius);border:2px solid var(--bg-page)}
 .markdown-body .katex-display::-webkit-scrollbar-track{background:var(--track-veil);border-radius:var(--radius)}
