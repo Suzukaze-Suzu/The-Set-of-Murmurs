@@ -1133,4 +1133,27 @@ html[lang='en'] .n1 .lead h3{line-height:1.42;letter-spacing:.02em}
   .n1 .fcard{border-right:0}
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   ⑰ 关于页「联系」行：GitHub / 邮箱两枚文字链接（2026-10-11）
+   ──────────────────────────────────────────────────────────────────────────────
+   两轮点单的净结果（原话都要留着，别只看结论）：
+     ① 「别放纯文本，做成可点的 GitHub 和邮箱按钮」→ 我先做成两枚青蓝描边 `.badge` 小签；
+     ② 「现在很丑，与上面不搭，给我一个方案让他看起来好看一点」→ 病根是**不成族**：
+        `.facts` 上面四行全是**无框的一根墨灰词条**，整张表一根框都没有，只有「联系」行
+        带框又带青蓝，自成一类。遂做三档候选对照页（甲=纯文字链接／乙=两行／丙=细线方签）；
+     ③ 他点 **乙** 并追加「去掉『通过留言板，或站内任意一篇文章』这行字」→ 乙 的"第二行"
+        就是这一行的全部内容 ⇒ **两枚无框文字链接**（细下划线表示可点，hover 转青蓝）。
+   ★ 与 `n1.css:32` 的 `.n1 a{color:inherit;text-decoration:none}` 的关系：那一条让 `a` 继承
+     墨色并去掉默认下划线，所以这里必须**主动给回**一条下划线当可点的提示；颜色从 `--fg2`
+     起（不用青蓝），青蓝只留给 hover —— 这样整张表仍只有墨灰一色。
+   ★ 别再用 `.badge`：它不是不行，是在 `.facts` 里不成族（见 ② ）。
+   回退＝删本段 ＋ 把 `About.tsx` 那行换回 `<dd>{t('about.factContactVal')}</dd>`（字典键仍在）。
+   ══════════════════════════════════════════════════════════════════════════════ */
+.n1 .facts dd .lnk-row{display:flex;flex-wrap:wrap;gap:12px}
+.n1 .facts dd a.plain{
+  color:var(--fg2);text-decoration:underline;text-decoration-thickness:1px;
+  text-decoration-color:var(--hair);text-underline-offset:3px;
+}
+.n1 .facts dd a.plain:hover{color:var(--teal);text-decoration-color:currentColor}
+
 

@@ -264,7 +264,21 @@ export default function About() {
           <div><dt>{t('about.factStack')}</dt><dd>React 18 + TypeScript + Vite</dd></div>
           <div><dt>{t('about.factWriting')}</dt><dd>{t('about.factWritingVal')}</dd></div>
           <div><dt>{t('about.factLang')}</dt><dd>{t('about.factLangVal')}</dd></div>
-          <div><dt>{t('about.factContact')}</dt><dd>{t('about.factContactVal')}</dd></div>
+          <div>
+            <dt>{t('about.factContact')}</dt>
+            {/* 2026-10-11 他两轮点单：地址由他给（github.com/Suzukaze-Suzu ／ imaneko@163.com）；
+                先按「别放纯文本，做成可点的 GitHub 和邮箱按钮」做了 badge 小签，被他否掉形状
+                （原话「现在很丑，与上面不搭」），三档候选页上点了 **乙**，并要求**去掉**原句
+                「通过留言板，或站内任意一篇文章」⇒ 这一行只剩两枚**无框文字链接**（细下划线，
+                hover 转青蓝），语言与上面四行一致。样式＝`n1-app.css` ⑰ 段。
+                ★ 字典键 `about.factContactVal` 已不再渲染，留着只为回退（要退回句子只需在 dd 里加回它）。 */}
+            <dd>
+              <span className="lnk-row">
+                <a className="plain" href="https://github.com/Suzukaze-Suzu" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a className="plain" href="mailto:imaneko@163.com">imaneko@163.com</a>
+              </span>
+            </dd>
+          </div>
         </dl>
       </section>
 
