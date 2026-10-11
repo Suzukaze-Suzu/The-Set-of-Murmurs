@@ -277,6 +277,8 @@ export const dict: Dict = {
     en: 'Sites I follow and trade links with. Link exchanges welcome.',
   },
   'friends.none': { zh: '还没有友链，等你来添加～', en: 'No links here yet.' },
+  // 2026-10-11 迁 N1 时新开的键：`.sec-head` 的 h2（页头 h1 用的是 friends.heading）
+  'friends.listTitle': { zh: '全部友链', en: 'All links' },
   'friends.loading': { zh: '正在加载友链…', en: 'Loading links…' },
   'friends.removeConfirm': { zh: '确定要删除这个友链吗？', en: 'Remove this link?' },
   'friends.add': { zh: '＋ 添加友链', en: '＋ Add link' },

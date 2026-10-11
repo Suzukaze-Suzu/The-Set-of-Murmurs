@@ -1062,4 +1062,68 @@ html[lang='en'] .n1 .recent .item-txt h3{line-height:1.42;letter-spacing:.02em;t
    回退＝删掉本段（生成物 `n1.css` 没动、`Home.tsx` 没动、中文站一个字不变）。 */
 html[lang='en'] .n1 .lead h3{line-height:1.42;letter-spacing:.02em}
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   ⑯ 友链页（2026-10-11，用户原话「友链被忘记了」）
+   ──────────────────────────────────────────────────────────────────────────────
+   `/friends` 是全站最后一页「N1 报头报尾 ＋ 旧三层页身」的混血页，本轮把页身
+   改用样张零件拼（样张六页里没有友链页，见 `first\n1-friends\本轮计划书.md`）。
+   能照样张的一律照样张（`.pagehead`/`.sec`/`.sec-head`/`.gform`/`.grow`/`.gfoot`/
+   `.gnote`/`.btn`），只有样张里**真的没有**的这几件写在这里：
+     · `.flinks/.fcard/.fcard-ico/.fcard-txt/.fcard-ops`＝友链网格（报纸细线分栏、无圆角）
+     · `.sec-ops`＝栏目右上角的管理员小签行、`.fmsg`＝闪信
+     · `.fdrop`＝图标拖入区。旧页那一块是**内联样式＋硬编码色号**（#c89f6b/#e0d5c3/#faf6ee/
+       #b39a7c… 全是旧皮肤的自造色），本轮一并清掉，换成 N1 虚线框；
+       这是全站最后一批不在四色＋灰里的字面色号，但**不是发明新色**——用的是既有 token。
+     · `.gform label` 的竖排字段（原有 gform 只有光秃秃的 input，没有 label 排版）
+   token 全走 n1.css（`--fg/--fg2/--fg3/--hair/--hair2/--teal/--disp/--body`），
+   **不新增颜色、不改色号、不动生成物 `n1.css`**。回退＝删掉本段 ＋ `Friends.tsx` 那次改写。 */
+.n1 .flinks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--fg);margin-top:12px}
+.n1 .fcard{
+  display:flex;flex-direction:column;
+  border-bottom:1px solid var(--hair);border-right:1px solid var(--hair2);
+  padding:15px 18px 16px;
+}
+.n1 .fcard:nth-child(3n){border-right:0}
+.n1 .fcard-main{display:flex;align-items:flex-start;gap:13px;color:inherit;text-decoration:none}
+.n1 .fcard-ico{
+  flex:0 0 42px;width:42px;height:42px;overflow:hidden;
+  border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;
+}
+.n1 .fcard-ico img{width:100%;height:100%;object-fit:cover;display:block}
+.n1 .fcard-ico i{font-style:normal;font-family:var(--disp);font-weight:600;font-size:19px;color:var(--fg2)}
+.n1 .fcard-txt{display:flex;flex-direction:column;gap:4px;min-width:0}
+.n1 .fcard-txt b{font-family:var(--disp);font-weight:600;font-size:15px;letter-spacing:.1em;color:var(--fg);line-height:1.3}
+.n1 .fcard-txt span{
+  font-size:11.5px;line-height:1.7;color:var(--fg2);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.n1 .fcard-main:hover .fcard-txt b{color:var(--teal)}
+.n1 .fcard-ops{margin-top:12px;padding-top:10px;border-top:1px solid var(--hair2);display:flex;gap:16px}
+.n1 .sec-ops{display:flex;justify-content:flex-end;margin:10px 0 0}
+.n1 .fmsg{margin:10px 0 0;font-size:11px;letter-spacing:.12em;color:var(--teal)}
+/* —— 博主表单：`.gform` 原样只有光秃秃的 input，这里给每个字段配一行小字标签 ——
+   ⚠️ 标签与表单脚注（含错误文案）是**新增控件/信息性小字**，按项目的对比度口径一律走 `--fg2`
+      （亮 4.94／暗 5.82）；`--fg3` 只留给样张原样小注，不许用在新控件上。 */
+.n1 .gform label{display:flex;flex-direction:column;gap:6px;font-size:10.5px;letter-spacing:.14em;color:var(--fg2)}
+.n1 .gform .gfoot .gnote{color:var(--fg2)}
+/* 表单脚注两枚按钮都靠右：n1.css 给 `.gfoot .btn` 挂了 `margin-left:auto`，
+   单个按钮时没事（留言板就是一枚），**两枚时会平分剩余空间** ⇒ 保存被推到版心中间、取消贴最右。
+   这里把 auto 收回给第一个，第二个紧跟其后。guestbook 那处只有一枚按钮，不受影响。 */
+.n1 .gform .gfoot .btn:first-of-type{margin-left:auto}
+.n1 .gform .gfoot .btn + .btn{margin-left:0}
+.n1 .fgrow-label{display:block;margin-top:12px}
+.n1 .fdrop{
+  margin-top:8px;min-height:88px;padding:16px;cursor:pointer;
+  border:1px dashed var(--hair);background:none;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:11.5px;color:var(--fg2);transition:border-color .15s,color .15s;
+}
+.n1 .fdrop.on{border-color:var(--teal);color:var(--teal)}
+.n1 .fdrop img{max-width:72px;max-height:72px;object-fit:contain;display:block}
+
+@media (max-width:860px){
+  .n1 .flinks{grid-template-columns:1fr}
+  .n1 .fcard{border-right:0}
+}
+
 

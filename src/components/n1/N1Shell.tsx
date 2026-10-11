@@ -35,14 +35,25 @@ import { editionOf } from '../../lib/navItems';
    做法＝给这条打 `adminOnly` 标记，渲染时按 `isAdmin` 过滤（旧 Navbar／旧页脚／
    分类页那三处「写作」入口本来就已经套着 `isAdmin`，全站口径就此统一）。
    博主登录后这一条照常在位次第 5 位，与样张的次序一致。
-   回退＝把渲染处的 `.filter(...)` 去掉即可（标记留着不影响）。 */
-const N1_NAV: { to: string; key: 'nav.home' | 'nav.articles' | 'nav.bookshelf' | 'nav.gallery' | 'nav.write' | 'nav.guestbook' | 'nav.about'; match: (p: string) => boolean; adminOnly?: boolean }[] = [
+   回退＝把渲染处的 `.filter(...)` 去掉即可（标记留着不影响）。
+
+   ★ 2026-10-11 用户原话「**友链被忘记了**」★
+   样张是一张静态设计图，它那 7 项里**没有**「友链」；真站点不照做这一条：
+   `/friends` 是既有页面（旧 Navbar 的 NAV_ITEMS 里一直有这一项），可 N1 报头接手后
+   它没被带上，于是从首页/文章/书架…**任何一页都点不进友链页** ——
+   预渲染的 splash 导航里还有 `<a href="/friends">友链</a>`，运行时被 N1 报头取代后就没了，
+   入口就是这么丢的（`first\n1-friends\本轮计划书.md` §1 有实测证据）。
+   做法＝补回这一项，位置与站内 `NAV_ITEMS` 一致（排在「关于」前）；
+   这样它与报头右上角那行「第 M 版」的版次口径也重新对齐。
+   回退＝删掉下面 `/friends` 那一行。 */
+const N1_NAV: { to: string; key: 'nav.home' | 'nav.articles' | 'nav.bookshelf' | 'nav.gallery' | 'nav.write' | 'nav.guestbook' | 'nav.friends' | 'nav.about'; match: (p: string) => boolean; adminOnly?: boolean }[] = [
   { to: '/', key: 'nav.home', match: (p) => p === '/' },
   { to: '/articles', key: 'nav.articles', match: (p) => p.startsWith('/articles') || p.startsWith('/article/') || p.startsWith('/category/') },
   { to: '/novels', key: 'nav.bookshelf', match: (p) => p.startsWith('/novels') },
   { to: '/gallery', key: 'nav.gallery', match: (p) => p.startsWith('/gallery') },
   { to: '/write', key: 'nav.write', match: (p) => p.startsWith('/write'), adminOnly: true },
   { to: '/guestbook', key: 'nav.guestbook', match: (p) => p.startsWith('/guestbook') },
+  { to: '/friends', key: 'nav.friends', match: (p) => p.startsWith('/friends') },
   { to: '/about', key: 'nav.about', match: (p) => p.startsWith('/about') },
 ];
 

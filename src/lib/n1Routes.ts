@@ -11,7 +11,8 @@
 // ⚠️ 2026-10-09 复看：上面那条「等他点名」是**流程**，不是永久冻结。此后他已陆续点名：
 //    · 文章列表/分类/阅读页 → 见下面 N1_ROUTES_ARTICLES
 //    · 登录 / 个人主页 / 译文台 → 见下面 N1_ROUTES_NAMED
-//    仍未点名、继续走旧外壳的只剩：**友链 `/friends`、写作台 `/write/:id`、404**。
+//    · 友链（2026-10-11 原话「**友链被忘记了**」）→ 见 N1_ROUTES_NAMED 里的 `/friends`
+//    仍未点名、继续走旧外壳的只剩：**写作台 `/write/:id`、404**。
 // ============================================================================
 
 /** 与样张一一对应的真前端路由（样张页 → 路由见 first\n1-as-frontend\本轮计划书.md §2） */
@@ -41,7 +42,15 @@ const N1_EXACT_ONLY = ['/write'] as const;
    尤其 `/write/translations` 必须精确 —— 否则 `/write/<文章id>` 也会被连带套进 N1，
    而写作台本体（`/write`、`/write/:id`）用户本轮**没点名**，维持旧口径不动。
    回退＝删掉这条常量与下面那一行。 */
-const N1_ROUTES_NAMED = ['/login', '/profile', '/write/translations'] as const;
+
+/* ★ 2026-10-11「友链被忘记了」（用户原话只有这五个字）★
+   —— 他点名 `/friends`，于是把「未换壳页」里又一张搬进 N1。
+   三条同族缺口一起补（`first\n1-friends\本轮计划书.md` §1 有实测证据）：
+     ① 本文件＝解禁路由；② `N1Shell.tsx` 的 `N1_NAV` 补「友链」这一项
+     （样张那 7 项里没有友链，真站点从 N1 任何一页都点不进友链页）；
+     ③ `pages\Friends.tsx` 页身由旧三层改写成样张零件。
+   精确匹配（`/friends` 没有子路由）。回退＝删掉这一项，页面立刻回旧外壳旧样式。 */
+const N1_ROUTES_NAMED = ['/login', '/profile', '/write/translations', '/friends'] as const;
 
 export function isN1Route(pathname: string): boolean {
   if ((N1_ROUTES_NAMED as readonly string[]).includes(pathname)) return true;
