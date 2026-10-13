@@ -30,8 +30,32 @@ export const N1_ROUTES_ARTICLES = ['/articles', '/category', '/article'] as cons
    与 `/write/:id`（编辑既有文章）也被套进了 N1 外壳 —— 与本文件开头「译文台保持旧外壳」的
    口径自相矛盾，实测（first\unify-audit\probe-tokens.mjs）这两页的页身 `.tr-*` 仍是旧层 CSS、
    却顶着 N1 的报头报尾，是**全站唯一一处「外壳与页身不同族」**。样张里没有这两页，
-   所以按口径把它们退回旧外壳。要再改回来只需把 `exactOnly` 去掉。 */
-const N1_EXACT_ONLY = ['/write'] as const;
+   所以按口径把它们退回旧外壳。要再改回来只需把 `exactOnly` 去掉。
+
+   ══════════════════════════════════════════════════════════════════════════════
+   ★ 2026-10-13 撤销上面那道闸（用户原话只有两个字：「**丙**」）★
+   ══════════════════════════════════════════════════════════════════════════════
+   他报「点击编辑文章页面风格不统一」，我给甲乙丙三案，他点第三档（活最大）＝
+   `/write/:id` 并入 N1 **并且**把小说编辑器／章节编辑器／译文工作台一起按样张零件重排。
+
+   **为什么当初那道闸现在可以撤**（两道前提，都已实测复查）：
+     ① 闸的唯一目的是保护 `/write/translations` 不被 `/write/:id` 的连带匹配卷进来。
+        而 `/write/translations` 已在 2026-10-09 进了上面的 `N1_ROUTES_NAMED`，
+        且 `isN1Route()` 里**它排在 `N1_ROUTES` 之前**（第 56 行先判 NAMED）——
+        精确项先短路，所以 `/write` 改回前缀匹配**卷不到它**。
+     ② `/write/:id` 本来就在原计划内：`first\n1-as-frontend\本轮计划书.md` 行 38 的映射表
+        写的是 `write.html` → `/write`、**`/write/:id`** → `pages/Write.tsx`，标记 **✅ 做**。
+        那道闸是 2026-10-08 为躲连带项临时加的保险，理由消失后一直没回头撤 ——
+        这正是「前置条件消失但决策没回头撤」的典型（教训已入记忆库）。
+
+   实测证据（`first\n1-write-edit\probe-routes.mjs`，改前 → 改后）：
+     · `/write/<id>`        false（旧壳，页身 `.bench` 一套 n1.css 规则全部落空） → true
+     · `/write/translations` true（且在 NAMED 里短路，**不受影响**）            → true
+     · `/write`             true                                                → true
+
+   ⚠️ 保留 `N1_EXACT_ONLY` 这个常量本身（形状不变、便于以后再挂钩），只是把它清空。
+      要整体回退＝把 `'/write'` 放回下面这个数组。 */
+const N1_EXACT_ONLY = [] as const;
 
 /* ★ 2026-10-09「登录、个人主页和翻译界面未统一风格」（用户原话）★
    —— 他点名这三页（＝对这三页解禁），于是把「未换壳页」里的三张搬进 N1：
@@ -39,8 +63,11 @@ const N1_EXACT_ONLY = ['/write'] as const;
      · `/profile`  个人主页（含访客态 `?userId=`）
      · `/write/translations` 翻译进度 ＋ 标签词典
    三条都是**精确匹配**（`startsWith(p + '/')` 那半段对它们无意义）：
-   尤其 `/write/translations` 必须精确 —— 否则 `/write/<文章id>` 也会被连带套进 N1，
-   而写作台本体（`/write`、`/write/:id`）用户本轮**没点名**，维持旧口径不动。
+   尤其 `/write/translations` 必须精确 —— 否则 `/write/<文章id>` 也会被连带套进 N1。
+   ⚠️ 2026-10-13 更新：写作台本体（`/write`、`/write/:id`）用户**已点名**（原话「丙」），
+      现在整个 `/write` 族都走 N1；这条精确项仍保留，它现在的作用是**短路**——
+      排在 `N1_ROUTES` 之前先判，保证 `/write/translations` 的归属不会因为
+      `/write` 改成前缀匹配而受影响（见上面 `N1_EXACT_ONLY` 那段）。
    回退＝删掉这条常量与下面那一行。 */
 
 /* ★ 2026-10-11「友链被忘记了」（用户原话只有这五个字）★
