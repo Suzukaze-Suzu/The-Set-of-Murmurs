@@ -237,6 +237,20 @@ export default function N1Shell({ children }: { children: ReactNode }) {
             <img src="/travellings/b.png" height={26} alt={t('nav.travellings')} />
           </a>
         </footer>
+
+        {/* ★ 萌 ICP 备（2026-10-11，用户原话「加载页脚，要求好看，符合整体风格」）★
+            他那行原始代码是 `<a href="https://icp.gov.moe/?keyword=20261729">萌ICP备20261729号</a>`，
+            这里**原样用它给的地址与文字**，只把它排进 N1 的报尾语言里：
+            · 排在双线夹**线外**下方（古籍版框的做法：框内是版面，框外才是版权小注），
+              与那条 4px 实线同一中轴，读作报尾的第二行；
+            · 两枚细线小装饰（`::before/::after`）夹住编号，呼应报头天头那枚鱼尾；
+            · 色只用 --fg3、行内细线只用 --hair，**不新增色号**；
+            · 外链新开页 ＋ rel=noopener（与站内其它外链同口径）。 */}
+        <p className="foot-icp">
+          <a href="https://icp.gov.moe/?keyword=20261729" target="_blank" rel="noopener noreferrer">
+            萌ICP备20261729号
+          </a>
+        </p>
       </div>
     </div>
   );

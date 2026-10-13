@@ -735,6 +735,43 @@ html[lang='en'] .n1 .stats::before{letter-spacing:.16em}
 html[lang='en'] .n1 .foot .fname{letter-spacing:.08em}
 html[lang='en'] .n1 .foot .fslogan{letter-spacing:.02em}
 html[lang='en'] .n1 .foot .flabel{letter-spacing:.12em}
+/* 萌 ICP 备编号在英文页同样只显示这串中文法定编号（备案号本来就不翻），字距与 fname 同族 */
+html[lang='en'] .n1 .foot-icp a{letter-spacing:.12em}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   萌 ICP 备行（2026-10-11）
+
+   用户原话：「<a href="https://icp.gov.moe/?keyword=20261729" …>萌ICP备20261729号</a>
+              加载页脚，要求好看，符合整体风格，这次不用重复检查不，加上就好」
+
+   位置＝报尾双线夹（`.n1 .foot` 的 `border-bottom:4px solid var(--fg)`）**线外**下方那一行。
+   这符合本版式既有的做法：框内是版面，框外的细字才是版权/备案这类小注 ——
+   报头那边也是这么分的（版框内是刊名与导航，框外才是日期／网址竖排刊眉）。
+
+   规格全部取自报尾既有的那一套，**零新色号、零新字族**：
+     字  ＝ 10px / .2em（＝ `.n1 .flabel` 的规格，报尾第二档小字）
+     色  ＝ var(--fg3)（报尾小注的既有色）
+     细线＝ var(--hair)（版框细线／开往徽章框同一档）
+   编号两侧各一枚 26×1px 细线；编号本身走双线夹那 3px 双线所给的「双」字语汇，
+   用**双层边框**（上 1px + 下 1px，靠下边距叠出 3px 视觉）把它做成一条小卷标，
+   与报头天头那枚鱼尾（同为双线/对称形状）呼应。 */
+.n1 .foot-icp{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  margin:9px 0 0;font-size:10px;letter-spacing:.2em;color:var(--fg3);
+}
+.n1 .foot-icp::before,
+.n1 .foot-icp::after{content:"";height:1px;flex:1;max-width:96px;background:var(--hair)}
+.n1 .foot-icp a{
+  color:var(--fg3);padding:2px 10px;line-height:1.6;
+  border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);
+  transition:color .18s ease,border-color .18s ease;
+}
+.n1 .foot-icp a:hover{color:var(--fg);border-color:var(--hair)}
+/* 手机上两枚细线收短（390px 下编号本身已占大半行宽，留一点呼吸即可） */
+@media (max-width:860px){
+  .n1 .foot-icp{margin-top:11px;letter-spacing:.16em}
+  .n1 .foot-icp::before,.n1 .foot-icp::after{max-width:34px}
+}
 
 /* —— ⑥ 手机档（样张在 860px 收一档，这里对同样的选择器给英文的值）——
    首页大刊名在英文页是 **The Set of Murmurs**（用户 2026-10-09 裁决），
