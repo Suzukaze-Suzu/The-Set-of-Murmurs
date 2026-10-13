@@ -12,6 +12,10 @@
      ① **曲目信息**（曲名/歌手/时长）→ 决定**渲不渲染**。
      ② **音频地址**（外链能否真播）→ 只影响那枚播放键。
 
+   2026-10-13 深夜补：卡片左侧加**专辑封套**（用户原话「我还是希望能够在播放界面
+     显示专辑封面的，调整一下」）。图走网易云 CDN 的缩略参数（`?param=240y240`，
+     186KB → 8KB），取不到就整枚不渲染。详见 `coverUrl()` 与下面那段注释。
+
    ⚠️⚠️ 2026-10-13 晚重大修正：取数**必须走自家同源代理 /api/ncm**，不能再直连网易云。
        原先这里直接 `fetch('https://music.163.com/api/…')`，真浏览器实测**必失败**：
          TypeError: Failed to fetch
@@ -30,6 +34,19 @@ interface SongInfo {
   duration: number;
   /** 音频直链（空字符串＝版权受限） */
   url: string;
+  /** 专辑封面**基础** URL（空字符串＝这首歌查不到封面，封套整枚不渲染） */
+  cover: string;
+}
+
+/* 封套要多大，就要多大的图。
+   上游原图 186KB，加 `?param=<W>y<H>` 后 240y240 只要 8KB（2026-10-13 实测），
+   带不带本站 Referer 都是 200 + `ACAO: *`，所以直接当 <img> 用、不必经代理转发二进制。
+   240 是给 `--ncm-cover` 默认 54px 留的 4 倍余量（含 HiDPI 与将来放大）——
+   他若把 `--ncm-cover` 调到 100px 以上，把这个数一起调大即可。 */
+const COVER_PX = 240;
+function coverUrl(base: string): string {
+  if (!base) return '';
+  return base + (base.includes('?') ? '&' : '?') + `param=${COVER_PX}y${COVER_PX}`;
 }
 
 /** 代理返回的形状（与 blog/api/ncm.mjs 严格对应） */
@@ -52,10 +69,13 @@ export default function NcmPlayer({ id }: { id: string }) {
   /** 代理或上游整体失败（网络/超时）→ 静默不渲染，靠下面那行兜底链接 */
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
+  /** 封套图解码失败（CDN 不通/图没了）→ 整枚隐藏，退回没有封面的样子，不留空框 */
+  const [coverOk, setCoverOk] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     let alive = true;
+    setCoverOk(true);
     (async () => {
       try {
         const r = await fetch('/api/ncm?id=' + encodeURIComponent(id), { credentials: 'omit' });
@@ -108,6 +128,26 @@ export default function NcmPlayer({ id }: { id: string }) {
 
   return (
     <div className="ncm-card">
+      {/* 专辑封套（2026-10-13 晚新增）。
+          用户原话：「我还是希望能够在播放界面显示专辑封面的，调整一下」。
+          四件事按优先级：① 有 cover 且解码成功才渲染 —— 否则整枚消失（`onError` → coverOk=false），
+          版面退回没有封面的样子，**绝不留一个空框**（这正是这一整支播放器存在的理由）；
+          ② `alt=""`＋`aria-hidden` —— 曲名就在右边，读屏再念一遍图是噪音；
+          ③ `loading="lazy"` —— 文章底部的歌不该抢首屏带宽；
+          ④ `referrerPolicy="no-referrer"` —— 不把本站地址报给网易云 CDN（实测不带 Referer 同样 200）。
+          大小由 CSS 变量 `--ncm-cover`（默认 54px）控制，一句话就能调。 */}
+      {info!.cover && coverOk && (
+        <img
+          className="ncm-cover"
+          src={coverUrl(info!.cover)}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onError={() => setCoverOk(false)}
+        />
+      )}
       <button
         type="button"
         className="ncm-play"

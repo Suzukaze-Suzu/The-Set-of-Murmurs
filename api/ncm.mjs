@@ -19,8 +19,11 @@
 //
 // 接口：GET /api/ncm?id=<纯数字歌曲ID>
 // 返回（**裁小过**，绝不透传上游原文）：
-//   查到且有音频直链 → { ok:true, id, song:{ name, artist, duration, url } }
+//   查到且有音频直链 → { ok:true, id, song:{ name, artist, duration, url, cover } }
 //   查到但无音频直链（版权/VIP）→ { ok:true, id, song:{ …, url:'' } }
+//   `cover`＝专辑封面**基础** URL（https，**不带** `?param=` 尺寸参数）。
+//     尺寸参数故意留给前端拼：同一张图 186KB → `?param=240y240` 只要 8KB（2026-10-13 实测），
+//     由渲染尺寸决定该要多大，代理不该替它拍板。取不到封面时是空串（前端据此隐藏封套）。
 //   上游答「没这首歌/已下架」→ { ok:true, id, song:null }
 //   参数不合法 → 400 { ok:false, reason:'bad_id' }
 //   上游连不上/超时 → 502 { ok:false, reason:'upstream' }
@@ -150,9 +153,13 @@ export default async function handler(req, res) {
       .join(' / '),
     duration: Number(s.duration || 0),
     url,
+    // 专辑封面（用户 2026-10-13 晚：「我还是希望能够在播放界面显示专辑封面的」）。
+    // `picUrl` 与 `blurPicUrl` 实测同值，前者缺时用后者兜底；都缺＝''（前端隐藏封套）。
+    // ⚠️ 只回**基础 URL**，不加 `?param=<W>y<H>`——尺寸由前端按渲染尺寸拼，见文件头契约。
+    cover: forceHttps(s.album?.picUrl || s.album?.blurPicUrl || ''),
   };
 
   res.setHeader('Cache-Control', CACHE_HEADER);
-  console.log(`[ncm] id=${id} name=${song.name || '(无)'} url=${url ? 'yes' : 'no'}`);
+  console.log(`[ncm] id=${id} name=${song.name || '(无)'} url=${url ? 'yes' : 'no'} cover=${song.cover ? 'yes' : 'no'}`);
   return res.status(200).json({ ok: true, id, song });
 }
