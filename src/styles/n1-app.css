@@ -1461,22 +1461,25 @@ html[lang='en'] .n1 .lead h3{line-height:1.42;letter-spacing:.02em}
    收口：`.item-txt` 变纵向 flex 并拉满格高，剩下的空间**只给摘要 `p`**（`margin-bottom:auto`）
    ⇒ `.meta` 被推到格底，而且贴的是**底边**（见下）。
    `.list` 是 grid、同行默认 `align-items:stretch` ⇒ 同行各格等高，于是三枚 meta 天然齐平。
-   作用域两重限定 `.n1 .list .item...`：
+   作用域收在 `.list-archive`（＝文章档案页与分类页给 `.list` 多挂的那一枚类名）：
      · **不动**首页「最近更新」右栏 `.recent .item`（单栏流，已验收、属别的线）；
-     · **不动**书架「同分类文章」`novel.html` 那段裸 `.list .item`（本轮没点名）；
-     · 首页 `.lead` 大头条本来就是 `margin-top:auto` 贴底，本轮也没碰。
+     · **不动**首页 `.lead` 大头条（本来就是 `margin-top:auto` 贴底，本轮没碰）；
+     · **不动**书架 `/novels` 的「同分类文章」裸 `.list .item`（`Novels.tsx:226`，本轮没点名；
+       要同款只需把下面三条里的 `.list-archive` 换成 `.list`，一行的事）；
+     · **不动**译文工作台 `.list.tov-list`（`Translations.tsx:204`，也是裸 `.list`，
+       它多了「进度条 `.bar`」那一行，属于别的线，不能被顺带改到）。
    `n1.css` 是生成物、本轮没动；回退＝删掉本段 ⑳（三行代码，零风险）。
    ══════════════════════════════════════════════════════════════════════════════ */
-.n1 .list .item{--item-meta-gap:12px}
-.n1 .list .item-txt{display:flex;flex-direction:column;height:100%}
-.n1 .list .item .meta{margin-top:0;padding-top:var(--item-meta-gap)}
+.n1 .list-archive .item{--item-meta-gap:12px}
+.n1 .list-archive .item-txt{display:flex;flex-direction:column;height:100%}
+.n1 .list-archive .item .meta{margin-top:0;padding-top:var(--item-meta-gap)}
 /* ★ 只给摘要 `p` 吃剩余空间 ⇒ meta 被推到格底，且**贴的是底边**：
    英文站有条目的 meta 会折成两行（`.go` 换行），若用 `margin-top:auto` 则各格
    meta **顶边**仍会差 21.32px（实测）；改由 `p{margin-bottom:auto}` 推底后，
    底边散差 0px，无论 meta 几行都齐平。
    `p` 的底距同时由上面 meta 的 `padding-top` 承担，所以摘要与 meta 之间的留白
    ＝ 12px（与窄屏 `.item` 11px 上下内距的节奏一致，比原来的 7px 透气一点）。 */
-.n1 .list .item-txt p{margin-bottom:auto}
+.n1 .list-archive .item-txt p{margin-bottom:auto}
 /* ══════════════════════════════════════════════════════════════════════════════
    ⑱-b 唱机匣的唱片封套（2026-10-13 深夜新增）
    ──────────────────────────────────────────────────────────────────────────────
