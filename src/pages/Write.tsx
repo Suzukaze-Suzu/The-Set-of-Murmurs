@@ -423,7 +423,35 @@ export default function Write() {
     }
   };
 
-  const insertNetEaseMusic = () => {
+  /* —— 网易云预检（B 方案「版权歌兜底」的编辑器侧，2026-10-13）——
+     在**插入之前**先问一遍网易云这首有没有外链，把「发完才发现是空框」提前到
+     「插入时就告诉你」。
+
+     ⚠️⚠️ 2026-10-13 晚修正：**不能再直连 music.163.com**。
+        原先这里 fetch 上游接口，真浏览器实测**必失败**（TypeError: Failed to fetch）：
+        那个接口响应里没有 `Access-Control-Allow-Origin` 头，浏览器跨源读不到 →
+        永远走下面的 catch → **永远返回 'unknown' → 从不弹版权警告**（静默放行）。
+        ⇒ 改走自家同源代理 `/api/ncm`（`blog/api/ncm.mjs` 在服务器侧代取并裁剪）。
+
+     ⚠️ 探不通＝按「未知」放行，绝不拦人：代理或上游可能被墙/被限流，
+         它挂了不代表这首歌没版权。返回 'ok' | 'blocked' | 'unknown'。 */
+  const probeNetEase = async (id: string): Promise<'ok' | 'blocked' | 'unknown'> => {
+    try {
+      const r = await fetch('/api/ncm?id=' + encodeURIComponent(id), { credentials: 'omit' });
+      if (!r.ok) return 'unknown';
+      const j = await r.json();
+      if (!j || j.ok !== true) return 'unknown';
+      // song 为 null ＝ 上游明确答「查无此曲」（下架/无版权资料）→ 按受限处理
+      if (j.song === null) return 'blocked';
+      if (!j.song) return 'unknown';
+      // 有曲目信息但拿不到音频直链 ＝ 版权/VIP 受限（原先直连上游，2026-10-13 晚改走同源代理）
+      return j.song.url ? 'ok' : 'blocked';
+    } catch {
+      return 'unknown';
+    }
+  };
+
+  const insertNetEaseMusic = async () => {
     const m = musicInfo.trim();
     if (!m) { alert('请输入网易云歌曲 ID 或歌曲链接'); return; }
     if (/163cn\.tv/i.test(m)) {
@@ -433,7 +461,29 @@ export default function Write() {
     const idMatch = m.match(/(?:id=|id\/)(\d+)/) || m.match(/^\d+$/);
     const songId = idMatch ? idMatch[1] : '';
     if (!songId) { alert('未能识别网易云音乐 ID，请直接填写歌曲 ID 数字，或粘贴带 song?id= 的链接'); return; }
-    const line = '\n<iframe class="ncm-embed" src="//music.163.com/outchain/player?type=2&id=' + songId + '&auto=0&height=66" width="100%" height="86" frameBorder="no" allow="autoplay; encrypted-media" loading="lazy"></iframe>\n\n[▶ 在网易云中播放这首歌曲](https://music.163.com/#/song?id=' + songId + ')\n';
+
+    /* 版权受限的歌**照样插**（曲名等信息仍会显示），只是告诉博主这枚播放键
+       会是禁用的 —— 而不是拦下来不让他插。 */
+    const verdict = await probeNetEase(songId);
+    if (verdict === 'blocked') {
+      const go = window.confirm(
+        '这首歌在网易云**版权受限**，插进文章后：\n\n' +
+        '· 曲名、歌手、时长会正常显示；\n' +
+        '· 播放键是灰的（点了没有反应），并标注「版权受限」；\n' +
+        '· 下方的「在网易云中播放」链接仍然可点。\n\n' +
+        '确定仍要插入吗？',
+      );
+      if (!go) return;
+    }
+
+    /* 2026-10-13 改版（方案 A+B+C）：不再插官方 iframe，改插**自绘播放器标记**
+       `<div class="ncm" data-id="…"></div>`。
+       为什么换掉 iframe：它的内部 DOM 在网易云服务器上、本站 CSS 进不去，
+       所以圆角与网易云绿永远改不掉；且版权歌会得到一个**空白框**。
+       新标记只存歌曲 ID，版面（外框/题签/字体/颜色）全归 N1，版权歌整块不渲染。
+       ——下面那行「在网易云中播放」是**兜底可见链接**：播放器取数失败时
+       读者手里至少还有一条路可走（B 方案）。 */
+    const line = '\n<div class="ncm" data-id="' + songId + '"></div>\n\n[▶ 在网易云中播放这首歌曲](https://music.163.com/#/song?id=' + songId + ')\n';
     insertAtCursor(line);
     setMusicInfo('');
     setPanel(null);
@@ -743,13 +793,22 @@ export default function Write() {
   };
 
   // 非博主无权访问写作页
+  // ★ 2026-10-13「丙」：这一段原来用 `<div className="page">` ＋ 内联样式（旧壳时代的写法）。
+  //    /write 族整体进了 N1 之后，旧类名没有样式来源、还会露一段裸 <p>；
+  //    改用样张的 .pagehead ＋ .art-note（N1 里「版外小注」的既有语汇），与邻页同族。
   if (!isAdmin) {
     return (
-      <div className="page">
-        <p style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>
-          无权访问写作页，请以博主身份登录后使用。
-        </p>
-      </div>
+      <>
+        <div className="pagehead">
+          <div className="pagehead-txt">
+            <div className="kicker">WRITE</div>
+            <h1>写作</h1>
+          </div>
+        </div>
+        <section className="sec">
+          <p className="art-note">无权访问写作页，请以博主身份登录后使用。</p>
+        </section>
+      </>
     );
   }
 
@@ -757,156 +816,191 @@ export default function Write() {
     // 编辑已有小说：进入章节级编辑界面（点选某章修改，或增删章节/调整顺序/改书籍信息）
     if (editing?.novel) {
       // P3：整本书的英文译文工作台（逐章翻译）
+      /* ★ 2026-10-13「丙」：工作台本体（components\TranslationWorkbench.tsx）本轮**不动**
+         —— 只把外面这层旧 `.page.write-page` 换成 N1 的 .pagehead ＋ .sec 外框，
+         让它在 N1 壳里不发飘。组件的内部结构留给点名再做（计划书 §3-S4 主动收窄）。 */
       if (enOpen) {
         return (
-          <div className="page write-page">
-            <TranslationWorkbench
-            article={editing}
-            zhTitle={title}
-            zhContent={content}
-            zhSummary={summary}
-            zhSynopsis={synopsis}
-            zhChapters={chapters}
-            zhDirty={zhDirty}
-            onSaveZh={saveZhFromWorkbench}
-            onClose={() => setEnOpen(false)}
-          />
-          </div>
+          <>
+            <div className="pagehead">
+              <div className="pagehead-txt">
+                <div className="kicker">TRANSLATE</div>
+                <h1>《{editing.title}》｜English 译文</h1>
+                <p className="lede">逐章对照，改完先存中文再存译文。</p>
+              </div>
+            </div>
+            <section className="sec">
+              <TranslationWorkbench
+              article={editing}
+              zhTitle={title}
+              zhContent={content}
+              zhSummary={summary}
+              zhSynopsis={synopsis}
+              zhChapters={chapters}
+              zhDirty={zhDirty}
+              onSaveZh={saveZhFromWorkbench}
+              onClose={() => setEnOpen(false)}
+            />
+            </section>
+          </>
         );
       }
       const editingCh = chapters.find((c) => c.id === editChId);
       return (
-        <div className="page write-page">
-          <h1 className="page-title">编辑小说《{editing.title}》</h1>
-          <div className="composer-switch">
-            <button className="mode-tab" onClick={() => setComposer('article')}>写普通文章</button>
-            <button className="mode-tab on" onClick={() => setComposer('novel')}>写小说</button>
-          </div>
-
-          <div className="novel-edit-wrap card">
-            <div className="novel-edit-cols">
-              {/* 左：书籍信息 + 章节列表 */}
-              <div className="novel-edit-left">
-                <div className="novel-edit-section">
-                  <div className="novel-edit-section-head">书籍信息</div>
-                  <div className="novel-edit-cover-row">
-                    <div className="novel-cover-preview">
-                      {cover ? <img src={cover} alt="封面" className="novel-cover-img" /> : <span className="novel-cover-ph">{title.slice(0, 1) || '书'}</span>}
-                    </div>
-                    <div className="novel-cover-actions">
-                      <button className="btn btn-light btn-sm" onClick={() => coverInput.current?.click()}>{cover ? '更换封面' : '上传封面'}</button>
-                      <input ref={coverInput} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { uploadCover(e.target.files?.[0]); e.target.value = ''; }} />
-                      <p className="novel-cover-hint">封面将显示在书架</p>
-                    </div>
-                  </div>
-                  <div className="novel-fields">
-                    <div className="meta-field"><label>书名（必填）</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-                    <div className="meta-field"><label>作者</label><input type="text" value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="未填写" /></div>
-                    <div className="meta-field"><label>状态</label>
-                      <select value={nstatus} onChange={(e) => setNstatus(e.target.value as NovelStatus)}>
-                        {Object.entries(NOVEL_STATUS_META).map(([k, m]) => (<option key={k} value={k}>{m.label}</option>))}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="novel-field-full">
-                    <label>简介</label>
-                    <textarea rows={2} value={synopsis} onChange={(e) => setSynopsis(e.target.value)} placeholder="一句话介绍这本书…" />
-                  </div>
-                </div>
-
-                <div className="novel-edit-section">
-                  <div className="novel-edit-chlist-head">
-                    <span className="novel-edit-chlist-title">章节（{chapters.length}）</span>
-                    <div className="novel-edit-chlist-actions">
-                      <button className="btn btn-light btn-sm" onClick={() => { const chId = addChapter('', ''); selectChapterWithDraft(chId); }}>＋ 新增章节</button>
-                      <button className="btn btn-light btn-sm" onClick={() => chapterFileInput.current?.click()}>导入 txt 分章</button>
-                      <input ref={chapterFileInput} type="file" accept=".txt,.md,.markdown" style={{ display: 'none' }} onChange={(e) => { importChapterFile(e, true); e.target.value = ''; }} />
-                    </div>
-                  </div>
-                  <div className="novel-edit-chitems">
-                    {chapters.length === 0 && (
-                      <p className="novel-edit-empty">还没有章节，点「＋ 新增章节」或「导入 txt 分章」开始。</p>
-                    )}
-                    {chapters.map((ch, i) => (
-                      <div key={ch.id} className={'novel-edit-chitem' + (editChId === ch.id ? ' active' : '')}>
-                        <button
-                          className="novel-edit-chname"
-                          onClick={() => { selectChapterWithDraft(ch.id); }}
-                        >
-                          <span className="novel-edit-ch-order">{i + 1}</span>
-                          <span className="novel-edit-ch-title-text">{ch.title || ('第' + (i + 1) + '章')}</span>
-                          {ch.part ? <span className="novel-edit-ch-part">{ch.part}</span> : null}
-                          <span className="novel-toc-wc">{ch.wordCount || 0} 字</span>
-                        </button>
-                        <div className="novel-edit-chops">
-                          <button onClick={() => moveChapter(ch.id, -1)} disabled={i === 0} title="上移">↑</button>
-                          <button onClick={() => moveChapter(ch.id, 1)} disabled={i === chapters.length - 1} title="下移">↓</button>
-                          <button onClick={() => { if (window.confirm('确定删除该章节？')) removeChapter(ch.id); }} title="删除">×</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* 右：章节编辑器 */}
-              <div className="novel-edit-right">
-                {editingCh ? (
-                  <div className="novel-chapter-editor card">
-                    {/* 章节草稿恢复提示 */}
-                    {chapterDraftPrompt && chapterDraftPrompt.chapterId === editChId && (
-                      <div className="chapter-draft-banner">
-                        <span className="chapter-draft-text">检测到未保存的草稿（{new Date(chapterDraftPrompt.draft.savedAt).toLocaleString()}）</span>
-                        <span className="chapter-draft-actions">
-                          <button className="btn btn-sm btn-primary" onClick={restoreChapterDraft}>恢复</button>
-                          <button className="btn btn-sm btn-light" onClick={discardChapterDraft}>丢弃</button>
-                        </span>
-                      </div>
-                    )}
-                    <div className="novel-ch-ed-head">
-                      <input className="novel-ch-title-input" placeholder="本章标题" value={chDraftTitle} onChange={(e) => { setChDraftTitle(e.target.value); updateChapter(editChId, { title: e.target.value, content: chDraftContent, part: chDraftPart }); }} />
-                      <input className="novel-ch-part-input" placeholder="所属部分（选填，如：第一卷 校园篇）" value={chDraftPart} onChange={(e) => { setChDraftPart(e.target.value); updateChapter(editChId, { title: chDraftTitle, content: chDraftContent, part: e.target.value }); }} />
-                    </div>
-                    <div className="editor-tabs">
-                      <button className={'tab-btn' + (!chPreview ? ' active' : '')} onClick={() => setChPreview(false)}>编辑</button>
-                      <button className={'tab-btn' + (chPreview ? ' active' : '')} onClick={() => setChPreview(true)}>预览</button>
-                    </div>
-                    {chPreview ? (
-                      <div className="editor-preview"><MarkdownRenderer content={chDraftContent} /></div>
-                    ) : (
-                      <textarea className="editor-textarea" rows={16} value={chDraftContent} onChange={(e) => { setChDraftContent(e.target.value); updateChapter(editChId, { title: chDraftTitle, content: e.target.value, part: chDraftPart }); }} placeholder="本章正文（支持 Markdown 与 LaTeX）" />
-                    )}
-
-                  </div>
-                ) : (
-                  <div className="novel-edit-placeholder">
-                    <p>从左侧点选一个章节进行编辑，或点「＋ 新增章节」「导入 txt 分章」。</p>
-                  </div>
-                )}
-              </div>
+        <>
+          {/* ★ 2026-10-13「丙」：小说编辑支改用样张零件 ★
+              原来整支是旧零件（.page.write-page / .page-title / .composer-switch /
+              .novel-edit-* 一整套），换 N1 壳后这些旧类名既没有样式来源、又和邻页不成族。
+              改法＝只用样张已有的零件拼（.pagehead / .kicker / .lede / .sec / .sec-head /
+              .list / .item / .editor-tabs / .editor-textarea），
+              样张没画的几件（封面预览、章节序号列）留在 n1-app.css 的补齐段，只用 N1 token。
+              功能一件不减：增删章节／上下移／导入分章／章节草稿恢复／译文台入口全部原样。 */}
+          <div className="pagehead">
+            <div className="pagehead-txt">
+              <div className="kicker">EDIT · NOVEL</div>
+              <h1>编辑《{editing.title}》</h1>
+              <p className="lede">书籍信息与章节，逐章修订，改完保存。</p>
             </div>
           </div>
 
-          <div className="write-actions">
-            <button className="btn btn-primary" onClick={save}>保存修改</button>
-            <button className="btn btn-light" onClick={() => setEnOpen(true)}>English 译文</button>
-            <Link className="btn btn-light" to="/write/translations#tags">翻译进度 / 标签词典</Link>
-          </div>
-        </div>
+          <section className="sec">
+            {/* 模式开关：样张没有这一件，沿用写作台主体的 .seg 语汇（与 /write 同形） */}
+            <div className="toolbar">
+              <span className="seg">
+                <button type="button" onClick={() => setComposer('article')}>文章</button>
+                <button type="button" className="on" onClick={() => setComposer('novel')}>小说</button>
+              </span>
+              <button type="button" onClick={save}>保存修改</button>
+              <button type="button" onClick={() => setEnOpen(true)}>English 译文</button>
+              <Link to="/write/translations#tags">翻译进度 / 标签词典</Link>
+            </div>
+
+            <div className="sec-head">
+              <h2>书籍信息</h2>
+              <small>BOOK INFO</small>
+            </div>
+
+            <div className="novel-info">
+              <div className="novel-cover-row">
+                <div className="novel-cover-preview">
+                  {cover ? <img src={cover} alt="封面" className="novel-cover-img" /> : <span className="novel-cover-ph">{title.slice(0, 1) || '书'}</span>}
+                </div>
+                <div className="novel-cover-actions">
+                  <button className="btn" onClick={() => coverInput.current?.click()}>{cover ? '更换封面' : '上传封面'}</button>
+                  <input ref={coverInput} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { uploadCover(e.target.files?.[0]); e.target.value = ''; }} />
+                  <p className="novel-cover-hint">封面将显示在书架</p>
+                </div>
+              </div>
+              <div className="novel-fields">
+                <div className="meta-field"><label>书名（必填）</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+                <div className="meta-field"><label>作者</label><input type="text" value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="未填写" /></div>
+                <div className="meta-field"><label>状态</label>
+                  <select value={nstatus} onChange={(e) => setNstatus(e.target.value as NovelStatus)}>
+                    {Object.entries(NOVEL_STATUS_META).map(([k, m]) => (<option key={k} value={k}>{m.label}</option>))}
+                  </select>
+                </div>
+              </div>
+              <div className="novel-field-full">
+                <label>简介</label>
+                <textarea rows={2} value={synopsis} onChange={(e) => setSynopsis(e.target.value)} placeholder="一句话介绍这本书…" />
+              </div>
+            </div>
+
+            {/* 章节列表：样张的 .list ＋ .item 纯文字流（序号 / 标题 / 部分 / 字数 ＋ 右侧三枚小操作） */}
+            <div className="sec-head">
+              <h2>章节</h2>
+              <small>{chapters.length} CHAPTERS</small>
+            </div>
+            <div className="novel-chlist-bar">
+              <button className="btn" onClick={() => { const chId = addChapter('', ''); selectChapterWithDraft(chId); }}>＋ 新增章节</button>
+              <button className="btn" onClick={() => chapterFileInput.current?.click()}>导入 txt 分章</button>
+              <input ref={chapterFileInput} type="file" accept=".txt,.md,.markdown" style={{ display: 'none' }} onChange={(e) => { importChapterFile(e, true); e.target.value = ''; }} />
+            </div>
+
+            {chapters.length === 0 ? (
+              <p className="novel-empty">还没有章节，点「＋ 新增章节」或「导入 txt 分章」开始。</p>
+            ) : (
+              <div className="list novel-chlist">
+                {chapters.map((ch, i) => (
+                  <div key={ch.id} className={'item novel-chitem' + (editChId === ch.id ? ' on' : '')}>
+                    <button className="novel-chname" onClick={() => { selectChapterWithDraft(ch.id); }}>
+                      <b className="novel-ch-order">{String(i + 1).padStart(2, '0')}</b>
+                      <span className="novel-ch-title">{ch.title || ('第' + (i + 1) + '章')}</span>
+                      {ch.part ? <i className="novel-ch-part">{ch.part}</i> : null}
+                      <span className="novel-ch-wc">{ch.wordCount || 0} 字</span>
+                    </button>
+                    <div className="novel-chops">
+                      <button onClick={() => moveChapter(ch.id, -1)} disabled={i === 0} title="上移">↑</button>
+                      <button onClick={() => moveChapter(ch.id, 1)} disabled={i === chapters.length - 1} title="下移">↓</button>
+                      <button onClick={() => { if (window.confirm('确定删除该章节？')) removeChapter(ch.id); }} title="删除">×</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 章节编辑器（右侧那一栏改成本页下方的「当前章」区，窄屏下天然单列） */}
+            <div className="sec-head">
+              <h2>当前章</h2>
+              <small>{editingCh ? (editingCh.title || '未命名') : 'NOT SELECTED'}</small>
+            </div>
+            {editingCh ? (
+              <div className="novel-chapter-editor">
+                {/* 章节草稿恢复提示 */}
+                {chapterDraftPrompt && chapterDraftPrompt.chapterId === editChId && (
+                  <div className="chapter-draft-banner">
+                    <span className="chapter-draft-text">检测到未保存的草稿（{new Date(chapterDraftPrompt.draft.savedAt).toLocaleString()}）</span>
+                    <span className="chapter-draft-actions">
+                      <button className="btn" onClick={restoreChapterDraft}>恢复</button>
+                      <button className="btn ghost" onClick={discardChapterDraft}>丢弃</button>
+                    </span>
+                  </div>
+                )}
+                <div className="novel-ch-ed-head">
+                  <input className="novel-ch-title-input" placeholder="本章标题" value={chDraftTitle} onChange={(e) => { setChDraftTitle(e.target.value); updateChapter(editChId, { title: e.target.value, content: chDraftContent, part: chDraftPart }); }} />
+                  <input className="novel-ch-part-input" placeholder="所属部分（选填，如：第一卷 校园篇）" value={chDraftPart} onChange={(e) => { setChDraftPart(e.target.value); updateChapter(editChId, { title: chDraftTitle, content: chDraftContent, part: e.target.value }); }} />
+                </div>
+                <div className="editor-tabs">
+                  <button className={'tab-btn' + (!chPreview ? ' active' : '')} onClick={() => setChPreview(false)}>编辑</button>
+                  <button className={'tab-btn' + (chPreview ? ' active' : '')} onClick={() => setChPreview(true)}>预览</button>
+                </div>
+                {chPreview ? (
+                  <div className="editor-preview"><MarkdownRenderer content={chDraftContent} /></div>
+                ) : (
+                  <textarea className="editor-textarea" rows={16} value={chDraftContent} onChange={(e) => { setChDraftContent(e.target.value); updateChapter(editChId, { title: chDraftTitle, content: e.target.value, part: chDraftPart }); }} placeholder="本章正文（支持 Markdown 与 LaTeX）" />
+                )}
+              </div>
+            ) : (
+              <p className="novel-empty">从上面的章节列表点选一章进行编辑，或点「＋ 新增章节」「导入 txt 分章」。</p>
+            )}
+          </section>
+        </>
       );
     }
 
     // 新建小说：走 NovelComposer
+    /* ★ 2026-10-13「丙」：与上面小说编辑支同理 —— 只换外面那层壳（.pagehead ＋ .sec），
+       NovelComposer 组件本体**本轮不动**（计划书 §3-S4 主动收窄）。 */
     return (
-      <div className="page write-page">
-        <h1 className="page-title">{editing ? '编辑小说' : '写小说'}</h1>
-        <div className="composer-switch">
-          <button className="mode-tab" onClick={() => setComposer('article')}>写普通文章</button>
-          <button className="mode-tab on" onClick={() => setComposer('novel')}>写小说</button>
+      <>
+        <div className="pagehead">
+          <div className="pagehead-txt">
+            <div className="kicker">WRITE · NOVEL</div>
+            <h1>{editing ? '编辑小说' : '写小说'}</h1>
+            <p className="lede">小说逐章上传：首次创建书籍时填写书名 / 作者 / 封面 / 简介，之后只需选择书籍、上传新章节正文即可。</p>
+          </div>
         </div>
-        <p className="novel-composer-desc">小说逐章上传：首次创建书籍时填写书名 / 作者 / 封面 / 简介，之后只需选择书籍、上传新章节正文即可。</p>
-        <NovelComposer />
-      </div>
+        <section className="sec">
+          <div className="toolbar">
+            <span className="seg">
+              <button type="button" onClick={() => setComposer('article')}>文章</button>
+              <button type="button" className="on" onClick={() => setComposer('novel')}>小说</button>
+            </span>
+            <Link to="/write/translations#tags">翻译进度 / 标签词典</Link>
+          </div>
+          <NovelComposer />
+        </section>
+      </>
     );
   }
 
@@ -1048,7 +1142,7 @@ export default function Write() {
       {panel === 'music' && (
         <div className="media-panel card">
           <h4>插入网易云音乐</h4>
-          <p className="media-panel-desc">粘贴网易云歌曲链接（如 music.163.com/song?id=123456）或直接填写歌曲 ID。</p>
+          <p className="media-panel-desc">粘贴网易云歌曲链接（如 music.163.com/song?id=123456）或直接填写歌曲 ID。插入前会先替你查一次版权：<b>受限的歌会当场提示</b>，曲名与「去网易云听」的链接照常显示，只是播放键不可用。</p>
           <input
             type="text"
             placeholder="歌曲链接或 ID"
