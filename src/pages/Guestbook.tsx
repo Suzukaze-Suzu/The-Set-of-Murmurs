@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useComments, classifyPostError } from '../context/CommentContext';
 import { useProfile } from '../context/ProfileContext';
@@ -87,7 +87,7 @@ export default function Guestbook() {
   const t = useT();
   const { locale } = useLocale();
   usePageTitle(t('comment.guestbookTitle'));
-  const { guestbook, addGuestbook, deleteComment } = useComments();
+  const { guestbook, addGuestbook, deleteComment, ensureGuestbook } = useComments();
   const { user, isAdmin } = useAuth();
   const { profile, myProfile } = useProfile();
   const [tab, setTab] = useState<'guestbook' | 'bug'>('guestbook');
@@ -108,6 +108,12 @@ export default function Guestbook() {
 
   const threads = buildThreads(guestbook);
   const needLogin = !user;
+
+  /* 2026-10-18「丁」：留言板只在**这一页**拉（原来 Provider 全站预拉，等于每次访问首页
+     都顺手把整张 guestbook 表＋base64 头像下载一遍）。 */
+  useEffect(() => {
+    ensureGuestbook();
+  }, [ensureGuestbook]);
 
   const loginName = (myProfile?.nickname?.trim() || '');
   const loginAvatar = myProfile?.avatar || '';

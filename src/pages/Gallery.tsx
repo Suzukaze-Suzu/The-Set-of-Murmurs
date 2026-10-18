@@ -238,6 +238,7 @@ export default function Gallery() {
                       src={sbProxy(img.url)}
                       alt={img.caption || t('gallery.imageAlt')}
                       loading="lazy"
+                      decoding="async"
                       onLoad={(e) => noteRatio(img.id, e.currentTarget)}
                     />
                   </a>

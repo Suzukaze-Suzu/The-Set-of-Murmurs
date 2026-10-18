@@ -1,4 +1,4 @@
-import { Fragment, useMemo } from 'react';
+import { Fragment, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import type { CSSProperties } from 'react';
 import { useArticles } from '../context/ArticleContext';
@@ -80,7 +80,7 @@ export default function Novels() {
   const { locale } = useLocale();
   usePageTitle(t('shelf.title'));
   const { articles, toggleFavorite } = useArticles();
-  const { articleComments, addArticleComment, deleteComment } = useComments();
+  const { articleComments, addArticleComment, deleteComment, ensureComments } = useComments();
   const { user } = useAuth();
   const { localize } = useTranslations();
 
@@ -95,6 +95,12 @@ export default function Novels() {
   );
 
   const totalChapters = novels.reduce((s, a) => s + (a.novel?.chapters?.length || 0), 0);
+
+  /* 2026-10-18「丁」：书架页要显示**每本书**的评论条数 ⇒ 这里才需要「全部」评论。
+     其它页面（首页/文章列表/图集/关于/写作）一律不再拉这张表。 */
+  useEffect(() => {
+    ensureComments();
+  }, [ensureComments]);
 
   /* 「同分类文章」＝小说分类下的全部文章（含还没有章节的），按日期倒序——与首页那条清单同一口径 */
   const sameCat = useMemo(

@@ -48,7 +48,7 @@ export default function NovelDetail() {
   const [search] = useSearchParams();
   const { isAdmin, user } = useAuth();
   const { getById, toggleFavorite, deleteArticle, loaded } = useArticles();
-  const { articleComments, addArticleComment, deleteComment } = useComments();
+  const { articleComments, addArticleComment, deleteComment, ensureComments } = useComments();
   const { localize } = useTranslations();
   const { locale } = useLocale();
   const t = useT();
@@ -63,6 +63,11 @@ export default function NovelDetail() {
   usePageTitle(article?.title);
 
   const novel = article?.novel;
+
+  /* 2026-10-18「丁」：评论按需取**这本**（含章评），不再全站预拉。 */
+  useEffect(() => {
+    if (id) ensureComments(id);
+  }, [id, ensureComments]);
   /* 章节按 order 排好：先 slice() 再排，**不动 novel.chapters 本身**（与书架页同一口径） */
   const chapters = useMemo(
     () => (novel?.chapters || []).slice().sort((a, b) => a.order - b.order),

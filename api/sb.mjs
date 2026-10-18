@@ -1,6 +1,5 @@
 // Vercel Serverless Function：Supabase **同源代理**
 // 部署位置：api/ 目录下的文件自动成为 /api/xxx 接口（Vercel Functions），与 api/ncm.mjs 同机制。
-// 动态路由 api/sb/[...path].mjs → 任意深度的 /api/sb/<...>
 //
 // ── 为什么需要它（2026-10-15 实测）────────────────────────────────────────────
 // 前端所有实时内容都从浏览器**直连** https://ghzcvuemtoqejyciirks.supabase.co 取；
@@ -9,17 +8,42 @@
 // 用户原话「只有快照在，没有内容」。
 // 解法：浏览器只连本站同源 /api/sb/*，由 Vercel 服务器去连 Supabase（走 /api/ncm 同一条已验证的路）。
 //
+// ── ★ 2026-10-18：「连快照都打不开了」的根因（务必先读）★ ─────────────────────
+//   原先写成 `api/sb/[...path].mjs`（catch-all），**在 Vercel 上没被当作 catch-all**：
+//   线上实测 `/api/sb/x`（一段）能命中本函数、`/api/sb/rest/v1/articles`（多段）直接吃
+//   Vercel 平台的 404 `NOT_FOUND` —— 即它只注册了「一段」的动态路由。
+//   结果：前端每一发请求（REST/auth/storage）全 404 → 首屏永远拿不到数据 →
+//   8 秒后落到「加载失败或网络较慢」＝用户说的「连快照都打不开」。
+//   修法：**别碰动态路由**。文件搬到顶层 `api/sb.mjs`（与 `api/ncm.mjs` 同层级，
+//   线上已被证明可用），目标路径整体放进查询参数：
+//       /api/sb?u=<encodeURIComponent('/rest/v1/articles?select=…')>
+//   `u` 值整体百分号编码，`?` `&` `/` 都在编码里，不会被任何一层拆开。
+//
 // ── 接口 ─────────────────────────────────────────────────────────────────────
-//   任意方法  /api/sb/<supabase 路径>?<query>
+//   任意方法  /api/sb?u=<encodeURIComponent(supabase 路径 + 查询)>
 //   返回：上游状态码与响应体**原样**回传
 //     非法路径        → 404 { ok:false, reason:'bad_path' }（**不打上游**，防被当任意转发器）
 //     上游连不上/超时 → 502 { ok:false, reason:'upstream' }
+//   兼容分支：旧形态 `/api/sb/<path>?<query>` 仍能解析（万一将来 Vercel 路由行为又变），
+//   但前端一律走 `?u=`，不要再依赖路径段。
 //
 // ── 三条纪律 ─────────────────────────────────────────────────────────────────
 //   ① 目标主机**写死**，只认 /rest/v1/ /auth/v1/ /storage/v1/ 三个前缀；
 //   ② **绝不附带 service role key** —— 上游要什么权限，由浏览器带来的 apikey / Authorization 决定；
 //   ③ 带鉴权的响应（/rest/v1/ /auth/v1/）一律 `private, no-store`，**绝不能被边缘缓存**；
 //      只有 /storage/v1/object/public/* 的 GET 才给公开缓存。
+//
+// ── ★ 2026-10-18「丁 · 把出口流量大头搬走」★ ─────────────────────────────────
+//   免费额度超了 5 GB（402 exceed_egress_quota），治本的一条是：**同一个响应别让
+//   Supabase 出第二遍**。原先只有 storage 图片有边缘缓存，REST 一律 no-store ——
+//   于是「每次访问都把整个留言板 + 全站评论（含 base64 头像）重下一遍」。
+//   现在分三档：
+//     · /storage/v1/object/public/*  → s-maxage=86400（图，原样）
+//     · **匿名** GET /rest/v1/*      → s-maxage=300 ＋ stale-while-revalidate=3600
+//     · 其余（带鉴权 / 写操作 / auth）→ private, no-store（原样，绝不缓存）
+//   ⚠️ 匿名读与登入读**必须用不同的缓存键**：前端会给自己带会话的请求加外层参数
+//      `&_r=auth`（见 src/lib/supabase.ts）。否则博主可能读到别人的匿名缓存
+//      （表现为「权限时有时无」）。这里再兜一道：请求头带 Authorization 的，永不缓存。
 
 const SUPABASE_URL = (
   process.env.SUPABASE_URL ||
@@ -82,28 +106,48 @@ function rateLimited(ip) {
   return false;
 }
 
-/** 取原始 path + query。**保留原样的百分号编码**，直接拼给上游，避免二次编解码跑偏。 */
-function rawTarget(req) {
-  const url = String(req.url || '');
-  const q = url.indexOf('?');
-  const rawPath = q >= 0 ? url.slice(0, q) : url;
-  const rawQuery = q >= 0 ? url.slice(q) : '';
-  const prefix = '/api/sb';
-  if (rawPath === prefix || rawPath.startsWith(prefix + '/')) {
-    return { path: rawPath.slice(prefix.length) || '/', query: rawQuery };
-  }
-  // 兜底：Vercel 已经把 /api/sb 剥掉时，用 req.query.path 还原
-  const seg = req.query && req.query.path;
-  const segs = Array.isArray(seg) ? seg : typeof seg === 'string' && seg ? seg.split('/') : [];
-  return { path: '/' + segs.join('/'), query: rawQuery };
-}
-
 function safeDecode(p) {
   try {
     return decodeURIComponent(p);
   } catch {
     return p;
   }
+}
+
+/** 取原始 path + query。**保留原样的百分号编码**，直接拼给上游，避免二次编解码跑偏。 */
+function rawTarget(req) {
+  const url = String(req.url || '');
+  const qi = url.indexOf('?');
+  const rawQuery = qi >= 0 ? url.slice(qi + 1) : '';
+
+  // ① 现行形态：/api/sb?u=<encodeURIComponent(目标路径+查询)>
+  //    只解码**一层**：u 里剩下的百分号编码是 supabase 自己的，要原样转给上游。
+  const m = /(?:^|&)u=([^&]*)/.exec(rawQuery);
+  if (m) {
+    const target = safeDecode(m[1]);
+    const tq = target.indexOf('?');
+    const path = tq < 0 ? target : target.slice(0, tq);
+    const query = tq < 0 ? '' : target.slice(tq);
+    return { path, query };
+  }
+
+  // ② 旧形态兜底：/api/sb/<supabase 路径>?<query>
+  //    2026-10-18 前的前端写法（Vercel 上多段路径吃 404，已弃用，只留解析能力）。
+  const rawPath = qi >= 0 ? url.slice(0, qi) : url;
+  const prefix = '/api/sb';
+  if (rawPath === prefix || rawPath.startsWith(prefix + '/')) {
+    return { path: rawPath.slice(prefix.length) || '/', query: qi >= 0 ? url.slice(qi) : '' };
+  }
+
+  // ③ 兜底：Vercel 把 `/api/sb` 前缀剥掉（旧 catch-all 形态会给 req.query.path 段数组）
+  const q = req.query || {};
+  const segParam = q.path;
+  const segs = Array.isArray(segParam) ? segParam : typeof segParam === 'string' && segParam ? segParam.split('/') : [];
+  if (segs.length) {
+    return { path: '/' + segs.join('/'), query: qi >= 0 ? url.slice(qi) : '' };
+  }
+
+  return { path: '/', query: '' };
 }
 
 /** 请求体透传：Vercel 给我们的可能是 Buffer / 字符串 / 已解析对象，三种都要认。 */
@@ -133,6 +177,26 @@ export default async function handler(req, res) {
 
   const { path, query } = rawTarget(req);
   const decoded = safeDecode(path);
+
+  /**
+   * 外层标记 `_r=auth`：前端在「这个浏览器有会话」时加上的缓存键分隔符。
+   * 它**只活在 /api/sb 自己的查询串里**，`rawTarget()` 只取 `u=`，所以永远不会
+   * 被转发到 Supabase 上游。
+   */
+  const outerQuery = (() => {
+    const u = String(req.url || '');
+    const qi = u.indexOf('?');
+    return qi >= 0 ? u.slice(qi + 1) : '';
+  })();
+  const markedAuth = /(?:^|&)_r=auth(?:&|$)/.test(outerQuery);
+  /**
+   * ⚠️ supabase-js 在**匿名**请求上也会带 `Authorization: Bearer <apikey>`（它的惯例），
+   * 所以「有 Authorization 头」不等于「有会话」。判据改成：Authorization 的值**不是**
+   * 本次请求的 apikey ⇒ 那是真会话（可缓存绝无可能）。前端带会话时还会额外打 `_r=auth`。
+   */
+  const authz = String(req.headers?.authorization || req.headers?.Authorization || '');
+  const apikeyHdr = String(req.headers?.apikey || req.headers?.Apikey || '');
+  const hasAuthHeader = !!authz && !(apikeyHdr && authz === 'Bearer ' + apikeyHdr);
 
   const allowed = ALLOWED_PREFIXES.some((p) => decoded.startsWith(p));
   if (!allowed) {
@@ -181,15 +245,29 @@ export default async function handler(req, res) {
       if (v) res.setHeader(name, v);
     }
 
-    // 缓存策略：公开静态对象可缓存；一切带鉴权的响应绝不缓存
-    const isPublicObject =
-      req.method === 'GET' && decoded.startsWith('/storage/v1/object/public/') && upstream.ok;
+    // 缓存策略（2026-10-18 丁）：
+    //   ① 公开对象（图）→ 公开长缓存
+    //   ② 匿名 GET /rest/v1/* → 公开短缓存（边缘 5 分钟 + 1 小时 SWR）
+    //   ③ 其余（带鉴权 / 写 / auth）→ 绝不缓存
+    const isGet = req.method === 'GET' || req.method === 'HEAD';
+    const isPublicObject = isGet && decoded.startsWith('/storage/v1/object/public/') && upstream.ok;
+    const isAnonRest =
+      req.method === 'GET' &&
+      !markedAuth &&
+      !hasAuthHeader &&
+      decoded.startsWith('/rest/v1/') &&
+      upstream.status === 200;
+
     res.setHeader(
       'Cache-Control',
       isPublicObject
         ? 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400'
-        : 'private, no-store, max-age=0',
+        : isAnonRest
+          ? 'public, max-age=0, s-maxage=300, stale-while-revalidate=3600'
+          : 'private, no-store, max-age=0',
     );
+    // 便于线上探针一眼看出走了哪一档（不影响缓存语义）
+    res.setHeader('x-sb-cache', isPublicObject ? 'public-object' : isAnonRest ? 'anon-rest' : 'none');
 
     if (req.method === 'HEAD' || upstream.status === 204 || upstream.status === 304 || !upstream.body) {
       return res.end();

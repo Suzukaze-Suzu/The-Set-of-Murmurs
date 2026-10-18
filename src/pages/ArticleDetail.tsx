@@ -41,7 +41,7 @@ export default function ArticleDetail() {
   const navigate = useNavigate();
   const { isAdmin, user } = useAuth();
   const { getById, toggleFavorite, deleteArticle, loaded } = useArticles();
-  const { articleComments, addArticleComment, deleteComment } = useComments();
+  const { articleComments, addArticleComment, deleteComment, ensureComments } = useComments();
   const { localize } = useTranslations();
   const { locale } = useLocale();
   const t = useT();
@@ -60,6 +60,12 @@ export default function ArticleDetail() {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const handleHeadings = useCallback((hs: Heading[]) => setHeadings(hs), []);
   const comments = articleComments.filter((c) => c.articleId === id || (id ? c.articleId.startsWith(id + '::') : false));
+
+  /* 2026-10-18「丁」：评论不再由 Provider 全站预拉（那会把整个 comments 表＋base64 头像
+     拖进每一次页面访问）。这里只按需取**本篇**（含 `id::章节` 的章评）。 */
+  useEffect(() => {
+    if (id) ensureComments(id);
+  }, [id, ensureComments]);
 
   /* ── 阅读进度细线（2026-10-08 批次② P4 起，2026-10-09 换成 N1 口径）─────────────
      原来那条线贴在旧 sticky 顶栏下沿、顶距要跟着顶栏滑走与否现算；N1 报头**不是 sticky**，

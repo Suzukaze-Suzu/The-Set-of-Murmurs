@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useRef, useState } from 'react';
 import { Comment } from '../types';
 import { supabase } from '../lib/supabase';
 
@@ -131,26 +131,46 @@ function notifyReply(input: NewCommentInput, replyName: string, targetType: 'com
 interface Ctx {
   articleComments: Comment[];
   guestbook: Comment[];
+  /** 按需加载：留言板（/guestbook 页挂载时调） */
+  ensureGuestbook: () => void;
+  /** 按需加载：传 articleId ⇒ 只拉这一篇（含 `id::章节` 的章评）；不传 ⇒ 全部（书架页要按书统计条数） */
+  ensureComments: (articleId?: string) => void;
   addArticleComment: (articleId: string, input: NewCommentInput) => Promise<PostResult>;
   addGuestbook: (input: NewCommentInput) => Promise<PostResult>;
   deleteComment: (id: string, type: 'comment' | 'guestbook') => void;
 }
+
+/**
+ * ★ 2026-10-18「丁 · 把出口流量大头搬走」★
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 改前：这两个 `useEffect` **挂在每个页面上**（CommentProvider 包全站），一挂载就
+ * `guestbook.select('*')` + `comments.select('*')` —— 无过滤、无分页。而这两张表的
+ * `avatar` 列存的是 **base64 头像（75–107 KB/行）**，所以首页、图集页、关于页这些
+ * 根本用不到评论的页面，每次访问都要为「整个留言板 + 全站每一篇的评论」付一遍出口流量。
+ * 这也是 5 GB 免费额度被吃爆的头号嫌疑。
+ *
+ * 现在：**谁用谁拉**，而且文章页只拉这一篇（`.like('article_id', '<id>%')`，把
+ * `<id>::<章节>` 的章评一起带上——与各页面原有的 `startsWith(id + '::')` 过滤同口径）。
+ * `articleComments` / `guestbook` 字段与过滤写法保持不变，所以调用方只需多调一个 ensure。
+ * 列也换成显式白名单（不再 `*` 兜未知列）。
+ */
+const COMMENT_COLS = 'id,article_id,name,content,date,user_id,parent_id,parent_name,avatar';
 
 const CommentContext = createContext<Ctx | null>(null);
 
 export function CommentProvider({ children }: { children: ReactNode }) {
   const [articleComments, setArticleComments] = useState<Comment[]>([]);
   const [guestbook, setGuestbook] = useState<Comment[]>([]);
+  const started = useRef<Set<string>>(new Set());
 
-  // 加载留言板
-  useEffect(() => {
-    let mounted = true;
+  const ensureGuestbook = useCallback(() => {
+    if (started.current.has('guestbook')) return;
+    started.current.add('guestbook');
     supabase
       .from('guestbook')
-      .select('*')
+      .select(COMMENT_COLS)
       .order('date', { ascending: false })
       .then(({ data, error }) => {
-        if (!mounted) return;
         if (!error && data) {
           setGuestbook(data.map((r) => ({
             id: r.id, articleId: 'guestbook', name: r.name, content: r.content, date: r.date,
@@ -159,27 +179,30 @@ export function CommentProvider({ children }: { children: ReactNode }) {
           })));
         }
       });
-    return () => { mounted = false; };
   }, []);
 
-  // 加载所有文章评论
-  useEffect(() => {
-    let mounted = true;
-    supabase
-      .from('comments')
-      .select('*')
-      .order('date', { ascending: false })
-      .then(({ data, error }) => {
-        if (!mounted) return;
-        if (!error && data) {
-          setArticleComments(data.map((r) => ({
-            id: r.id, articleId: r.article_id, name: r.name, content: r.content, date: r.date,
-            userId: r.user_id || undefined, parentId: r.parent_id || undefined, parentName: r.parent_name || undefined,
-            avatar: r.avatar || undefined,
-          })));
-        }
+  const ensureComments = useCallback((articleId?: string) => {
+    const key = articleId ? 'article:' + articleId : 'article:*';
+    if (started.current.has(key)) return;
+    started.current.add(key);
+
+    let q = supabase.from('comments').select(COMMENT_COLS).order('date', { ascending: false });
+    // 前缀匹配：`<id>` 与 `<id>::<章节>` 一起取回（与页面过滤同口径）。多取到的行会被页面过滤掉。
+    if (articleId) q = q.like('article_id', articleId + '%');
+
+    q.then(({ data, error }) => {
+      if (error || !data) return;
+      const rows: Comment[] = data.map((r) => ({
+        id: r.id, articleId: r.article_id, name: r.name, content: r.content, date: r.date,
+        userId: r.user_id || undefined, parentId: r.parent_id || undefined, parentName: r.parent_name || undefined,
+        avatar: r.avatar || undefined,
+      }));
+      setArticleComments((prev) => {
+        const seen = new Set(prev.map((c) => c.id));
+        const add = rows.filter((c) => !seen.has(c.id));
+        return add.length ? [...add, ...prev] : prev;
       });
-    return () => { mounted = false; };
+    });
   }, []);
 
   const addArticleComment = async (articleId: string, input: NewCommentInput): Promise<PostResult> => {
@@ -233,7 +256,7 @@ export function CommentProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <CommentContext.Provider value={{ articleComments, addArticleComment, guestbook, addGuestbook, deleteComment }}>
+    <CommentContext.Provider value={{ articleComments, ensureGuestbook, ensureComments, addArticleComment, addGuestbook, guestbook, deleteComment }}>
       {children}
     </CommentContext.Provider>
   );

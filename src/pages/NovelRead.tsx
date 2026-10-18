@@ -40,7 +40,7 @@ export default function NovelRead() {
   const [search, setSearch] = useSearchParams();
   const { user } = useAuth();
   const { getById, loaded } = useArticles();
-  const { articleComments, addArticleComment, deleteComment } = useComments();
+  const { articleComments, addArticleComment, deleteComment, ensureComments } = useComments();
   const { localize } = useTranslations();
   const { locale } = useLocale();
   const t = useT();
@@ -107,6 +107,11 @@ export default function NovelRead() {
     jumpedRef.current = true;
     bodyRef.current?.scrollIntoView({ block: 'start' });
   }, [chapterKey, chapters.length]);
+
+  /* 2026-10-18「丁」：评论按需取**这本**（含 `id::章节` 的章评），不再全站预拉。 */
+  useEffect(() => {
+    if (id) ensureComments(id);
+  }, [id, ensureComments]);
 
   // 键盘左右翻章（输入框里不抢键）
   useEffect(() => {

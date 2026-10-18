@@ -500,7 +500,8 @@ export default function Write() {
         const sess = await supabase.auth.getSession();
         const token = sess?.data?.session?.access_token || '';
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/api/sb/storage/v1/object/articles/' + encodeURI(path));
+        // 2026-10-18：目标路径放进 `?u=`（`/api/sb/<路径>` 那种写法在 Vercel 上一律 404，见 api/sb.mjs 顶部）
+        xhr.open('POST', '/api/sb?u=' + encodeURIComponent('/storage/v1/object/articles/' + encodeURI(path)));
         xhr.setRequestHeader('Authorization', 'Bearer ' + token);
         xhr.setRequestHeader('x-upsert', 'false');
         xhr.upload.onprogress = (e) => {
