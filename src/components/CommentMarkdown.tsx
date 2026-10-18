@@ -2,6 +2,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useEffect, useState } from 'react';
 import { normalizeMathDelimiters } from '../lib/mathDelimiters';
+// 2026-10-15：留言里贴的 supabase 存储图片/链接，墙内直连会被掐 → 渲染时换同源（见 lib/sbUrl.ts）。
+import { sbProxy } from '../lib/sbUrl';
 
 /* ══════════════════════════════════════════════════════════════════════════════
    留言正文的 Markdown 渲染（2026-10-09，用户原话「让留言支持markdown」）
@@ -135,7 +137,7 @@ export default function CommentMarkdown({ content }: Props) {
              不能把当前页顶掉、也不该给它们传权重（正文那支没管这条，留言这层必须管）。 */
           a({ href, children }: any) {
             return (
-              <a href={href} target="_blank" rel="noopener noreferrer nofollow">
+              <a href={sbProxy(href)} target="_blank" rel="noopener noreferrer nofollow">
                 {children}
               </a>
             );
@@ -143,7 +145,7 @@ export default function CommentMarkdown({ content }: Props) {
           /* 图片只限宽（内联只写 height/display，宽度交给 CSS 的 ⑩ 段，
              免得行内样式压过 `max-width`）——与正文那支同一口径。 */
           img({ src, alt }: any) {
-            return <img src={src} alt={alt} loading="lazy" style={{ height: 'auto', display: 'block' }} />;
+            return <img src={sbProxy(src)} alt={alt} loading="lazy" style={{ height: 'auto', display: 'block' }} />;
           },
           pre({ children }: any) {
             return <pre className="code-block">{children}</pre>;

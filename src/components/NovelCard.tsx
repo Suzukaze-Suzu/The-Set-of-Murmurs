@@ -6,6 +6,8 @@ import { useLocalizedArticle } from '../context/TranslationContext';
 import { useT, useLocale } from '../i18n';
 import { novelStatusKey } from '../i18n/dict';
 import { formatCountLabel, sumChapterCounts, formatCount } from '../lib/wordCount';
+// 2026-10-15：书封存在 supabase 存储里，墙内直连会被掐 → 渲染时换同源 /api/sb/…（见 lib/sbUrl.ts）。
+import { sbProxy } from '../lib/sbUrl';
 
 interface Props {
   article: Article;
@@ -34,7 +36,7 @@ export default function NovelCard({ article: raw }: Props) {
     <div className="novel-card">
       {novel?.cover ? (
         <div className="novel-cover-wrap">
-          <img src={novel.cover} alt={article.title} className="novel-cover" loading="lazy" />
+          <img src={sbProxy(novel.cover)} alt={article.title} className="novel-cover" loading="lazy" />
         </div>
       ) : (
         <div className="novel-cover novel-cover-placeholder">

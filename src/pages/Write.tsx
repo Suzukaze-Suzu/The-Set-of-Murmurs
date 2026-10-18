@@ -9,7 +9,10 @@ import NovelComposer from '../components/NovelComposer';
 import TranslationWorkbench from '../components/TranslationWorkbench';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { supabase, SUPABASE_URL } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
+// 2026-10-15：封面预览/附件「打开」若指向 supabase 存储，墙内直连会被掐 → 只换**渲染**地址；
+// 编辑态里的 cover/attachments 仍保持绝对地址（保存时要原样写库）。见 lib/sbUrl.ts。
+import { sbProxy } from '../lib/sbUrl';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { isNovelArticle } from '../lib/novelPath';
 import {
@@ -497,7 +500,7 @@ export default function Write() {
         const sess = await supabase.auth.getSession();
         const token = sess?.data?.session?.access_token || '';
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', SUPABASE_URL + '/storage/v1/object/articles/' + encodeURI(path));
+        xhr.open('POST', '/api/sb/storage/v1/object/articles/' + encodeURI(path));
         xhr.setRequestHeader('Authorization', 'Bearer ' + token);
         xhr.setRequestHeader('x-upsert', 'false');
         xhr.upload.onprogress = (e) => {
@@ -883,7 +886,7 @@ export default function Write() {
             <div className="novel-info">
               <div className="novel-cover-row">
                 <div className="novel-cover-preview">
-                  {cover ? <img src={cover} alt="封面" className="novel-cover-img" /> : <span className="novel-cover-ph">{title.slice(0, 1) || '书'}</span>}
+                  {cover ? <img src={sbProxy(cover)} alt="封面" className="novel-cover-img" /> : <span className="novel-cover-ph">{title.slice(0, 1) || '书'}</span>}
                 </div>
                 <div className="novel-cover-actions">
                   <button className="btn" onClick={() => coverInput.current?.click()}>{cover ? '更换封面' : '上传封面'}</button>
@@ -1209,7 +1212,8 @@ export default function Write() {
                     <button className="btn btn-primary btn-sm" onClick={() => copyAsset(a.url, a.key)}>
                       {copiedAsset === a.key ? '已复制 ✓' : '复制链接'}
                     </button>
-                    <a className="btn btn-light btn-sm" href={a.url} target="_blank" rel="noreferrer">打开</a>
+                    {/* 只换「打开」这一跳；上面 <code> 与「复制链接」给的仍是**绝对地址**（写库/外发都要绝对地址） */}
+                    <a className="btn btn-light btn-sm" href={sbProxy(a.url)} target="_blank" rel="noreferrer">打开</a>
                   </div>
                 ))}
               </div>

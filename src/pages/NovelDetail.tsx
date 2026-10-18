@@ -16,6 +16,8 @@ import { catKey, novelStatusKey } from '../i18n/dict';
 import { isNovelArticle, novelHref, novelReadHref } from '../lib/novelPath';
 import { n1TitleClass } from '../lib/n1TitleSize';
 import { formatCountLabel, sumChapterCounts, formatCount } from '../lib/wordCount';
+// 2026-10-15：书封存在 supabase 存储里，墙内直连会被掐 → 渲染时换同源 /api/sb/…（见 lib/sbUrl.ts）。
+import { sbProxy } from '../lib/sbUrl';
 
 /* ══════════════════════════════════════════════════════════════════════════════
    小说书介页（2026-10-09 第二轮：正文被搬去独立的阅读界面后，本页只剩「介绍 + 入口」）
@@ -213,7 +215,7 @@ export default function NovelDetail() {
         <div className="book big">
           <figure className="book-cover">
             {novel?.cover
-              ? <img src={novel.cover} alt={article.title} />
+              ? <img src={sbProxy(novel.cover)} alt={article.title} />
               : <div className="cover-ph" aria-hidden="true">{article.title.slice(0, 1)}</div>}
           </figure>
           <div className="book-txt">

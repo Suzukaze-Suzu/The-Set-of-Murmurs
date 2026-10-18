@@ -12,6 +12,8 @@ import { useT, useLocale, formatDate } from '../i18n';
 import { catKey } from '../i18n/dict';
 import { formatCountLabel, sumChapterCounts, formatCount, stripForWordCount } from '../lib/wordCount';
 import { articleHref, novelReadHref } from '../lib/novelPath';
+// 2026-10-15：书封存在 supabase 存储里，墙内直连会被掐 → 渲染时换同源 /api/sb/…（见 lib/sbUrl.ts）。
+import { sbProxy } from '../lib/sbUrl';
 
 /* 报眼方框里的头像（站点既有素材，原样使用）：取不到站长头像时兜底 */
 const AVATAR_FALLBACK = '/avatar-original.png';
@@ -266,7 +268,7 @@ export default function Home({ query }: Props) {
             return (
               <div className="book" key={a.id}>
                 <figure className="book-cover">
-                  {novel?.cover && <img src={novel.cover} alt={t('common.coverAlt', { t: a.title })} loading="lazy" />}
+                  {novel?.cover && <img src={sbProxy(novel.cover)} alt={t('common.coverAlt', { t: a.title })} loading="lazy" />}
                 </figure>
                 <div className="book-txt">
                   <h3>

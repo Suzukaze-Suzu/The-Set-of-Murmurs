@@ -20,9 +20,31 @@ const SUPABASE_ANON_KEY =
  */
 const TIMEOUT_MS = 20000;
 
+/**
+ * ★ 2026-10-15「只有快照在，没有内容」★
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 病根：前端所有实时内容都是**浏览器直连** supabase.co 取的，而墙内这条腿被掐
+ * （本机 node 实测 ECONNRESET / 234ms，浏览器侧更凶）。于是 HTML 能打开（墙内到
+ * Vercel 是通的：首页实测 200 / 366ms），React 挂载后取数失败 → 页面只剩构建期
+ * 预渲染快照。用户原话：「只有快照在，没有内容」。
+ *
+ * 解法：把所有对 Supabase 的请求改打到**同源** `/api/sb/*`，由 Vercel Function
+ * （`api/sb/[...path].mjs`）代转 —— 和 2026-10-13 网易云那次 `api/ncm.mjs` 同一条路。
+ *
+ * 只改这一个函数 → REST / auth / storage 三条线全覆盖，业务代码一行都不用动。
+ * 注意：目标地址只做**前缀替换**，query 与百分号编码原样保留。
+ */
+const PROXY_BASE = '/api/sb';
+
+function toSameOriginUrl(input: RequestInfo | URL): string {
+  const raw = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+  if (raw.startsWith(SUPABASE_URL)) return PROXY_BASE + raw.slice(SUPABASE_URL.length);
+  return raw;
+}
+
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   global: {
     fetch: (input: RequestInfo | URL, init?: RequestInit) =>
-      fetch(input, { ...init, signal: init?.signal ?? AbortSignal.timeout(TIMEOUT_MS) }),
+      fetch(toSameOriginUrl(input), { ...init, signal: init?.signal ?? AbortSignal.timeout(TIMEOUT_MS) }),
   },
 });

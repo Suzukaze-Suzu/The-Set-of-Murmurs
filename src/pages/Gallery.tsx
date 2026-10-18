@@ -4,6 +4,8 @@ import { useGallery } from '../context/GalleryContext';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useT, useLocale, formatDate } from '../i18n';
+// 2026-10-15：图集图片存在 supabase 存储里，墙内直连会被掐 → 渲染时换同源 /api/sb/…（见 lib/sbUrl.ts）。
+import { sbProxy } from '../lib/sbUrl';
 
 /* ══════════════════════════════════════════════════════════════════════════════
    图集页（2026-10-09 重设计 · Saber 点定 B「中」档）
@@ -233,7 +235,7 @@ export default function Gallery() {
                     }}
                   >
                     <img
-                      src={img.url}
+                      src={sbProxy(img.url)}
                       alt={img.caption || t('gallery.imageAlt')}
                       loading="lazy"
                       onLoad={(e) => noteRatio(img.id, e.currentTarget)}
@@ -333,7 +335,7 @@ export default function Gallery() {
       {current && (
         <div className="gview" onClick={(e) => { if (e.target === e.currentTarget) setZoom(null); }}>
           <figure>
-            <img src={current.url} alt={current.caption || t('gallery.imageAlt')} />
+            <img src={sbProxy(current.url)} alt={current.caption || t('gallery.imageAlt')} />
             <figcaption>
               <b>{capOf(current)}</b>
               <span>{current.date ? formatDate(current.date, locale) : ''}</span>

@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useT } from '../i18n';
+// 2026-10-15：友链头像存在 supabase 存储的 articles 桶里，墙内直连会被掐 → 渲染时换同源（见 lib/sbUrl.ts）。
+import { sbProxy } from '../lib/sbUrl';
 
 /* ══════════════════════════════════════════════════════════════════════════════
    友链页（2026-10-11「友链被忘记了」）
@@ -162,7 +164,7 @@ export default function Friends() {
               {avatarUploading ? (
                 <span>{t('friends.iconUploading')}</span>
               ) : draft.avatar ? (
-                <img src={draft.avatar} alt={t('friends.iconPreview')} />
+                <img src={sbProxy(draft.avatar)} alt={t('friends.iconPreview')} />
               ) : (
                 <span>{t('friends.iconDrop')}</span>
               )}
@@ -213,7 +215,7 @@ export default function Friends() {
                 <a href={f.url} target="_blank" rel="noopener noreferrer" className="fcard-main">
                   <span className="fcard-ico">
                     {f.avatar
-                      ? <img src={f.avatar} alt="" loading="lazy" />
+                      ? <img src={sbProxy(f.avatar)} alt="" loading="lazy" />
                       : <i>{initials(f.name, t('friends.title').charAt(0))}</i>}
                   </span>
                   <span className="fcard-txt">

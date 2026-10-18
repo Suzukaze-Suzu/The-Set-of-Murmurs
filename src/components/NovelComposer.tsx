@@ -4,6 +4,8 @@ import { useArticles, uid } from '../context/ArticleContext';
 import { Article, NovelChapter, NovelStatus, NOVEL_STATUS_META } from '../types';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { supabase } from '../lib/supabase';
+// 2026-10-15：封面预览若来自 supabase 存储，墙内直连会被掐 → 只改**渲染**，bookCover 状态保持绝对地址。
+import { sbProxy } from '../lib/sbUrl';
 
 export default function NovelComposer() {
   const navigate = useNavigate();
@@ -171,7 +173,7 @@ export default function NovelComposer() {
           </div>
           <div className="novel-cover-row">
             <div className="novel-cover-preview">
-              {bookCover ? <img src={bookCover} alt="封面" className="novel-cover-img" /> : <span className="novel-cover-ph">{bookTitle.slice(0, 1) || '书'}</span>}
+              {bookCover ? <img src={sbProxy(bookCover)} alt="封面" className="novel-cover-img" /> : <span className="novel-cover-ph">{bookTitle.slice(0, 1) || '书'}</span>}
             </div>
             <div className="novel-cover-actions">
               <button className="btn btn-light btn-sm" onClick={() => coverInput.current?.click()}>{uploading ? '上传中…' : '上传本地封面'}</button>

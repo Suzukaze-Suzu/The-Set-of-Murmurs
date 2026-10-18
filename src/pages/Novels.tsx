@@ -12,6 +12,8 @@ import N1Comments from '../components/n1/N1Comments';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useT, useLocale, formatDate } from '../i18n';
 import { catKey, novelStatusKey } from '../i18n/dict';
+// 2026-10-15：书封存在 supabase 存储里，墙内直连会被掐 → 渲染时换同源 /api/sb/…（见 lib/sbUrl.ts）。
+import { sbProxy } from '../lib/sbUrl';
 import { formatCountLabel, sumChapterCounts, formatCount } from '../lib/wordCount';
 import { articleHref, novelHref, novelReadHref } from '../lib/novelPath';
 
@@ -144,7 +146,7 @@ export default function Novels() {
               <section className="sec">
                 <div className="book big">
                   <figure className="book-cover">
-                    {novel?.cover && <img src={novel.cover} alt={t('common.coverAlt', { t: a.title })} loading="lazy" />}
+                    {novel?.cover && <img src={sbProxy(novel.cover)} alt={t('common.coverAlt', { t: a.title })} loading="lazy" />}
                   </figure>
                   <div className="book-txt">
                     <h3>

@@ -12,6 +12,9 @@ import { remarkMath, rehypeKatex } from '../lib/katexBundle';
 // 2026-10-13（方案 C）：自绘网易云播放器。组件内自带取数与降级，
 // 取不到曲目信息时整块不渲染 —— 版权歌不会再留下空白框。
 import NcmPlayer from './NcmPlayer';
+// 2026-10-15：正文里的图片/附件链接若指向 supabase 存储，墙内直连会被掐。
+// 渲染时换成同源 /api/sb/...（见 lib/sbUrl.ts；**只用于渲染，不碰写库的地址**）。
+import { sbProxy } from '../lib/sbUrl';
 
 interface CodeProps {
   inline?: boolean;
@@ -99,7 +102,12 @@ export default function MarkdownRenderer({ content, onHeadings }: { content: str
                    宽度交给 CSS 管：未迁页由 index.css 的 `.markdown-body img{max-width:100%}` 兜底，
                    N1 页由 n1-app.css 的 `--img-w` 收到 760px。`height/display` 仍写内联，
                    免得旧层 `.markdown-body img` 只有 max-width、图片回落到 inline 出现基线缝隙。 */
-                return <img src={src} alt={alt} loading="lazy" className="md-img" style={{ height: 'auto', display: 'block' }} />;
+                return <img src={sbProxy(src)} alt={alt} loading="lazy" className="md-img" style={{ height: 'auto', display: 'block' }} />;
+              },
+              /* 正文里指向 supabase 存储的链接（附件等）也走同源，否则墙内点了打不开。
+                 只多接一个 title，其余行为与 react-markdown 默认一致。 */
+              a({ href, title, children }: any) {
+                return <a href={sbProxy(href)} title={title}>{children}</a>;
               },
               pre({ children }: any) {
                 return <pre className="code-block">{children}</pre>;

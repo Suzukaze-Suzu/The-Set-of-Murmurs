@@ -14,6 +14,8 @@ import { catKey } from '../i18n/dict';
 import { formatCountLabel } from '../lib/wordCount';
 import { isNovelArticle, novelHref } from '../lib/novelPath';
 import { n1TitleClass } from '../lib/n1TitleSize';
+// 2026-10-15：附件存在 supabase 存储里，墙内直连会被掐 → 渲染时换同源 /api/sb/…（见 lib/sbUrl.ts）。
+import { sbProxy } from '../lib/sbUrl';
 
 /* ══════════════════════════════════════════════════════════════════════════════
    阅读页（2026-10-09 迁入 N1）
@@ -248,7 +250,7 @@ export default function ArticleDetail() {
           <ul className="att">
             {article.attachments.map((att, i) => (
               <li key={i}>
-                <a href={att.url} target="_blank" rel="noreferrer" className="att-item">
+                <a href={sbProxy(att.url)} target="_blank" rel="noreferrer" className="att-item">
                   <span className="att-icon">📎</span>
                   <span className="att-name">{att.name}</span>
                   {att.size ? <span className="att-size">{(att.size / 1024).toFixed(1)} KB</span> : null}
