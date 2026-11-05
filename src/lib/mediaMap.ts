@@ -1,18 +1,20 @@
 /**
- * ★ 2026-10-18「丁 · 把出口流量大头搬走」★ 图集/书封/头像的**本地副本清单**
- * ─────────────────────────────────────────────────────────────────────────────
- * 干什么用的：Supabase Storage 的公开对象（图集、书封、附件、头像图）每被取一次，
- * 就算一次项目出口流量。免费额度 5 GB 就是这么被吃掉的。把**文件本身**搬到站点自己
- * 的 `public/media/` 下（由 Vercel CDN 出，不走 Supabase），这块直接归零。
- *
- * 这个文件是**生成物**：`node first/egress-cut/pull-media.mjs` 会把 Storage 里的
- * 公开对象下载到 `public/media/<bucket>/<path>`，并重写这个映射表。
- * 键＝supabase 的 storage 路径（如 `/storage/v1/object/public/gallery/abc.jpg`），
- * 值＝站点内的静态地址（如 `/media/gallery/abc.jpg`）。
- *
- * `sbProxy()`（src/lib/sbUrl.ts）渲染时**先查这张表**：命中就用本地静态地址，
- * 没命中才回落到 `/api/sb?u=…` 同源代理。所以：
- *   · 表是空的 ⇒ 行为与今天完全一致（纯代理）；
- *   · 跑了 pull-media 之后 ⇒ 已搬走的图自动改走 CDN，**不用改任何业务代码、不用写库**。
+ * 自动生成：node first/egress-cut/pull-media.mjs（2026-10-18「丁」C 档）
+ * 键＝supabase storage 路径，值＝站点内静态地址。sbProxy() 渲染时先查这张表。
  */
-export const MEDIA_MAP: Record<string, string> = {};
+export const MEDIA_MAP: Record<string, string> = {
+  "/storage/v1/object/public/articles/msg8g2yc-lraj81.jpeg": "/media/articles/msg8g2yc-lraj81.jpeg",
+  "/storage/v1/object/public/articles/msg9cxin-jly5z1.png": "/media/articles/msg9cxin-jly5z1.png",
+  "/storage/v1/object/public/articles/mshlxonw-osx9dd.png": "/media/articles/mshlxonw-osx9dd.png",
+  "/storage/v1/object/public/articles/mtq0ms6w-m25dc2.jpeg": "/media/articles/mtq0ms6w-m25dc2.jpeg",
+  "/storage/v1/object/public/articles/mtrglrp1-pqomsq.png": "/media/articles/mtrglrp1-pqomsq.png",
+  "/storage/v1/object/public/articles/mu989vz6-3fr1nb.jpg": "/media/articles/mu989vz6-3fr1nb.jpg",
+  "/storage/v1/object/public/articles/mv38mbsp-wotbgo.jpg": "/media/articles/mv38mbsp-wotbgo.jpg",
+  "/storage/v1/object/public/articles/mv63r0yq-yfudcv.jpg": "/media/articles/mv63r0yq-yfudcv.jpg",
+  "/storage/v1/object/public/articles/novel/cover/msn1j566-9ww58c.png": "/media/articles/novel/cover/msn1j566-9ww58c.png",
+  "/storage/v1/object/public/gallery/img_msg4gy1k6tg5fx-___.png": "/media/gallery/img_msg4gy1k6tg5fx-___.png",
+  "/storage/v1/object/public/gallery/img_msjvfe8cx0dz6y-IMG_2187.png": "/media/gallery/img_msjvfe8cx0dz6y-IMG_2187.png",
+  "/storage/v1/object/public/gallery/img_msk5mt6bghslok-IMG_2693.png": "/media/gallery/img_msk5mt6bghslok-IMG_2693.png",
+  "/storage/v1/object/public/gallery/img_msn9pyz1juefv9-227.jpg": "/media/gallery/img_msn9pyz1juefv9-227.jpg",
+  "/storage/v1/object/public/gallery/img_mv10veiqnqamx0-______.jpg": "/media/gallery/img_mv10veiqnqamx0-______.jpg",
+};
