@@ -131,6 +131,8 @@ function notifyReply(input: NewCommentInput, replyName: string, targetType: 'com
 interface Ctx {
   articleComments: Comment[];
   guestbook: Comment[];
+  /** 留言板这一次「没取回来」（网络/数据库）——页面据此把「还没有留言」换成「没取回来 + 重试」 */
+  guestbookFailed: boolean;
   /** 按需加载：留言板（/guestbook 页挂载时调） */
   ensureGuestbook: () => void;
   /** 按需加载：传 articleId ⇒ 只拉这一篇（含 `id::章节` 的章评）；不传 ⇒ 全部（书架页要按书统计条数） */
@@ -156,28 +158,57 @@ interface Ctx {
  */
 const COMMENT_COLS = 'id,article_id,name,content,date,user_id,parent_id,parent_name,avatar';
 
+/**
+ * ★ 2026-11-06「留言板页面空着、留言看不见」★
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 上面那份 `COMMENT_COLS` 里带 **article_id**——它只存在于 `comments` 表。
+ * `guestbook` 表没有这一列（实测列：id/name/content/date/user_id/parent_id/parent_name/avatar），
+ * 所以 2026-10-18「丁」把两张表的 `select('*')` 换成共用白名单之后，留言板每次取数
+ * 都被 PostgREST 拒掉：
+ *   GET /rest/v1/guestbook?select=id,article_id,…,avatar
+ *   → 400 {"code":"42703","message":"column guestbook.article_id does not exist"}
+ * 而下面的 `.then` 是 `if (!error && data)`，错误被静默跳过 → 前端永远 [] →
+ * 页面显示成「留言（0）／还没有留言，来抢沙发吧～」，**看上去像真的没人留言**（库里其实 27 条）。
+ * 修法：两张表各用各的白名单，别再共用一份。
+ */
+const GUESTBOOK_COLS = 'id,name,content,date,user_id,parent_id,parent_name,avatar';
+
 const CommentContext = createContext<Ctx | null>(null);
 
 export function CommentProvider({ children }: { children: ReactNode }) {
   const [articleComments, setArticleComments] = useState<Comment[]>([]);
   const [guestbook, setGuestbook] = useState<Comment[]>([]);
+  /* 取数失败要让页面能说人话（见下方 ensureGuestbook）：没拉回来 ≠ 没人留言 */
+  const [guestbookFailed, setGuestbookFailed] = useState(false);
   const started = useRef<Set<string>>(new Set());
 
+  /**
+   * 按需加载的两个 ensure（2026-11-06 修）：
+   * 老口径先把 key 塞进 `started` 再发请求，**失败就静默 return** —— 这一次会话里
+   * 再进 /guestbook / 再打开同一篇，`started` 已经占着坑，于是永远不重试、永远空态。
+   * 现在：失败时**删掉那个 key**（允许下一次重试）、**保留手里已有的数据**（不清空）、
+   * 把错误原文 `console.warn` 出来；留言板另外置 `guestbookFailed` 让页面显示成人话。
+   */
   const ensureGuestbook = useCallback(() => {
     if (started.current.has('guestbook')) return;
     started.current.add('guestbook');
     supabase
       .from('guestbook')
-      .select(COMMENT_COLS)
+      .select(GUESTBOOK_COLS)
       .order('date', { ascending: false })
       .then(({ data, error }) => {
-        if (!error && data) {
-          setGuestbook(data.map((r) => ({
-            id: r.id, articleId: 'guestbook', name: r.name, content: r.content, date: r.date,
-            userId: r.user_id || undefined, parentId: r.parent_id || undefined, parentName: r.parent_name || undefined,
-            avatar: r.avatar || undefined,
-          })));
+        if (error || !data) {
+          started.current.delete('guestbook');   // 允许重试（否则这一次会话永远空态）
+          setGuestbookFailed(true);
+          console.warn('[comment] 留言板取数失败：', error?.message || 'no data');
+          return;
         }
+        setGuestbookFailed(false);
+        setGuestbook(data.map((r) => ({
+          id: r.id, articleId: 'guestbook', name: r.name, content: r.content, date: r.date,
+          userId: r.user_id || undefined, parentId: r.parent_id || undefined, parentName: r.parent_name || undefined,
+          avatar: r.avatar || undefined,
+        })));
       });
   }, []);
 
@@ -191,7 +222,11 @@ export function CommentProvider({ children }: { children: ReactNode }) {
     if (articleId) q = q.like('article_id', articleId + '%');
 
     q.then(({ data, error }) => {
-      if (error || !data) return;
+      if (error || !data) {
+        started.current.delete(key);           // 同上：失败不占坑，下次进来还能再试
+        console.warn('[comment] 评论取数失败：', error?.message || 'no data');
+        return;
+      }
       const rows: Comment[] = data.map((r) => ({
         id: r.id, articleId: r.article_id, name: r.name, content: r.content, date: r.date,
         userId: r.user_id || undefined, parentId: r.parent_id || undefined, parentName: r.parent_name || undefined,
@@ -256,7 +291,7 @@ export function CommentProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <CommentContext.Provider value={{ articleComments, ensureGuestbook, ensureComments, addArticleComment, addGuestbook, guestbook, deleteComment }}>
+    <CommentContext.Provider value={{ articleComments, guestbook, guestbookFailed, ensureGuestbook, ensureComments, addArticleComment, addGuestbook, deleteComment }}>
       {children}
     </CommentContext.Provider>
   );

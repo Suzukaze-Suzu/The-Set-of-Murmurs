@@ -334,6 +334,13 @@ export const dict: Dict = {
   'comment.signInTip': { zh: '登录后才能留言或评论哦～', en: 'Sign in to leave a comment.' },
   'comment.saySomething': { zh: '说说你的想法吧…', en: 'Say something please…' },
   'comment.empty': { zh: '还没有留言，来抢沙发吧～', en: 'No comments yet — be the first.' },
+  // 2026-11-06「留言板页面空着」：**没取回来 ≠ 没人留言**。老口径取数失败静默，
+  // 页面把空数组当成「真的没有留言」显示，用户看到的是一句否认事实的空态文案。
+  'comment.loadFailed': {
+    zh: '留言没有取回来（网络或数据库暂时连不上）。稍后再试一次，或刷新页面。',
+    en: 'Could not load messages (network or database is unreachable). Try again, or refresh the page.',
+  },
+  'comment.retry': { zh: '再试一次', en: 'Try again' },
   'comment.anonymous': { zh: '匿名路人', en: 'Anonymous' },
   // N1 留言页（样张 guestbook.html）：版头右侧那枚计数、样张表单里那两个框
   'comment.count': { zh: '{n} 条留言', en: { one: '{n} message', other: '{n} messages' } },

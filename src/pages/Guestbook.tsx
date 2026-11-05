@@ -87,7 +87,7 @@ export default function Guestbook() {
   const t = useT();
   const { locale } = useLocale();
   usePageTitle(t('comment.guestbookTitle'));
-  const { guestbook, addGuestbook, deleteComment, ensureGuestbook } = useComments();
+  const { guestbook, guestbookFailed, addGuestbook, deleteComment, ensureGuestbook } = useComments();
   const { user, isAdmin } = useAuth();
   const { profile, myProfile } = useProfile();
   const [tab, setTab] = useState<'guestbook' | 'bug'>('guestbook');
@@ -305,7 +305,8 @@ export default function Guestbook() {
       <section className="sec">
         <div className="seg gb-tabs">
           <button type="button" className={tab === 'guestbook' ? 'on' : ''} onClick={() => switchTab('guestbook')}>
-            {t('comment.tabGuestbook')} {guestbook.length}
+            {/* 没取回来时不能报 0：0 是「确实没人留言」的数字，失败时它是在撒谎（2026-11-06） */}
+            {t('comment.tabGuestbook')} {guestbookFailed ? '—' : guestbook.length}
           </button>
           <button type="button" className={tab === 'bug' ? 'on' : ''} onClick={() => switchTab('bug')}>
             {t('comment.tabBug')}
@@ -384,11 +385,26 @@ export default function Guestbook() {
       {tab === 'guestbook' ? (
         <section className="sec">
           <div className="sec-head">
-            <h2>{t('comment.title', { n: guestbook.length })}</h2>
-            <small>{t('comment.count', { n: guestbook.length })}</small>
+            <h2>{t('comment.title', { n: guestbookFailed ? '—' : guestbook.length })}</h2>
+            {!guestbookFailed && <small>{t('comment.count', { n: guestbook.length })}</small>}
           </div>
           <ul className="msgs">
-            {threads.length === 0 && <li className="msg"><span className="gnote">{t('comment.empty')}</span></li>}
+            {/* 2026-11-06：**空列表有两种**——「真的没人留言」和「没取回来」。老口径一律显示前者，
+                库里明明有 27 条却写着「还没有留言」，等于拿空态否认事实。后者给一句话 + 一颗重试。 */}
+            {threads.length === 0 && (
+              <li className="msg">
+                {guestbookFailed ? (
+                  <div className="mtxt">
+                    <span className="gnote">{t('comment.loadFailed')}</span>{' '}
+                    <button type="button" className="btn ghost" onClick={() => ensureGuestbook()}>
+                      {t('comment.retry')}
+                    </button>
+                  </div>
+                ) : (
+                  <span className="gnote">{t('comment.empty')}</span>
+                )}
+              </li>
+            )}
             {threads.map(renderThread)}
           </ul>
         </section>
