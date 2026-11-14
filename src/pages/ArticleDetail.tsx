@@ -238,10 +238,12 @@ export default function ArticleDetail() {
           </section>
         )}
 
-        {/* ⑦ 正文：单栏、占满整幅（用户口径「单栏，类似报纸大版，不变窄」） */}
+        {/* ⑦ 正文：单栏、占满整幅（用户口径「单栏，类似报纸大版，不变窄」）
+            ★ 2026-11-14 三轮：数学笔记（category=math）**不做首字下沉**——用户「数学文章这么干有点奇怪」。
+              语言判据（只有英文线做）仍在 MarkdownRenderer 里，这里只多关一类。 */}
         <section className="sec">
           <article className="prose prose-read">
-            <MarkdownRenderer content={article.content} onHeadings={handleHeadings} />
+            <MarkdownRenderer content={article.content} onHeadings={handleHeadings} dropCap={article.category !== 'math'} />
           </article>
         </section>
       </>

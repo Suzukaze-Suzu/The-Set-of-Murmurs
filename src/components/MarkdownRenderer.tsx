@@ -46,7 +46,7 @@ const KATEX_OPTIONS = {
   macros: KATEX_MACROS,
 };
 
-export default function MarkdownRenderer({ content, onHeadings }: { content: string; onHeadings?: (headings: Heading[]) => void }) {
+export default function MarkdownRenderer({ content, onHeadings, dropCap }: { content: string; onHeadings?: (headings: Heading[]) => void; dropCap?: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const { locale } = useLocale();
 
@@ -55,9 +55,12 @@ export default function MarkdownRenderer({ content, onHeadings }: { content: str
 
      ★ 2026-11-14 二轮：**只有英文（译文）线做**。中文站整站不做（用户：「中文就不用了，
        有点蠢，只在翻译的文章中使用」）；`latinOnly` 再兜一层——英文站上没译文、
-       整篇回退中文正文的文章，也不会冒出一枚 80px 的汉字。 */
+       整篇回退中文正文的文章，也不会冒出一枚 80px 的汉字。
+
+     ★ 2026-11-14 三轮（用户：「数学文章这么干有点奇怪」）：**数学笔记（category=math）整类不做**，
+       由调用方（ArticleDetail）用 `dropCap` 传进来；首页头条同一条判据（见 Home.tsx）。 */
   const dropCapOff = /<!--\s*n1:dropcap=off\s*-->/i.test(content);
-  const dropCapOn = !dropCapOff && locale === 'en';
+  const dropCapOn = (dropCap ?? true) && !dropCapOff && locale === 'en';
 
   // 检测超宽 LaTeX 块级公式，仅对其添加 math-overflow 类以显示滑动提示箭头
   useEffect(() => {
