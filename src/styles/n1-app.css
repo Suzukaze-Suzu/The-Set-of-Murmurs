@@ -1521,6 +1521,55 @@ html[lang='en'] .n1 .lead h3{line-height:1.42;letter-spacing:.02em}
 .n1 .msgs > .msg > .mtxt:only-child{grid-column:1/-1}
 .n1 .msgs > .msg > .mtxt:only-child .btn{margin-top:6px}
 
+/* ════════════════════════════════════════════════════════════════════════════════
+   ⑳ 正文首字下沉（2026-11-14，方案 `blog/first/dropcap/方案书.md`）
+   ────────────────────────────────────────────────────────────────────────────────
+   用户原话：「一般英文报纸的每一篇文章的第一个字母会变得特别大给我一个方案」，
+   随后一句「都听你的」＝按推荐档直接落地：文章正文 ＋ 首页头条／三行／手机降两行／
+   中英同行数／乙路线（rehype 插件包 span，见 `src/lib/n1DropCap.ts`）／墨色。
+
+   **不发明新配方**：与样张 `.lede::first-letter`（`n1.css:121`）同一条配方——浮动 +
+   `--disp` + 600。区别只在规模：样张那枚 ≈1.4 行，正文这枚是 3 行。
+
+   尺寸怎么来的（正文一行行盒＝12.5px × 1.85 ＝ **23.125px**）：
+     font-size ＝ 行数 × 23.125px ÷ 字形比例
+       英文 Murmurs Title（cap ≈ 0.68em）：3 行 → 102px ≈ 8.2em；2 行 → 68px ≈ 5.5em
+       中文 思源宋（字面 ≈ 0.86em）：  3 行 → 81px ≈ 6.5em；2 行 → 54px ≈ 4.3em
+     `line-height` 必须 ≈ 该字形比例：这支 Cormorant 变体上伸 0.97 ＋ 下伸 0.38 ＝ 1.35em
+     （见 ⑬ 段实测），用默认行高浮动盒会比字形高一截 → 第 3 行末尾空一道缝。
+   ⚠️ 0.68 / 0.86 是估值，落值以 `first/dropcap/probe-cap.mjs` 的实测为准（详见方案书 §七）。
+
+   作用域：`.n1-cap` 只在 `MarkdownRenderer`（文章页／小说页）与首页头条里出现，
+   关于页的 `.prose`（三栏）不吃这条规则；页头 summary 的 `.lede::first-letter` 也没动。
+   回退：删掉本段 ＋ `git checkout -- src/components/MarkdownRenderer.tsx src/pages/Home.tsx`
+         ＋ 删 `src/lib/n1DropCap.ts`。
+   ════════════════════════════════════════════════════════════════════════════════ */
+/* ⚠️ 作用域要写全：插件挂在 MarkdownRenderer 上，而「关于」页与写作页预览也用它。
+   所以只有**文章/小说正文（.prose-read）**与**首页头条（.lead-body）**吃这条规则，
+   关于页的三栏 `.prose` 就算 DOM 里被包了 span 也不会变形（用户口径：关于页不动）。 */
+.n1 .prose-read .n1-cap,
+.n1 .lead-body .n1-cap{
+  float:left;
+  font-family:var(--disp);font-weight:600;color:var(--fg);
+  font-size:var(--cap-size,8.2em);line-height:var(--cap-lh,.67);
+  /* ⚠️ 上边距必须为 0（2026-11-14 实测）：浮动盒顶一旦被下推，盒底就会探进第 N+1 行，
+     那一行会被整个推到首字右边（探针里表现为 wrappedLines 多 1）。 */
+  margin:0 .1em 0 0;
+}
+/* 挂在首字前面的引号：留在浮动里，但缩到 0.4em 抬到字顶（否则「“」也会变成 100px 的黑块） */
+.n1 .prose-read .n1-cap .n1-cap-q,
+.n1 .lead-body .n1-cap .n1-cap-q{font-size:.4em;vertical-align:.9em;margin-right:.02em;font-weight:400}
+/* 中文换一套（字形比例 0.86） */
+html[lang^='zh'] .n1 .prose-read .n1-cap,
+html[lang^='zh'] .n1 .lead-body .n1-cap{--cap-size:6.5em;--cap-lh:.85}
+/* 窄屏与样张同一档收口（`n1.css` 在 ≤860px 也把提要先字从 3.2em 收到 2.6em） */
+@media (max-width:860px){
+  .n1 .prose-read .n1-cap,
+  .n1 .lead-body .n1-cap{--cap-size:5.5em}
+  html[lang^='zh'] .n1 .prose-read .n1-cap,
+  html[lang^='zh'] .n1 .lead-body .n1-cap{--cap-size:4.3em}
+}
+
 
 
 

@@ -14,6 +14,8 @@ import { formatCountLabel, sumChapterCounts, formatCount, stripForWordCount } fr
 import { articleHref, novelReadHref } from '../lib/novelPath';
 // 2026-10-15：书封存在 supabase 存储里，墙内直连会被掐 → 渲染时换同源 /api/sb/…（见 lib/sbUrl.ts）。
 import { sbProxy } from '../lib/sbUrl';
+// 2026-11-14：头条正文首字下沉（与文章正文同一条配方，见 lib/n1DropCap.ts）。
+import { splitDropCap } from '../lib/n1DropCap';
 
 /* 报眼方框里的头像（站点既有素材，原样使用）：取不到站长头像时兜底 */
 const AVATAR_FALLBACK = '/avatar-original.png';
@@ -175,9 +177,26 @@ export default function Home({ query }: Props) {
                   {a.summary && <p className="lead-ex">{a.summary}</p>}
                   {leadBody.length > 0 && (
                     <div className={`lead-body${leadShort ? ' is-short' : ''}`} ref={bodyRef}>
-                      {leadBody.map((p, i) => (
-                        <p key={i}>{p}</p>
-                      ))}
+                      {leadBody.map((p, i) => {
+                        /* 首段首字下沉：与文章正文同一个 `splitDropCap`（标点留在 .n1-cap-q 里缩小上标），
+                           拆不出来（没有字母、或前缀不是引号）就原样渲染。 */
+                        const dc = i === 0 ? splitDropCap(p) : null;
+                        return (
+                          <p key={i}>
+                            {dc ? (
+                              <>
+                                <span className="n1-cap">
+                                  {dc.punct && <span className="n1-cap-q">{dc.punct}</span>}
+                                  {dc.cap}
+                                </span>
+                                {dc.rest}
+                              </>
+                            ) : (
+                              p
+                            )}
+                          </p>
+                        );
+                      })}
                     </div>
                   )}
                   <div className="meta">

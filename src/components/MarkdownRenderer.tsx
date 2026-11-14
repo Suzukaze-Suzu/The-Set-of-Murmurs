@@ -15,6 +15,9 @@ import NcmPlayer from './NcmPlayer';
 // 2026-10-15：正文里的图片/附件链接若指向 supabase 存储，墙内直连会被掐。
 // 渲染时换成同源 /api/sb/...（见 lib/sbUrl.ts；**只用于渲染，不碰写库的地址**）。
 import { sbProxy } from '../lib/sbUrl';
+// 2026-11-14：正文首字下沉（方案 `blog/first/dropcap/方案书.md`）。
+// 为什么是 rehype 阶段而不是 `::first-letter`：见该文件顶部注释（引号会被一起放大／首块非段落时静默失效）。
+import rehypeDropCap from '../lib/n1DropCap';
 
 interface CodeProps {
   inline?: boolean;
@@ -42,6 +45,10 @@ const KATEX_OPTIONS = {
 
 export default function MarkdownRenderer({ content, onHeadings }: { content: string; onHeadings?: (headings: Heading[]) => void }) {
   const rootRef = useRef<HTMLDivElement>(null);
+
+  /* 首字下沉的单篇开关：正文里写 `<!-- n1:dropcap=off -->` 这一篇就不下沉
+     （用来处理「一 / 二 / 三 / 十」这类横笔字放大后像一道横线的情况）。 */
+  const dropCapOff = /<!--\s*n1:dropcap=off\s*-->/i.test(content);
 
   // 检测超宽 LaTeX 块级公式，仅对其添加 math-overflow 类以显示滑动提示箭头
   useEffect(() => {
@@ -83,7 +90,7 @@ export default function MarkdownRenderer({ content, onHeadings }: { content: str
     <div className="markdown-body" ref={rootRef}>
           <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[[rehypeKatex, KATEX_OPTIONS], rehypeRaw]}
+        rehypePlugins={[[rehypeKatex, KATEX_OPTIONS], rehypeRaw, [rehypeDropCap, { enabled: !dropCapOff }]]}
             components={{
           code({ inline, className, children }: CodeProps) {
                 const match = /language-(\w+)/.exec(className || '');
