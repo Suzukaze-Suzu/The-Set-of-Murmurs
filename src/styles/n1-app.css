@@ -1534,10 +1534,15 @@ html[lang='en'] .n1 .lead h3{line-height:1.42;letter-spacing:.02em}
    尺寸怎么来的（正文一行行盒＝12.5px × 1.85 ＝ **23.125px**）：
      font-size ＝ 行数 × 23.125px ÷ 字形比例
        英文 Murmurs Title（cap ≈ 0.68em）：3 行 → 102px ≈ 8.2em；2 行 → 68px ≈ 5.5em
-       中文 思源宋（字面 ≈ 0.86em）：  3 行 → 81px ≈ 6.5em；2 行 → 54px ≈ 4.3em
      `line-height` 必须 ≈ 该字形比例：这支 Cormorant 变体上伸 0.97 ＋ 下伸 0.38 ＝ 1.35em
      （见 ⑬ 段实测），用默认行高浮动盒会比字形高一截 → 第 3 行末尾空一道缝。
-   ⚠️ 0.68 / 0.86 是估值，落值以 `first/dropcap/probe-cap.mjs` 的实测为准（详见方案书 §七）。
+   ⚠️ 0.68 是估值，落值以 `first/dropcap/probe-cap.mjs` 的实测为准（详见方案书 §七）。
+
+   ★★ 2026-11-14 二轮（用户原话「中文就不用了，有点蠢，只在翻译的文章中使用」）★★
+   ① **中文站整站不做**：语言由 URL 决定，`MarkdownRenderer`/`Home` 里 `locale !== 'en'`
+      直接不挂插件（不再用 CSS 覆盖尺寸——那样 DOM 里还留着一枚 span，属于"看着没下沉"）；
+   ② 因此本段**删掉了 `html[lang^='zh']` 的 6.5/4.3em 两行**，只留英文一套尺寸；
+   ③ 英文站上没译文、整篇回退中文正文的文章也不下沉（插件选项 `latinOnly`）。
 
    作用域：`.n1-cap` 只在 `MarkdownRenderer`（文章页／小说页）与首页头条里出现，
    关于页的 `.prose`（三栏）不吃这条规则；页头 summary 的 `.lede::first-letter` 也没动。
@@ -1559,15 +1564,10 @@ html[lang='en'] .n1 .lead h3{line-height:1.42;letter-spacing:.02em}
 /* 挂在首字前面的引号：留在浮动里，但缩到 0.4em 抬到字顶（否则「“」也会变成 100px 的黑块） */
 .n1 .prose-read .n1-cap .n1-cap-q,
 .n1 .lead-body .n1-cap .n1-cap-q{font-size:.4em;vertical-align:.9em;margin-right:.02em;font-weight:400}
-/* 中文换一套（字形比例 0.86） */
-html[lang^='zh'] .n1 .prose-read .n1-cap,
-html[lang^='zh'] .n1 .lead-body .n1-cap{--cap-size:6.5em;--cap-lh:.85}
 /* 窄屏与样张同一档收口（`n1.css` 在 ≤860px 也把提要先字从 3.2em 收到 2.6em） */
 @media (max-width:860px){
   .n1 .prose-read .n1-cap,
   .n1 .lead-body .n1-cap{--cap-size:5.5em}
-  html[lang^='zh'] .n1 .prose-read .n1-cap,
-  html[lang^='zh'] .n1 .lead-body .n1-cap{--cap-size:4.3em}
 }
 
 

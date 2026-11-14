@@ -179,8 +179,10 @@ export default function Home({ query }: Props) {
                     <div className={`lead-body${leadShort ? ' is-short' : ''}`} ref={bodyRef}>
                       {leadBody.map((p, i) => {
                         /* 首段首字下沉：与文章正文同一个 `splitDropCap`（标点留在 .n1-cap-q 里缩小上标），
-                           拆不出来（没有字母、或前缀不是引号）就原样渲染。 */
-                        const dc = i === 0 ? splitDropCap(p) : null;
+                           拆不出来（没有字母、或前缀不是引号）就原样渲染。
+                           ★ 2026-11-14 二轮：只在英文（译文）线做，且首字必须是拉丁字母
+                           ——「中文就不用了，有点蠢，只在翻译的文章中使用」。 */
+                        const dc = i === 0 && locale === 'en' ? splitDropCap(p, { latinOnly: true }) : null;
                         return (
                           <p key={i}>
                             {dc ? (
